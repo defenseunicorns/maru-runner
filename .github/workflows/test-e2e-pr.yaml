@@ -1,0 +1,42 @@
+name: E2E Tests
+on:
+  pull_request:
+    paths-ignore:
+      - "**.md"
+      - "**.jpg"
+      - "**.png"
+      - "**.gif"
+      - "**.svg"
+      - "adr/**"
+      - "docs/**"
+      - "CODEOWNERS"
+      - "goreleaser.yml"
+
+# Abort prior jobs in the same workflow / PR
+concurrency:
+  group: e2e-runner-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Setup golang
+        uses: ./.github/actions/golang
+
+      - name: Install Zarf
+        uses: ./.github/actions/zarf
+
+      - name: Build runner binary
+        run: make build-cli-linux-amd ARCH=amd64
+
+      - name: Run e2e tests
+        run: |
+          make test-e2e
+
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs
