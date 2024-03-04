@@ -23,7 +23,7 @@ import (
 
 var runCmd = &cobra.Command{
 	Use: "run",
-	PersistentPreRun: func(cmd *cobra.Command, _ []string) {
+	PersistentPreRun: func(_ *cobra.Command, _ []string) {
 		exec.ExitOnInterrupt()
 		cliSetup()
 	},
