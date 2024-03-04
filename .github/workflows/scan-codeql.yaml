@@ -1,0 +1,59 @@
+name: Analyze CodeQL
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    paths-ignore:
+      - "**.md"
+      - "**.jpg"
+      - "**.png"
+      - "**.gif"
+      - "**.svg"
+      - "adr/**"
+      - "docs/**"
+      - "CODEOWNERS"
+      - "goreleaser.yml"
+  schedule:
+    - cron: "32 2 * * 5"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ["go"]
+        # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Setup golang
+        uses: ./.github/actions/golang
+
+      - name: Build maru CLI
+        run: make build-cli-linux-amd
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@47b3d888fe66b639e431abf22ebca059152f1eea # v3.24.5
+        env:
+          CODEQL_EXTRACTOR_GO_BUILD_TRACING: on
+        with:
+          languages: ${{ matrix.language }}
+          config-file: ./.github/codeql.yaml
+
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@47b3d888fe66b639e431abf22ebca059152f1eea # v3.24.5
+        with:
+          category: "/language:${{matrix.language}}"

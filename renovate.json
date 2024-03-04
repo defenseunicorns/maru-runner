@@ -1,0 +1,40 @@
+{
+  "enabled": true,
+  "forkProcessing": "enabled",
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base"
+  ],
+  "ignorePaths": [],
+  "timezone": "America/New_York",
+  "repositories": ["defenseunicorns/maru-runner"],
+  "rebaseStalePrs": true,
+  "schedule": ["after 12pm and before 11am every weekday"],
+  "dependencyDashboard": true,
+  "platform": "github",
+  "onboarding": false,
+  "dependencyDashboardTitle": "Renovate Dashboard 🤖",
+  "rebaseWhen": "conflicted",
+  "commitBodyTable": true,
+  "suppressNotifications": ["prIgnoreNotification"],
+  "postUpdateOptions": [
+    "gomodTidy"
+  ],
+  "packageRules": [
+    {
+      "matchPackageNames": ["defenseunicorns/zarf", "github.com/defenseunicorns/zarf"],
+      "groupName": "zarf"
+    }
+  ],
+  "regexManagers": [
+    {
+      "fileMatch": [
+        "action.yaml"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>.*) depName=(?<depName>.*)(versioning=(?<versioning>.*))?(registryUrl=(?<registryUrl>.*))?\\n\\s*(version|ref): (?<currentValue>.*)"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    }
+  ]
+}
