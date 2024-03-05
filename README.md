@@ -219,8 +219,6 @@ Variables can be defined in several ways:
          - cmd: echo ${FOO}
    ```
 
-### TODO: make env var prefix configurable
-
 1. As an environment variable prefixed with `RUN_`. In the example above, if you create an env var `RUN_FOO=bar`, then the`FOO` variable would be set to `bar`.
 
 1. Using the `--set` flag in the CLI : `run foo --set FOO=bar`

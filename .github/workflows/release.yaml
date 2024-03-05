@@ -56,7 +56,7 @@ jobs:
 
       - name: Make maru executable
         run: |
-          chmod +x build/run
+          chmod +x build/maru
 
       - name: Run e2e tests
         run: |
