@@ -100,7 +100,7 @@ func cliSetup() {
 		}
 	}
 
-	if !config.SkipLogFile && !config.ListTasks {
+	if !config.SkipLogFile && !config.ListTasks && !config.ListAllTasks{
 		utils.UseLogFile()
 	}
 }
