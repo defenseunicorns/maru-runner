@@ -20,11 +20,11 @@ import (
 	_ "github.com/defenseunicorns/zarf/src/pkg/packager" // import for the side effect of bringing in actions fns
 
 	"github.com/defenseunicorns/maru-runner/src/config"
-	zarfConfig"github.com/defenseunicorns/zarf/src/config"
 	"github.com/defenseunicorns/maru-runner/src/types"
+	zarfConfig "github.com/defenseunicorns/zarf/src/config"
 	"github.com/defenseunicorns/zarf/src/config/lang"
 	"github.com/defenseunicorns/zarf/src/pkg/message"
-	zarfUtils"github.com/defenseunicorns/zarf/src/pkg/utils"
+	zarfUtils "github.com/defenseunicorns/zarf/src/pkg/utils"
 	"github.com/defenseunicorns/zarf/src/pkg/utils/helpers"
 	zarfTypes "github.com/defenseunicorns/zarf/src/types"
 	goyaml "github.com/goccy/go-yaml"
@@ -112,7 +112,6 @@ func (r *Runner) importTasks(includes []map[string]string, dir string, setVariab
 		}
 
 		includeFilename = r.TemplateString(includeFilename)
-
 
 		var tasksFile types.TasksFile
 		var includePath string

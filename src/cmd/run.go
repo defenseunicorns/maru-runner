@@ -12,18 +12,17 @@ import (
 	"strings"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
-	zarfConfig"github.com/defenseunicorns/zarf/src/config"
 	"github.com/defenseunicorns/maru-runner/src/config/lang"
 	"github.com/defenseunicorns/maru-runner/src/pkg/runner"
 	"github.com/defenseunicorns/maru-runner/src/types"
+	zarfConfig "github.com/defenseunicorns/zarf/src/config"
+	zarfLang "github.com/defenseunicorns/zarf/src/config/lang"
 	"github.com/defenseunicorns/zarf/src/pkg/message"
 	zarfUtils "github.com/defenseunicorns/zarf/src/pkg/utils"
 	"github.com/defenseunicorns/zarf/src/pkg/utils/exec"
 	"github.com/defenseunicorns/zarf/src/pkg/utils/helpers"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-	zarfLang "github.com/defenseunicorns/zarf/src/config/lang"
-
 )
 
 var runCmd = &cobra.Command{
