@@ -375,4 +375,16 @@ func TestTaskRunner(t *testing.T) {
 		require.Contains(t, stdErr, "echo foo")
 		require.Contains(t, stdErr, "echo bar")
 	})
+
+	t.Run("test calling a remote included task directly", func(t *testing.T) {
+		t.Parallel()
+		gitRev, err := e2e.GetGitRevision()
+		if err != nil {
+			return
+		}
+		setVar := fmt.Sprintf("GIT_REVISION=%s", gitRev)
+		stdOut, stdErr, err := e2e.Maru("run", "remote:echo-var", "--set", setVar, "--file", "src/test/tasks/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "defenseunicorns is a pretty ok company")
+	})
 }

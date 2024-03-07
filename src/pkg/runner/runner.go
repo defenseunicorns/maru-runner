@@ -223,10 +223,10 @@ func (r *Runner) loadIncludedTaskFile(taskName string) (string, error) {
 					fullPath = filepath.Join(filepath.Dir(config.TaskFileLocation), includeFileLocation)
 				}
 				// update config.TaskFileLocation which gets used globally
-				config.TaskFileLocation = includeFileLocation
+				config.TaskFileLocation = fullPath
 				// get included TasksFile
 				if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-					message.Fatalf(err, "%s not found", includeFileLocation)
+					message.Fatalf(err, "%s not found", config.TaskFileLocation)
 				}
 				err := zarfUtils.ReadYaml(fullPath, &tasksFile)
 				if err != nil {
