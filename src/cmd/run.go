@@ -85,13 +85,8 @@ var runCmd = &cobra.Command{
 					for includeName, includeFileLocation := range include {
 						// check for templated variables in includeFileLocation value
 						if re.MatchString(includeFileLocation) {
-							runner := runner.Runner{
-								TemplateMap: map[string]*zarfUtils.TextTemplate{},
-								TasksFile:   tasksFile,
-								TaskNameMap: map[string]bool{},
-							}
-							runner.PopulateTemplateMap(runner.TasksFile.Variables, config.SetRunnerVariables)
-							includeFileLocation = runner.TemplateString(includeFileLocation)
+							templateMap := runner.PopulateTemplateMap(tasksFile.Variables, config.SetRunnerVariables)
+							includeFileLocation = runner.TemplateString(templateMap, includeFileLocation)
 						}
 						// check if included file is a url
 						if helpers.IsURL(includeFileLocation) {

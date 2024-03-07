@@ -63,7 +63,8 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 	}
 
 	// populate after getting task in case of calling included task directly
-	runner.PopulateTemplateMap(runner.TasksFile.Variables, setVariables)
+	templateMap := PopulateTemplateMap(runner.TasksFile.Variables, setVariables)
+	runner.TemplateMap = templateMap
 
 	// can't call a task directly from the CLI if it has inputs
 	if task.Inputs != nil {
@@ -111,7 +112,7 @@ func (r *Runner) importTasks(includes []map[string]string, dir string, setVariab
 			break
 		}
 
-		includeFilename = r.TemplateString(includeFilename)
+		includeFilename = TemplateString(r.TemplateMap, includeFilename)
 
 		var tasksFile types.TasksFile
 		var includePath string
@@ -203,8 +204,8 @@ func (r *Runner) loadIncludedTaskFile(taskName string) (string, error) {
 			if includeFileLocation, ok := includes[includeName]; ok {
 				// check for templated variables in includeFileLocation value
 				if re.MatchString(includeFileLocation) {
-					r.PopulateTemplateMap(r.TasksFile.Variables, config.SetRunnerVariables)
-					includeFileLocation = r.TemplateString(includeFileLocation)
+					templateMap := PopulateTemplateMap(r.TasksFile.Variables, config.SetRunnerVariables)
+					includeFileLocation = TemplateString(templateMap, includeFileLocation)
 				}
 				// check if included file is a url
 				if helpers.IsURL(includeFileLocation) {
@@ -310,9 +311,10 @@ func (r *Runner) executeTask(task types.Task) error {
 	return nil
 }
 
-// PopulateTemplateMap populates the runner's template variable map
-func (r *Runner) PopulateTemplateMap(zarfVariables []zarfTypes.ZarfPackageVariable, setVariables map[string]string) {
+// PopulateTemplateMap creates a template variable map
+func PopulateTemplateMap(zarfVariables []zarfTypes.ZarfPackageVariable, setVariables map[string]string) map[string]*zarfUtils.TextTemplate {
 	// populate text template (ie. Zarf var) with the following precedence: default < env var < set var
+	templateMap := make(map[string]*zarfUtils.TextTemplate)
 	for _, variable := range zarfVariables {
 		templatedVariableName := fmt.Sprintf("${%s}", variable.Name)
 		textTemplate := &zarfUtils.TextTemplate{
@@ -326,7 +328,7 @@ func (r *Runner) PopulateTemplateMap(zarfVariables []zarfTypes.ZarfPackageVariab
 		} else {
 			textTemplate.Value = variable.Default
 		}
-		r.TemplateMap[templatedVariableName] = textTemplate
+		templateMap[templatedVariableName] = textTemplate
 	}
 
 	setVariablesTemplateMap := make(map[string]*zarfUtils.TextTemplate)
@@ -336,14 +338,15 @@ func (r *Runner) PopulateTemplateMap(zarfVariables []zarfTypes.ZarfPackageVariab
 		}
 	}
 
-	r.TemplateMap = helpers.MergeMap[*zarfUtils.TextTemplate](r.TemplateMap, setVariablesTemplateMap)
+	templateMap = helpers.MergeMap[*zarfUtils.TextTemplate](templateMap, setVariablesTemplateMap)
+	return templateMap
 }
 
 func (r *Runner) placeFiles(files []zarfTypes.ZarfFile) error {
 	for _, file := range files {
 		// template file.Source and file.Target
-		srcFile := r.TemplateString(file.Source)
-		targetFile := r.TemplateString(file.Target)
+		srcFile := TemplateString(r.TemplateMap, file.Source)
+		targetFile := TemplateString(r.TemplateMap, file.Target)
 
 		// get current directory
 		workingDir, err := os.Getwd()
@@ -444,7 +447,7 @@ func (r *Runner) performAction(action types.Action) error {
 
 		// template the withs with variables
 		for k, v := range action.With {
-			action.With[k] = r.TemplateString(v)
+			action.With[k] = TemplateString(r.TemplateMap, v)
 		}
 
 		referencedTask.Actions, err = templateTaskActionsWithInputs(referencedTask, action.With)
@@ -687,10 +690,10 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 	}
 
 	// Template dir string
-	cfg.Dir = r.TemplateString(cfg.Dir)
+	cfg.Dir = TemplateString(r.TemplateMap, cfg.Dir)
 
 	// template cmd string
-	cmd = r.TemplateString(cmd)
+	cmd = TemplateString(r.TemplateMap, cmd)
 
 	duration := time.Duration(cfg.MaxTotalSeconds) * time.Second
 	timeout := time.After(duration)
@@ -775,13 +778,13 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 }
 
 // TemplateString replaces ${...} with the value from the template map
-func (r *Runner) TemplateString(s string) string {
+func TemplateString(templateMap map[string]*zarfUtils.TextTemplate, s string) string {
 	// Create a regular expression to match ${...}
 	re := regexp.MustCompile(`\${(.*?)}`)
 
 	// template string using values from the template map
 	result := re.ReplaceAllStringFunc(s, func(matched string) string {
-		if value, ok := r.TemplateMap[matched]; ok {
+		if value, ok := templateMap[matched]; ok {
 			return value.Value
 		}
 		return matched // If the key is not found, keep the original substring
