@@ -27,12 +27,6 @@ var (
 	// EnvPrefix is the prefix for viper configs and runner variables, useful when vendoring the runner
 	EnvPrefix = "run"
 
-	// ListTasks is a flag to print available tasks in a TaskFileLocation
-	ListTasks bool
-
-	// ListAllTasks is a flag to print available tasks in a TaskFileLocation
-	ListAllTasks bool
-
 	// LogLevel is the log level for the runner
 	LogLevel string
 

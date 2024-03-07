@@ -6,6 +6,8 @@ package cmd
 
 import (
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -14,16 +16,22 @@ import (
 	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/config/lang"
 	"github.com/defenseunicorns/maru-runner/src/pkg/runner"
+	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
 	"github.com/defenseunicorns/maru-runner/src/types"
-	zarfConfig "github.com/defenseunicorns/zarf/src/config"
-	zarfLang "github.com/defenseunicorns/zarf/src/config/lang"
 	"github.com/defenseunicorns/zarf/src/pkg/message"
 	zarfUtils "github.com/defenseunicorns/zarf/src/pkg/utils"
 	"github.com/defenseunicorns/zarf/src/pkg/utils/exec"
 	"github.com/defenseunicorns/zarf/src/pkg/utils/helpers"
+	goyaml "github.com/goccy/go-yaml"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
+
+// ListTasks is a flag to print available tasks in a TaskFileLocation
+var ListTasks bool
+
+// ListAllTasks is a flag to print available tasks in a TaskFileLocation
+var ListAllTasks bool
 
 var runCmd = &cobra.Command{
 	Use: "run",
@@ -51,12 +59,12 @@ var runCmd = &cobra.Command{
 		return taskNames, cobra.ShellCompDirectiveNoFileComp
 	},
 	Args: func(_ *cobra.Command, args []string) error {
-		if len(args) > 1 && !config.ListTasks {
+		if len(args) > 1 {
 			return fmt.Errorf("accepts 0 or 1 arg(s), received %d", len(args))
 		}
 		return nil
 	},
-	Run: func(_ *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 		var tasksFile types.TasksFile
 
 		// ensure vars are uppercase
@@ -67,7 +75,10 @@ var runCmd = &cobra.Command{
 			message.Fatalf(err, "Cannot unmarshal %s", config.TaskFileLocation)
 		}
 
-		if config.ListTasks || config.ListAllTasks {
+		ListTasks = cmd.Flag("list").Value.String() == "true"
+		ListAllTasks = cmd.Flag("list-all").Value.String() == "true"
+
+		if ListTasks || ListAllTasks {
 			rows := [][]string{
 				{"Name", "Description"},
 			}
@@ -75,7 +86,7 @@ var runCmd = &cobra.Command{
 				rows = append(rows, []string{task.Name, task.Description})
 			}
 			// If ListAllTasks, add tasks from included files
-			if config.ListAllTasks {
+			if ListAllTasks {
 				var includedTasksFile types.TasksFile
 				var fullPath string
 				templatePattern := `\${[^}]+}`
@@ -85,31 +96,41 @@ var runCmd = &cobra.Command{
 					for includeName, includeFileLocation := range include {
 						// check for templated variables in includeFileLocation value
 						if re.MatchString(includeFileLocation) {
-							templateMap := runner.PopulateTemplateMap(tasksFile.Variables, config.SetRunnerVariables)
-							includeFileLocation = runner.TemplateString(templateMap, includeFileLocation)
+							templateMap := utils.PopulateTemplateMap(tasksFile.Variables, config.SetRunnerVariables)
+							includeFileLocation = utils.TemplateString(templateMap, includeFileLocation)
 						}
 						// check if included file is a url
 						if helpers.IsURL(includeFileLocation) {
-							// If file is a url download it to a tmp directory
-							tmpDir, err := zarfUtils.MakeTempDir(zarfConfig.CommonOptions.TempDirectory)
-							defer os.RemoveAll(tmpDir)
+							// Send an HTTP GET request to fetch the content of the remote file
+							resp, err := http.Get(includeFileLocation)
 							if err != nil {
-								message.Fatalf(err, "error removing %s", tmpDir)
+								message.Fatalf(err, "Error fetching %s", includeFileLocation)
 							}
-							fullPath = filepath.Join(tmpDir, filepath.Base(includeFileLocation))
-							if err := zarfUtils.DownloadToFile(includeFileLocation, fullPath, ""); err != nil {
-								message.Fatalf(zarfLang.ErrDownloading, includeFileLocation, err.Error())
+							defer resp.Body.Close()
+
+							// Read the content of the response body
+							body, err := io.ReadAll(resp.Body)
+							if err != nil {
+								message.Fatalf(err, "Error reading contents of %s", includeFileLocation)
 							}
+
+							// Deserialize the content into the includedTasksFile
+							err = goyaml.Unmarshal(body, &includedTasksFile)
+							if err != nil {
+								message.Fatalf(err, "Error deserializing %s into includedTasksFile", includeFileLocation)
+							}
+
 						} else {
 							fullPath = filepath.Join(filepath.Dir(config.TaskFileLocation), includeFileLocation)
+							if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+								message.Fatalf(err, "%s not found", fullPath)
+							}
+							err := zarfUtils.ReadYaml(fullPath, &includedTasksFile)
+							if err != nil {
+								message.Fatalf(err, "Cannot unmarshal %s", fullPath)
+							}
 						}
-						if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-							message.Fatalf(err, "%s not found", fullPath)
-						}
-						err := zarfUtils.ReadYaml(fullPath, &includedTasksFile)
-						if err != nil {
-							message.Fatalf(err, "Cannot unmarshal %s", fullPath)
-						}
+
 						for _, task := range includedTasksFile.Tasks {
 							rows = append(rows, []string{fmt.Sprintf("%s:%s", includeName, task.Name), task.Description})
 						}
@@ -140,7 +161,7 @@ func init() {
 	rootCmd.AddCommand(runCmd)
 	runFlags := runCmd.Flags()
 	runFlags.StringVarP(&config.TaskFileLocation, "file", "f", config.TasksYAML, lang.CmdRunFlag)
-	runFlags.BoolVar(&config.ListTasks, "list", false, lang.CmdRunList)
-	runFlags.BoolVar(&config.ListAllTasks, "list-all", false, lang.CmdRunListAll)
+	runFlags.BoolVar(&ListTasks, "list", false, lang.CmdRunList)
+	runFlags.BoolVar(&ListAllTasks, "list-all", false, lang.CmdRunListAll)
 	runFlags.StringToStringVar(&config.SetRunnerVariables, "set", nil, lang.CmdRunSetVarFlag)
 }
