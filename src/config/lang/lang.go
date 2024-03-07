@@ -9,6 +9,7 @@ const (
 	RootCmdShort              = "CLI for the maru runner"
 	RootCmdFlagSkipLogFile    = "Disable log file creation"
 	RootCmdFlagLogLevel       = "Log level for the runner. Valid options are: warn, info, debug, trace"
+	RootCmdFlagNoProgress     = "Disable fancy UI progress bars, spinners, logos, etc"
 	RootCmdErrInvalidLogLevel = "Invalid log level. Valid options are: warn, info, debug, trace."
 	RootCmdFlagArch           = "Architecture for the runner"
 	RootCmdFlagTempDir        = "Specify the temporary directory to use for intermediate files"
