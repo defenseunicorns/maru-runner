@@ -75,8 +75,6 @@ var runCmd = &cobra.Command{
 			message.Fatalf(err, "Cannot unmarshal %s", config.TaskFileLocation)
 		}
 
-		ListTasks = cmd.Flag("list").Value.String() == "true"
-		ListAllTasks = cmd.Flag("list-all").Value.String() == "true"
 
 		if ListTasks || ListAllTasks {
 			rows := [][]string{
