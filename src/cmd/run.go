@@ -64,7 +64,7 @@ var runCmd = &cobra.Command{
 		}
 		return nil
 	},
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, args []string) {
 		var tasksFile types.TasksFile
 
 		// ensure vars are uppercase
