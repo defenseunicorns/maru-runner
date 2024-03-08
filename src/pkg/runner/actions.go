@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-        // allows us to use compile time directives
+	// allows us to use compile time directives
 	_ "unsafe"
 	// used for compile time directives to pull functions from Zarf
 	_ "github.com/defenseunicorns/zarf/src/pkg/packager" // import for the side effect of bringing in actions fns
@@ -235,11 +235,11 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 		// Otherwise, try running the command.
 		default:
 			ctx, cancel = context.WithTimeout(context.Background(), duration)
-			defer cancel()
 			if err := tryCmd(ctx); err != nil {
+				cancel() // Directly cancel the context after an unsuccessful command attempt.
 				continue
 			}
-
+			cancel() // Also cancel the context after a successful command attempt.
 			return nil
 		}
 	}

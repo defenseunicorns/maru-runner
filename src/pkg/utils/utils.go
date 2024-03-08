@@ -49,19 +49,31 @@ func UseLogFile() {
 // replacing variables found in env2 with variables from env1
 // otherwise appending the variable from env1 to env2
 func MergeEnv(env1, env2 []string) []string {
-	for _, s1 := range env1 {
-		replaced := false
-		for j, s2 := range env2 {
-			if strings.Split(s1, "=")[0] == strings.Split(s2, "=")[0] {
-				env2[j] = s1
-				replaced = true
-			}
-		}
-		if !replaced {
-			env2 = append(env2, s1)
+	envMap := make(map[string]string)
+	var result []string
+
+	// First, populate the map with env2's values for quick lookup.
+	for _, s := range env2 {
+		split := strings.SplitN(s, "=", 2)
+		if len(split) == 2 {
+			envMap[split[0]] = split[1]
 		}
 	}
-	return env2
+
+	// Then, update the map with env1's values, effectively merging them.
+	for _, s := range env1 {
+		split := strings.SplitN(s, "=", 2)
+		if len(split) == 2 {
+			envMap[split[0]] = split[1]
+		}
+	}
+
+	// Finally, reconstruct the environment array from the map.
+	for key, value := range envMap {
+		result = append(result, key+"="+value)
+	}
+
+	return result
 }
 
 // FormatEnvVar format environment variables replacing non-alphanumeric characters with underscores and adding INPUT_ prefix

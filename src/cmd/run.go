@@ -75,7 +75,6 @@ var runCmd = &cobra.Command{
 			message.Fatalf(err, "Cannot unmarshal %s", config.TaskFileLocation)
 		}
 
-
 		if ListTasks || ListAllTasks {
 			rows := [][]string{
 				{"Name", "Description"},
@@ -85,55 +84,7 @@ var runCmd = &cobra.Command{
 			}
 			// If ListAllTasks, add tasks from included files
 			if ListAllTasks {
-				var includedTasksFile types.TasksFile
-				var fullPath string
-				templatePattern := `\${[^}]+}`
-				re := regexp.MustCompile(templatePattern)
-				for _, include := range tasksFile.Includes {
-					// get included TasksFile
-					for includeName, includeFileLocation := range include {
-						// check for templated variables in includeFileLocation value
-						if re.MatchString(includeFileLocation) {
-							templateMap := utils.PopulateTemplateMap(tasksFile.Variables, config.SetRunnerVariables)
-							includeFileLocation = utils.TemplateString(templateMap, includeFileLocation)
-						}
-						// check if included file is a url
-						if helpers.IsURL(includeFileLocation) {
-							// Send an HTTP GET request to fetch the content of the remote file
-							resp, err := http.Get(includeFileLocation)
-							if err != nil {
-								message.Fatalf(err, "Error fetching %s", includeFileLocation)
-							}
-							defer resp.Body.Close()
-
-							// Read the content of the response body
-							body, err := io.ReadAll(resp.Body)
-							if err != nil {
-								message.Fatalf(err, "Error reading contents of %s", includeFileLocation)
-							}
-
-							// Deserialize the content into the includedTasksFile
-							err = goyaml.Unmarshal(body, &includedTasksFile)
-							if err != nil {
-								message.Fatalf(err, "Error deserializing %s into includedTasksFile", includeFileLocation)
-							}
-
-						} else {
-							fullPath = filepath.Join(filepath.Dir(config.TaskFileLocation), includeFileLocation)
-							if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-								message.Fatalf(err, "%s not found", fullPath)
-							}
-							err := zarfUtils.ReadYaml(fullPath, &includedTasksFile)
-							if err != nil {
-								message.Fatalf(err, "Cannot unmarshal %s", fullPath)
-							}
-						}
-
-						for _, task := range includedTasksFile.Tasks {
-							rows = append(rows, []string{fmt.Sprintf("%s:%s", includeName, task.Name), task.Description})
-						}
-					}
-				}
+				listTasksFromIncludes(&rows, tasksFile)
 			}
 
 			err := pterm.DefaultTable.WithHasHeader().WithData(rows).Render()
@@ -152,6 +103,68 @@ var runCmd = &cobra.Command{
 			message.Fatalf(err, "Failed to run action: %s", err)
 		}
 	},
+}
+
+func listTasksFromIncludes(rows *[][]string, tasksFile types.TasksFile) {
+	var includedTasksFile types.TasksFile
+	templatePattern := `\${[^}]+}`
+	re := regexp.MustCompile(templatePattern)
+	for _, include := range tasksFile.Includes {
+		// get included TasksFile
+		for includeName, includeFileLocation := range include {
+			// check for templated variables in includeFileLocation value
+			if re.MatchString(includeFileLocation) {
+				templateMap := utils.PopulateTemplateMap(tasksFile.Variables, config.SetRunnerVariables)
+				includeFileLocation = utils.TemplateString(templateMap, includeFileLocation)
+			}
+			// check if included file is a url
+			if helpers.IsURL(includeFileLocation) {
+				includedTasksFile = loadTasksFromRemoteIncludes(includeFileLocation)
+			} else {
+				includedTasksFile = loadTasksFromLocalIncludes(includeFileLocation)
+			}
+			for _, task := range includedTasksFile.Tasks {
+				*rows = append(*rows, []string{fmt.Sprintf("%s:%s", includeName, task.Name), task.Description})
+			}
+		}
+	}
+}
+
+func loadTasksFromRemoteIncludes(includeFileLocation string) types.TasksFile {
+	var includedTasksFile types.TasksFile
+
+	// Send an HTTP GET request to fetch the content of the remote file
+	resp, err := http.Get(includeFileLocation)
+	if err != nil {
+		message.Fatalf(err, "Error fetching %s", includeFileLocation)
+	}
+	defer resp.Body.Close()
+
+	// Read the content of the response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		message.Fatalf(err, "Error reading contents of %s", includeFileLocation)
+	}
+
+	// Deserialize the content into the includedTasksFile
+	err = goyaml.Unmarshal(body, &includedTasksFile)
+	if err != nil {
+		message.Fatalf(err, "Error deserializing %s into includedTasksFile", includeFileLocation)
+	}
+	return includedTasksFile
+}
+
+func loadTasksFromLocalIncludes(includeFileLocation string) types.TasksFile {
+	var includedTasksFile types.TasksFile
+	fullPath := filepath.Join(filepath.Dir(config.TaskFileLocation), includeFileLocation)
+	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+		message.Fatalf(err, "%s not found", fullPath)
+	}
+	err := zarfUtils.ReadYaml(fullPath, &includedTasksFile)
+	if err != nil {
+		message.Fatalf(err, "Cannot unmarshal %s", fullPath)
+	}
+	return includedTasksFile
 }
 
 func init() {
