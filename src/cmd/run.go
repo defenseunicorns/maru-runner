@@ -27,7 +27,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// ListTasks is a flag to print available tasks in a TaskFileLocation
+// ListTasks is a flag to print available tasks in a TaskFileLocation (no includes)
 var ListTasks bool
 
 // ListAllTasks is a flag to print available tasks in a TaskFileLocation
