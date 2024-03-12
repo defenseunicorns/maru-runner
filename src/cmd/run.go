@@ -88,7 +88,7 @@ var runCmd = &cobra.Command{
 	},
 }
 
-// ListAllTasks returns a list of all of the available tasks that can be run
+// ListAutoCompleteTasks returns a list of all of the available tasks that can be run
 func ListAutoCompleteTasks(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 	var tasksFile types.TasksFile
 
