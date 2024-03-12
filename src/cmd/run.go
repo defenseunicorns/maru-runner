@@ -39,25 +39,8 @@ var runCmd = &cobra.Command{
 		exec.ExitOnInterrupt()
 		cliSetup()
 	},
-	Short: lang.RootCmdShort,
-	ValidArgsFunction: func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
-		var tasksFile types.TasksFile
-
-		if _, err := os.Stat(config.TaskFileLocation); os.IsNotExist(err) {
-			return []string{}, cobra.ShellCompDirectiveNoFileComp
-		}
-
-		err := zarfUtils.ReadYaml(config.TaskFileLocation, &tasksFile)
-		if err != nil {
-			return []string{}, cobra.ShellCompDirectiveNoFileComp
-		}
-
-		var taskNames []string
-		for _, task := range tasksFile.Tasks {
-			taskNames = append(taskNames, task.Name)
-		}
-		return taskNames, cobra.ShellCompDirectiveNoFileComp
-	},
+	Short:             lang.RootCmdShort,
+	ValidArgsFunction: ListAutoCompleteTasks,
 	Args: func(_ *cobra.Command, args []string) error {
 		if len(args) > 1 {
 			return fmt.Errorf("accepts 0 or 1 arg(s), received %d", len(args))
@@ -103,6 +86,26 @@ var runCmd = &cobra.Command{
 			message.Fatalf(err, "Failed to run action: %s", err)
 		}
 	},
+}
+
+// ListAllTasks returns a list of all of the available tasks that can be run
+func ListAutoCompleteTasks(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+	var tasksFile types.TasksFile
+
+	if _, err := os.Stat(config.TaskFileLocation); os.IsNotExist(err) {
+		return []string{}, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	err := zarfUtils.ReadYaml(config.TaskFileLocation, &tasksFile)
+	if err != nil {
+		return []string{}, cobra.ShellCompDirectiveNoFileComp
+	}
+
+	var taskNames []string
+	for _, task := range tasksFile.Tasks {
+		taskNames = append(taskNames, task.Name)
+	}
+	return taskNames, cobra.ShellCompDirectiveNoFileComp
 }
 
 func listTasksFromIncludes(rows *[][]string, tasksFile types.TasksFile) {
