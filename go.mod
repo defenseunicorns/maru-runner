@@ -1,6 +1,6 @@
 module github.com/defenseunicorns/maru-runner
 
-go 1.21.6
+go 1.22.1
 
 require (
 	github.com/alecthomas/jsonschema v0.0.0-20220216202328-9eeeec9d044b
