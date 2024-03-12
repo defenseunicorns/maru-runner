@@ -68,7 +68,7 @@ brews:
 release:
   github:
     owner: defenseunicorns
-    name: maru
+    name: maru-runner
   prerelease: auto
   mode: append
   draft: false
