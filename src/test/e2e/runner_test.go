@@ -308,6 +308,22 @@ func TestTaskRunner(t *testing.T) {
 		require.Contains(t, stdErr, "copy-verify")
 	})
 
+	t.Run("run --list-all tasks", func(t *testing.T) {
+		t.Parallel()
+		gitRev, err := e2e.GetGitRevision()
+		if err != nil {
+			return
+		}
+		setVar := fmt.Sprintf("GIT_REVISION=%s", gitRev)
+
+		stdOut, stdErr, err := e2e.Maru("run", "--list-all", "--set", setVar, "--file", "src/test/tasks/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "copy")
+		require.Contains(t, stdErr, "This is a copy task")
+		require.Contains(t, stdErr, "foo:foobar")
+		require.Contains(t, stdErr, "remote:echo-var")
+	})
+
 	t.Run("test bad call to zarf tools wait-for", func(t *testing.T) {
 		t.Parallel()
 		_, stdErr, err := e2e.Maru("run", "wait-fail", "--file", "src/test/tasks/tasks.yaml")
@@ -350,5 +366,25 @@ func TestTaskRunner(t *testing.T) {
 		require.NotContains(t, stdErr, "default")
 		require.Contains(t, stdErr, "env-var")
 		require.Contains(t, stdErr, "DEBUG")
+	})
+
+	t.Run("test calling an included task directly", func(t *testing.T) {
+		t.Parallel()
+		stdOut, stdErr, err := e2e.Maru("run", "foo:foobar", "--file", "src/test/tasks/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "echo foo")
+		require.Contains(t, stdErr, "echo bar")
+	})
+
+	t.Run("test calling a remote included task directly", func(t *testing.T) {
+		t.Parallel()
+		gitRev, err := e2e.GetGitRevision()
+		if err != nil {
+			return
+		}
+		setVar := fmt.Sprintf("GIT_REVISION=%s", gitRev)
+		stdOut, stdErr, err := e2e.Maru("run", "remote:echo-var", "--set", setVar, "--file", "src/test/tasks/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "defenseunicorns is a pretty ok company")
 	})
 }

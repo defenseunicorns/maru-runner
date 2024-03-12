@@ -70,10 +70,13 @@ Optionally, you can specify the location and name of your `tasks.yaml` using the
 run example -f tmp/tasks.yaml
 ```
 
-You can also view the tasks that are available to run using the `list` flag:
+You can also view the tasks that are available to run in your current task file using the `list` flag, or you can view all tasks including tasks from external files that are being included in your task file by using the `list-all` flag:
 
 ```bash
 run -f tmp/tasks.yaml --list
+```
+```bash
+run -f tmp/tasks.yaml --list-all
 ```
 
 ## Key Concepts
@@ -320,6 +323,15 @@ tasks:
 Note that included task files can also include other task files, with the following restriction:
 
 - If a task file includes a remote task file, the included remote task file cannot include any local task files
+
+Tasks from an included file can also be run individually, by using the includes reference name followed by a colon and the name of the task, like in the example below. Both of these commands run the same task.
+
+```bash
+run import-local
+```
+```bash
+run local:some-local-task
+```
 
 ### Task Inputs and Reusable Tasks
 
