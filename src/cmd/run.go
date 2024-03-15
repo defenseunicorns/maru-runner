@@ -82,7 +82,9 @@ var runCmd = &cobra.Command{
 		if len(args) > 0 {
 			taskName = args[0]
 		}
-		if err := runner.Run(tasksFile, taskName, config.SetRunnerVariables); err != nil {
+		zarfRunner := runner.NewZarfRunner()
+		r := runner.NewRunner(zarfRunner, tasksFile)
+		if err := r.Run(taskName, config.SetRunnerVariables); err != nil {
 			message.Fatalf(err, "Failed to run action: %s", err)
 		}
 	},

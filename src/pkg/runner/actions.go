@@ -13,8 +13,6 @@ import (
 	"strings"
 	"time"
 
-	// allows us to use compile time directives
-	_ "unsafe"
 	// used for compile time directives to pull functions from Zarf
 	_ "github.com/defenseunicorns/zarf/src/pkg/packager" // import for the side effect of bringing in actions fns
 
@@ -161,7 +159,7 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 	// Persist the spinner output so it doesn't get overwritten by the command output.
 	spinner.EnablePreserveWrites()
 
-	cfg := actionGetCfg(zarfTypes.ZarfComponentActionDefaults{}, *action, r.TemplateMap)
+	cfg := r.runner.GetConfig(zarfTypes.ZarfComponentActionDefaults{}, *action, r.TemplateMap)
 
 	if cmd, err = actionCmdMutation(cmd); err != nil {
 		spinner.Errorf(err, "Error mutating command: %s", cmdEscaped)
@@ -182,7 +180,7 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 		// Perform the action run.
 		tryCmd := func(ctx context.Context) error {
 			// Try running the command and continue the retry loop if it fails.
-			if out, err = actionRun(ctx, cfg, cmd, cfg.Shell, spinner); err != nil {
+			if out, err = r.runner.RunAction(ctx, cfg, cmd, cfg.Shell, spinner); err != nil {
 				return err
 			}
 
@@ -360,9 +358,3 @@ func validateActionableTaskCall(inputTaskName string, inputs map[string]types.In
 	}
 	return nil
 }
-
-//go:linkname actionGetCfg github.com/defenseunicorns/zarf/src/pkg/packager.actionGetCfg
-func actionGetCfg(cfg zarfTypes.ZarfComponentActionDefaults, a zarfTypes.ZarfComponentAction, vars map[string]*zarfUtils.TextTemplate) zarfTypes.ZarfComponentActionDefaults
-
-//go:linkname actionRun github.com/defenseunicorns/zarf/src/pkg/packager.actionRun
-func actionRun(ctx context.Context, cfg zarfTypes.ZarfComponentActionDefaults, cmd string, shellPref zarfTypes.ZarfComponentActionShell, spinner *message.Spinner) (string, error)

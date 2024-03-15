@@ -29,18 +29,24 @@ type Runner struct {
 	TasksFile   types.TasksFile
 	TaskNameMap map[string]bool
 	envFilePath string
+	runner      ActionRunner
+}
+
+// NewRunner returns a new Runner.
+func NewRunner(runner ActionRunner, tasksFile types.TasksFile) *Runner {
+	return &Runner{
+		runner:      runner,
+		TasksFile:   tasksFile,
+		TaskNameMap: map[string]bool{},
+		TemplateMap: map[string]*zarfUtils.TextTemplate{},
+	}
 }
 
 // Run runs a task from tasks file
-func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]string) error {
-	runner := Runner{
-		TemplateMap: map[string]*zarfUtils.TextTemplate{},
-		TasksFile:   tasksFile,
-		TaskNameMap: map[string]bool{},
-	}
+func (r *Runner) Run(taskName string, setVariables map[string]string) error {
 
 	// Check to see if running an included task directly
-	includeTaskName, err := runner.loadIncludedTaskFile(taskName)
+	includeTaskName, err := r.loadIncludedTaskFile(taskName)
 	if err != nil {
 		return err
 	}
@@ -49,25 +55,25 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 		taskName = includeTaskName
 	}
 
-	task, err := runner.getTask(taskName)
+	task, err := r.getTask(taskName)
 	if err != nil {
 		return err
 	}
 
 	// populate after getting task in case of calling included task directly
-	templateMap := utils.PopulateTemplateMap(runner.TasksFile.Variables, setVariables)
-	runner.TemplateMap = templateMap
+	templateMap := utils.PopulateTemplateMap(r.TasksFile.Variables, setVariables)
+	r.TemplateMap = templateMap
 
 	// can't call a task directly from the CLI if it has inputs
 	if task.Inputs != nil {
 		return fmt.Errorf("task '%s' contains 'inputs' and cannot be called directly by the CLI", taskName)
 	}
 
-	if err = runner.checkForTaskLoops(task, runner.TasksFile, setVariables); err != nil {
+	if err = r.checkForTaskLoops(task, r.TasksFile, setVariables); err != nil {
 		return err
 	}
 
-	err = runner.executeTask(task)
+	err = r.executeTask(task)
 	return err
 }
 
