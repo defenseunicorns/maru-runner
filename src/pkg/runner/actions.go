@@ -263,9 +263,9 @@ func actionCmdMutation(cmd string) (string, error) {
 	}
 
 	// Try to patch the binary path in case the name isn't exactly "./run".
-	prefix := "./run"
+	prefix := "./run "
 	if config.CmdPrefix != "" {
-		prefix = fmt.Sprintf("./%s", config.CmdPrefix)
+		prefix = fmt.Sprintf("./%s ", config.CmdPrefix)
 	}
 	cmd = strings.ReplaceAll(cmd, prefix, runCmd+" ")
 
