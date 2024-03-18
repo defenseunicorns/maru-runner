@@ -362,8 +362,8 @@ func validateActionableTaskCall(inputTaskName string, inputs map[string]types.In
 	return nil
 }
 
-//go:linkname actionGetCfg github.com/defenseunicorns/zarf/src/pkg/packager.actionGetCfg
+//go:linkname actionGetCfg github.com/defenseunicorns/zarf/src/pkg/packager/actions.actionGetCfg
 func actionGetCfg(cfg zarfTypes.ZarfComponentActionDefaults, a zarfTypes.ZarfComponentAction, vars map[string]*zarfUtils.TextTemplate) zarfTypes.ZarfComponentActionDefaults
 
-//go:linkname actionRun github.com/defenseunicorns/zarf/src/pkg/packager.actionRun
+//go:linkname actionRun github.com/defenseunicorns/zarf/src/pkg/packager/actions.actionRun
 func actionRun(ctx context.Context, cfg zarfTypes.ZarfComponentActionDefaults, cmd string, shellPref zarfTypes.ZarfComponentActionShell, spinner *message.Spinner) (string, error)
