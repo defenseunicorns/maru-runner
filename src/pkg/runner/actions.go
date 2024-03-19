@@ -26,8 +26,8 @@ import (
 	zarfTypes "github.com/defenseunicorns/zarf/src/types"
 )
 
-// Utils is an interface that defines the GetFinalExecutablePath method.
-type Utils interface {
+// ExecutablePathFinder is an interface that defines the GetFinalExecutablePath method.
+type ExecutablePathFinder interface {
 	GetFinalExecutablePath() (string, error)
 }
 
@@ -183,7 +183,7 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 
 	configWrapper := Config{cmdPrefix: config.CmdPrefix}
 
-	if cmd, err = actionCmdMutation(cmd, ZarfUtils{}, configWrapper); err != nil {
+	if cmd, err = actionCmdMutation(cmd, NewZarfUtils(), configWrapper); err != nil {
 		spinner.Errorf(err, "Error mutating command: %s", cmdEscaped)
 	}
 
@@ -275,8 +275,13 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 	}
 }
 
+// NewZarfUtils returns a new ZarfUtils struct.
+func NewZarfUtils() ExecutablePathFinder {
+	return &ZarfUtils{}
+}
+
 // Perform some basic string mutations to make commands more useful.
-func actionCmdMutation(cmd string, utils Utils, config Config) (string, error) {
+func actionCmdMutation(cmd string, utils ExecutablePathFinder, config Config) (string, error) {
 	runCmd, err := utils.GetFinalExecutablePath()
 	if err != nil {
 		return cmd, err
