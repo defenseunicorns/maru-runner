@@ -26,6 +26,24 @@ import (
 	zarfTypes "github.com/defenseunicorns/zarf/src/types"
 )
 
+// Utils is an interface that defines the GetFinalExecutablePath method.
+type Utils interface {
+	GetFinalExecutablePath() (string, error)
+}
+
+// ZarfUtils is a struct that implements the Utils interface.
+type ZarfUtils struct{}
+
+// GetFinalExecutablePath returns the final executable path.
+func (z ZarfUtils) GetFinalExecutablePath() (string, error) {
+	return zarfUtils.GetFinalExecutablePath()
+}
+
+// Config is a struct that holds the cmdPrefix
+type Config struct {
+	cmdPrefix string
+}
+
 func (r *Runner) performAction(action types.Action) error {
 	if action.TaskReference != "" {
 		// todo: much of this logic is duplicated in Run, consider refactoring
@@ -163,7 +181,9 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 
 	cfg := actionGetCfg(zarfTypes.ZarfComponentActionDefaults{}, *action, r.TemplateMap)
 
-	if cmd, err = actionCmdMutation(cmd); err != nil {
+	configWrapper := Config{cmdPrefix: config.CmdPrefix}
+
+	if cmd, err = actionCmdMutation(cmd, ZarfUtils{}, configWrapper); err != nil {
 		spinner.Errorf(err, "Error mutating command: %s", cmdEscaped)
 	}
 
@@ -256,16 +276,16 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 }
 
 // Perform some basic string mutations to make commands more useful.
-func actionCmdMutation(cmd string) (string, error) {
-	runCmd, err := zarfUtils.GetFinalExecutablePath()
+func actionCmdMutation(cmd string, utils Utils, config Config) (string, error) {
+	runCmd, err := utils.GetFinalExecutablePath()
 	if err != nil {
 		return cmd, err
 	}
 
 	// Try to patch the binary path in case the name isn't exactly "./run".
 	prefix := "./run "
-	if config.CmdPrefix != "" {
-		prefix = fmt.Sprintf("./%s ", config.CmdPrefix)
+	if config.cmdPrefix != "" {
+		prefix = fmt.Sprintf("./%s ", config.cmdPrefix)
 	}
 	cmd = strings.ReplaceAll(cmd, prefix, runCmd+" ")
 
