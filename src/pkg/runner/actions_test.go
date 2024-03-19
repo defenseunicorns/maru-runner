@@ -241,7 +241,7 @@ func TestRunner_performAction(t *testing.T) {
 				TemplateMap: make(map[string]*zarfUtils.TextTemplate),
 				TasksFile:   types.TasksFile{},
 				TaskNameMap: make(map[string]bool),
-				envFilePath: "test/path",
+				envFilePath: "",
 			},
 			args: args{
 				task: types.Task{
@@ -266,7 +266,6 @@ func TestRunner_performAction(t *testing.T) {
 					},
 				},
 			},
-			wantErr: true,
 		},
 		{
 			name: "Unable to open path",
