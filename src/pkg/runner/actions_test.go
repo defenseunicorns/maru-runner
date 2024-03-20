@@ -7,55 +7,43 @@ package runner
 import (
 	"fmt"
 	"testing"
+
+	"github.com/defenseunicorns/maru-runner/src/config"
+	"github.com/stretchr/testify/require"
 )
-
-// Mocking zarfUtils for testing purposes
-type mockZarfUtils struct{}
-
-func (m mockZarfUtils) GetFinalExecutablePath() (string, error) {
-	return "/path/to/executable", nil
-}
 
 func TestActionCmdMutation(t *testing.T) {
 	// Initialize test cases
 	testCases := []struct {
-		input     string
-		expected  string
-		cmdPrefix Config
+		input    string
+		expected string
+		config   string
 	}{
 		{
 			input:    "./uds mycommand",
 			expected: "/path/to/executable mycommand",
-			cmdPrefix: Config{
-				cmdPrefix: "uds",
-			},
+			config:   "uds",
 		},
 		{
 			input:    "./uds ../uds/mycommand",
 			expected: "/path/to/executable ../uds/mycommand",
-			cmdPrefix: Config{
-				cmdPrefix: "uds",
-			},
+			config:   "uds",
 		},
 		{
-			input:     "./run ../run/mycommand",
-			expected:  "/path/to/executable ../run/mycommand",
-			cmdPrefix: Config{},
+			input:    "./run ../run/mycommand",
+			expected: "/path/to/executable ../run/mycommand",
+			config:   "",
 		},
-		// Add more test cases as needed
 	}
 
 	// Run tests
+	runCmd := "/path/to/executable"
 	for _, tc := range testCases {
+		config.CmdPrefix = tc.config
 		t.Run(fmt.Sprintf("Input: %s", tc.input), func(t *testing.T) {
-			mutatedCmd, err := actionCmdMutation(tc.input, mockZarfUtils{}, tc.cmdPrefix)
-			if err != nil {
-				t.Fatalf("Unexpected error: %v", err)
-			}
-
-			if mutatedCmd != tc.expected {
-				t.Errorf("Expected mutated command: %s, got: %s", tc.expected, mutatedCmd)
-			}
+			mutatedCmd, err := actionCmdMutation(tc.input, runCmd)
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, mutatedCmd)
 		})
 	}
 }
