@@ -163,7 +163,12 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 
 	cfg := actionGetCfg(zarfTypes.ZarfComponentActionDefaults{}, *action, r.TemplateMap)
 
-	if cmd, err = actionCmdMutation(cmd); err != nil {
+	runCmd, err := zarfUtils.GetFinalExecutablePath()
+	if err != nil {
+		return err
+	}
+
+	if cmd, err = actionCmdMutation(cmd, runCmd); err != nil {
 		spinner.Errorf(err, "Error mutating command: %s", cmdEscaped)
 	}
 
@@ -256,16 +261,12 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 }
 
 // Perform some basic string mutations to make commands more useful.
-func actionCmdMutation(cmd string) (string, error) {
-	runCmd, err := zarfUtils.GetFinalExecutablePath()
-	if err != nil {
-		return cmd, err
-	}
+func actionCmdMutation(cmd string, runCmd string) (string, error) {
 
 	// Try to patch the binary path in case the name isn't exactly "./run".
-	prefix := "./run"
+	prefix := "./run "
 	if config.CmdPrefix != "" {
-		prefix = fmt.Sprintf("./%s", config.CmdPrefix)
+		prefix = fmt.Sprintf("./%s ", config.CmdPrefix)
 	}
 	cmd = strings.ReplaceAll(cmd, prefix, runCmd+" ")
 
