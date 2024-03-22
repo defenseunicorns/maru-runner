@@ -17,6 +17,7 @@ import (
 	_ "unsafe"
 	// used for compile time directives to pull functions from Zarf
 	_ "github.com/defenseunicorns/zarf/src/pkg/packager" // import for the side effect of bringing in actions fns
+	"github.com/defenseunicorns/zarf/src/pkg/utils/exec"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
@@ -197,7 +198,7 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 			for _, v := range action.SetVariables {
 				// include ${...} syntax in template map for uniformity and to satisfy zarfUtils.ReplaceTextTemplate
 				nameInTemplatemap := "${" + v.Name + "}"
-				r.TemplateMap[nameInTemplatemap] = &zarfUtils.TextTemplate{
+				r.TemplateMap[nameInTemplatemap] = &utils.TextTemplate{
 					Sensitive:  v.Sensitive,
 					AutoIndent: v.AutoIndent,
 					Type:       v.Type,
@@ -363,7 +364,10 @@ func validateActionableTaskCall(inputTaskName string, inputs map[string]types.In
 }
 
 //go:linkname actionGetCfg github.com/defenseunicorns/zarf/src/pkg/packager/actions.actionGetCfg
-func actionGetCfg(cfg zarfTypes.ZarfComponentActionDefaults, a zarfTypes.ZarfComponentAction, vars map[string]*zarfUtils.TextTemplate) zarfTypes.ZarfComponentActionDefaults
+func actionGetCfg(cfg zarfTypes.ZarfComponentActionDefaults, a zarfTypes.ZarfComponentAction, vars map[string]*utils.TextTemplate) zarfTypes.ZarfComponentActionDefaults
 
 //go:linkname actionRun github.com/defenseunicorns/zarf/src/pkg/packager/actions.actionRun
-func actionRun(ctx context.Context, cfg zarfTypes.ZarfComponentActionDefaults, cmd string, shellPref zarfTypes.ZarfComponentActionShell, spinner *message.Spinner) (string, error)
+func actionRun(ctx context.Context, cfg zarfTypes.ZarfComponentActionDefaults, cmd string, shellPref exec.Shell, spinner *message.Spinner) (string, error)
+
+//go:linkname ReplaceTextTemplate github.com/defenseunicorns/zarf/src/internal/packager/template.ReplaceTextTemplate
+func ReplaceTextTemplate(path string, mappings map[string]*utils.TextTemplate, deprecations map[string]string, templateRegex string) error
