@@ -6,6 +6,7 @@ require (
 	github.com/alecthomas/jsonschema v0.0.0-20220216202328-9eeeec9d044b
 	github.com/defenseunicorns/zarf v0.32.5
 	github.com/goccy/go-yaml v1.11.3
+	github.com/google/go-cmp v0.6.0
 	github.com/mholt/archiver/v3 v3.5.1
 	github.com/pterm/pterm v0.12.79
 	github.com/spf13/cobra v1.8.0
@@ -196,7 +197,6 @@ require (
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/certificate-transparency-go v1.1.7 // indirect
 	github.com/google/gnostic-models v0.6.9-0.20230804172637-c7be7c783f49 // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/go-containerregistry v0.19.0 // indirect
 	github.com/google/go-github/v55 v55.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
