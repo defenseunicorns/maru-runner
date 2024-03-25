@@ -369,5 +369,7 @@ func actionGetCfg(cfg zarfTypes.ZarfComponentActionDefaults, a zarfTypes.ZarfCom
 //go:linkname actionRun github.com/defenseunicorns/zarf/src/pkg/packager/actions.actionRun
 func actionRun(ctx context.Context, cfg zarfTypes.ZarfComponentActionDefaults, cmd string, shellPref exec.Shell, spinner *message.Spinner) (string, error)
 
+// ReplaceTextTemplate todo: should be getting from Zarf but it's now private: https://github.com/defenseunicorns/zarf/issues/2395
+//
 //go:linkname ReplaceTextTemplate github.com/defenseunicorns/zarf/src/internal/packager/template.ReplaceTextTemplate
 func ReplaceTextTemplate(path string, mappings map[string]*utils.TextTemplate, deprecations map[string]string, templateRegex string) error

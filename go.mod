@@ -2,18 +2,15 @@ module github.com/defenseunicorns/maru-runner
 
 go 1.21.6
 
-replace github.com/defenseunicorns/zarf v0.32.5 => github.com/defenseunicorns/zarf v0.32.6-0.20240321202634-329a1ae1f69c
-
 require (
 	github.com/alecthomas/jsonschema v0.0.0-20220216202328-9eeeec9d044b
-	github.com/defenseunicorns/zarf v0.32.5
+	github.com/defenseunicorns/zarf v0.32.6
 	github.com/goccy/go-yaml v1.11.3
 	github.com/mholt/archiver/v3 v3.5.1
 	github.com/pterm/pterm v0.12.79
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.9.0
-	go.uber.org/mock v0.4.0
 )
 
 require (

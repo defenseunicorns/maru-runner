@@ -20,6 +20,7 @@ import (
 )
 
 // TextTemplate represents a value to be templated into a text file.
+// todo: should be grabbing from Zarf but it's now private: https://github.com/defenseunicorns/zarf/issues/2395
 type TextTemplate struct {
 	Sensitive  bool
 	AutoIndent bool
