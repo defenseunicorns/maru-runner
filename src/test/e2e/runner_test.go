@@ -331,7 +331,7 @@ func TestTaskRunner(t *testing.T) {
 		require.Contains(t, stdErr, "Waiting for")
 	})
 
-	t.Run("test successful call to zarf tools wait-for", func(t *testing.T) {
+	t.Run("test successful call to zarf tools wait-for (requires Zarf on path)", func(t *testing.T) {
 		t.Parallel()
 		_, stderr, err := e2e.Maru("run", "wait-success", "--file", "src/test/tasks/tasks.yaml")
 		require.NoError(t, err)

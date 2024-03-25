@@ -25,7 +25,7 @@ import (
 
 // Runner holds the necessary data to run tasks from a tasks file
 type Runner struct {
-	TemplateMap map[string]*zarfUtils.TextTemplate
+	TemplateMap map[string]*utils.TextTemplate
 	TasksFile   types.TasksFile
 	TaskNameMap map[string]bool
 	envFilePath string
@@ -34,7 +34,7 @@ type Runner struct {
 // Run runs a task from tasks file
 func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]string) error {
 	runner := Runner{
-		TemplateMap: map[string]*zarfUtils.TextTemplate{},
+		TemplateMap: map[string]*utils.TextTemplate{},
 		TasksFile:   tasksFile,
 		TaskNameMap: map[string]bool{},
 	}
@@ -173,7 +173,7 @@ func (r *Runner) checkProcessedTasksForLoops(tasksFile types.TasksFile) error {
 func (r *Runner) processTemplateMapVariables(setVariables map[string]string, tasksFile types.TasksFile) {
 	// grab variables from included file
 	for _, v := range tasksFile.Variables {
-		r.TemplateMap["${"+v.Name+"}"] = &zarfUtils.TextTemplate{
+		r.TemplateMap["${"+v.Name+"}"] = &utils.TextTemplate{
 			Sensitive:  v.Sensitive,
 			AutoIndent: v.AutoIndent,
 			Type:       v.Type,
@@ -182,14 +182,14 @@ func (r *Runner) processTemplateMapVariables(setVariables map[string]string, tas
 	}
 
 	// merge variables with setVariables
-	setVariablesTemplateMap := make(map[string]*zarfUtils.TextTemplate)
+	setVariablesTemplateMap := make(map[string]*utils.TextTemplate)
 	for name, value := range setVariables {
-		setVariablesTemplateMap[fmt.Sprintf("${%s}", name)] = &zarfUtils.TextTemplate{
+		setVariablesTemplateMap[fmt.Sprintf("${%s}", name)] = &utils.TextTemplate{
 			Value: value,
 		}
 	}
 
-	r.TemplateMap = helpers.MergeMap[*zarfUtils.TextTemplate](r.TemplateMap, setVariablesTemplateMap)
+	r.TemplateMap = helpers.MergeMap[*utils.TextTemplate](r.TemplateMap, setVariablesTemplateMap)
 }
 
 func (r *Runner) loadIncludedTaskFile(taskName string) (string, error) {
@@ -319,7 +319,7 @@ func (r *Runner) placeFiles(files []zarfTypes.ZarfFile) error {
 			}
 		} else {
 			// If file is not a url copy it
-			if err := zarfUtils.CreatePathAndCopy(srcFile, dest); err != nil {
+			if err := helpers.CreatePathAndCopy(srcFile, dest); err != nil {
 				return fmt.Errorf("unable to copy file %s: %w", srcFile, err)
 			}
 
@@ -336,11 +336,11 @@ func (r *Runner) placeFiles(files []zarfTypes.ZarfFile) error {
 		// if shasum is specified check it
 		if file.Shasum != "" {
 			if file.ExtractPath != "" {
-				if err := zarfUtils.SHAsMatch(file.ExtractPath, file.Shasum); err != nil {
+				if err := helpers.SHAsMatch(file.ExtractPath, file.Shasum); err != nil {
 					return err
 				}
 			} else {
-				if err := zarfUtils.SHAsMatch(dest, file.Shasum); err != nil {
+				if err := helpers.SHAsMatch(dest, file.Shasum); err != nil {
 					return err
 				}
 			}
@@ -349,7 +349,7 @@ func (r *Runner) placeFiles(files []zarfTypes.ZarfFile) error {
 		r.templateTextFilesWithVars(dest)
 
 		// if executable make file executable
-		if file.Executable || zarfUtils.IsDir(dest) {
+		if file.Executable || helpers.IsDir(dest) {
 			_ = os.Chmod(dest, 0700)
 		} else {
 			_ = os.Chmod(dest, 0600)
@@ -360,7 +360,7 @@ func (r *Runner) placeFiles(files []zarfTypes.ZarfFile) error {
 			// Try to remove the filepath if it exists
 			_ = os.RemoveAll(link)
 			// Make sure the parent directory exists
-			_ = zarfUtils.CreateParentDirectory(link)
+			_ = helpers.CreateParentDirectory(link)
 			// Create the symlink
 			err := os.Symlink(targetFile, link)
 			if err != nil {
@@ -373,22 +373,22 @@ func (r *Runner) placeFiles(files []zarfTypes.ZarfFile) error {
 
 func (r *Runner) templateTextFilesWithVars(dest string) {
 	fileList := []string{}
-	if zarfUtils.IsDir(dest) {
-		files, _ := zarfUtils.RecursiveFileList(dest, nil, false)
+	if helpers.IsDir(dest) {
+		files, _ := helpers.RecursiveFileList(dest, nil, false)
 		fileList = append(fileList, files...)
 	} else {
 		fileList = append(fileList, dest)
 	}
 	for _, subFile := range fileList {
 		// Check if the file looks like a text file
-		isText, err := zarfUtils.IsTextFile(subFile)
+		isText, err := helpers.IsTextFile(subFile)
 		if err != nil {
 			fmt.Printf("unable to determine if file %s is a text file: %s", subFile, err)
 		}
 
 		// If the file is a text file, template it
 		if isText {
-			if err := zarfUtils.ReplaceTextTemplate(subFile, r.TemplateMap, nil, `\$\{[A-Z0-9_]+\}`); err != nil {
+			if err := ReplaceTextTemplate(subFile, r.TemplateMap, nil, `\$\{[A-Z0-9_]+\}`); err != nil {
 				message.Fatalf(err, "unable to template file %s", subFile)
 			}
 		}

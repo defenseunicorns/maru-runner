@@ -15,18 +15,26 @@ import (
 	goyaml "github.com/goccy/go-yaml"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
-	zarfUtils "github.com/defenseunicorns/zarf/src/pkg/utils"
 	"github.com/defenseunicorns/zarf/src/pkg/utils/helpers"
 	zarfTypes "github.com/defenseunicorns/zarf/src/types"
 )
 
+// TextTemplate represents a value to be templated into a text file.
+// todo: should be grabbing from Zarf but it's now private: https://github.com/defenseunicorns/zarf/issues/2395
+type TextTemplate struct {
+	Sensitive  bool
+	AutoIndent bool
+	Type       zarfTypes.VariableType
+	Value      string
+}
+
 // PopulateTemplateMap creates a template variable map
-func PopulateTemplateMap(zarfVariables []zarfTypes.ZarfPackageVariable, setVariables map[string]string) map[string]*zarfUtils.TextTemplate {
+func PopulateTemplateMap(zarfVariables []zarfTypes.ZarfPackageVariable, setVariables map[string]string) map[string]*TextTemplate {
 	// populate text template (ie. Zarf var) with the following precedence: default < env var < set var
-	templateMap := make(map[string]*zarfUtils.TextTemplate)
+	templateMap := make(map[string]*TextTemplate)
 	for _, variable := range zarfVariables {
 		templatedVariableName := fmt.Sprintf("${%s}", variable.Name)
-		textTemplate := &zarfUtils.TextTemplate{
+		textTemplate := &TextTemplate{
 			Sensitive:  variable.Sensitive,
 			AutoIndent: variable.AutoIndent,
 			Type:       variable.Type,
@@ -40,14 +48,14 @@ func PopulateTemplateMap(zarfVariables []zarfTypes.ZarfPackageVariable, setVaria
 		templateMap[templatedVariableName] = textTemplate
 	}
 
-	setVariablesTemplateMap := make(map[string]*zarfUtils.TextTemplate)
+	setVariablesTemplateMap := make(map[string]*TextTemplate)
 	for name, value := range setVariables {
-		setVariablesTemplateMap[fmt.Sprintf("${%s}", name)] = &zarfUtils.TextTemplate{
+		setVariablesTemplateMap[fmt.Sprintf("${%s}", name)] = &TextTemplate{
 			Value: value,
 		}
 	}
 
-	templateMap = helpers.MergeMap[*zarfUtils.TextTemplate](templateMap, setVariablesTemplateMap)
+	templateMap = helpers.MergeMap[*TextTemplate](templateMap, setVariablesTemplateMap)
 	return templateMap
 }
 
@@ -93,7 +101,7 @@ func TemplateTaskActionsWithInputs(task types.Task, withs map[string]string) ([]
 }
 
 // TemplateString replaces ${...} with the value from the template map
-func TemplateString(templateMap map[string]*zarfUtils.TextTemplate, s string) string {
+func TemplateString(templateMap map[string]*TextTemplate, s string) string {
 	// Create a regular expression to match ${...}
 	re := regexp.MustCompile(`\${(.*?)}`)
 

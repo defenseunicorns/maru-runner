@@ -18,9 +18,9 @@ import (
 	"github.com/defenseunicorns/maru-runner/src/pkg/runner"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
 	"github.com/defenseunicorns/maru-runner/src/types"
+	zarfCommon "github.com/defenseunicorns/zarf/src/cmd/common"
 	"github.com/defenseunicorns/zarf/src/pkg/message"
 	zarfUtils "github.com/defenseunicorns/zarf/src/pkg/utils"
-	"github.com/defenseunicorns/zarf/src/pkg/utils/exec"
 	"github.com/defenseunicorns/zarf/src/pkg/utils/helpers"
 	goyaml "github.com/goccy/go-yaml"
 	"github.com/pterm/pterm"
@@ -36,7 +36,7 @@ var ListAllTasks bool
 var runCmd = &cobra.Command{
 	Use: "run",
 	PersistentPreRun: func(_ *cobra.Command, _ []string) {
-		exec.ExitOnInterrupt()
+		zarfCommon.ExitOnInterrupt()
 		cliSetup()
 	},
 	Short:             lang.RootCmdShort,
