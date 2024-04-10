@@ -6,6 +6,7 @@ package runner
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -189,7 +190,7 @@ func (r *Runner) processTemplateMapVariables(setVariables map[string]string, tas
 		}
 	}
 
-	r.TemplateMap = helpers.TransformAndMergeMap[*utils.TextTemplate](r.TemplateMap, setVariablesTemplateMap, nil)
+	maps.Copy(r.TemplateMap, setVariablesTemplateMap)
 }
 
 func (r *Runner) loadIncludedTaskFile(taskName string) (string, error) {
