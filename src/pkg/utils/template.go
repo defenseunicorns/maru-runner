@@ -6,6 +6,7 @@ package utils
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"regexp"
 	"strings"
@@ -15,7 +16,6 @@ import (
 	goyaml "github.com/goccy/go-yaml"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
-	"github.com/defenseunicorns/zarf/src/pkg/utils/helpers"
 	zarfTypes "github.com/defenseunicorns/zarf/src/types"
 )
 
@@ -55,7 +55,7 @@ func PopulateTemplateMap(zarfVariables []zarfTypes.ZarfPackageVariable, setVaria
 		}
 	}
 
-	templateMap = helpers.MergeMap[*TextTemplate](templateMap, setVariablesTemplateMap)
+	maps.Copy(templateMap, setVariablesTemplateMap)
 	return templateMap
 }
 

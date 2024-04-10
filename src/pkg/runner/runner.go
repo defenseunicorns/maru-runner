@@ -6,6 +6,7 @@ package runner
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -14,11 +15,11 @@ import (
 	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
 	"github.com/defenseunicorns/maru-runner/src/types"
+	"github.com/defenseunicorns/pkg/helpers"
 	zarfConfig "github.com/defenseunicorns/zarf/src/config"
 	"github.com/defenseunicorns/zarf/src/config/lang"
 	"github.com/defenseunicorns/zarf/src/pkg/message"
 	zarfUtils "github.com/defenseunicorns/zarf/src/pkg/utils"
-	"github.com/defenseunicorns/zarf/src/pkg/utils/helpers"
 	zarfTypes "github.com/defenseunicorns/zarf/src/types"
 	"github.com/mholt/archiver/v3"
 )
@@ -189,7 +190,7 @@ func (r *Runner) processTemplateMapVariables(setVariables map[string]string, tas
 		}
 	}
 
-	r.TemplateMap = helpers.MergeMap[*utils.TextTemplate](r.TemplateMap, setVariablesTemplateMap)
+	maps.Copy(r.TemplateMap, setVariablesTemplateMap)
 }
 
 func (r *Runner) loadIncludedTaskFile(taskName string) (string, error) {
