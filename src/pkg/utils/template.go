@@ -15,7 +15,7 @@ import (
 	goyaml "github.com/goccy/go-yaml"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
-	"github.com/defenseunicorns/zarf/src/pkg/utils/helpers"
+	"github.com/defenseunicorns/pkg/helpers"
 	zarfTypes "github.com/defenseunicorns/zarf/src/types"
 )
 
@@ -55,7 +55,7 @@ func PopulateTemplateMap(zarfVariables []zarfTypes.ZarfPackageVariable, setVaria
 		}
 	}
 
-	templateMap = helpers.MergeMap[*TextTemplate](templateMap, setVariablesTemplateMap)
+	templateMap = helpers.TransformAndMergeMap[*TextTemplate](templateMap, setVariablesTemplateMap, nil)
 	return templateMap
 }
 
