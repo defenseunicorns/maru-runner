@@ -415,8 +415,8 @@ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/defenseunicorns/pkg/helpers v1.0.0 h1:0o3Rs+J/g0UemZHcENBS1Z2Qw2y4FIUUrGs75iEyPb4=
-github.com/defenseunicorns/pkg/helpers v1.0.0/go.mod h1:F4S5VZLDrlNWQKklzv4v9tFWjjZNhxJ1gT79j4XiLwk=
+github.com/defenseunicorns/pkg/helpers v1.1.0 h1:VU8Cr3IGFEDuZrfavxmo6YXsh5FZXhehy4clKXrHNGk=
+github.com/defenseunicorns/pkg/helpers v1.1.0/go.mod h1:F4S5VZLDrlNWQKklzv4v9tFWjjZNhxJ1gT79j4XiLwk=
 github.com/defenseunicorns/pkg/oci v0.0.1 h1:EFRp3NeiwzhOWKpQ6mAxi0l9chnrAvDcIgjMr0o0fkM=
 github.com/defenseunicorns/pkg/oci v0.0.1/go.mod h1:zVBgRjckEAhfdvbnQrnfOP/3M/GYJkIgWtJtY7pjYdo=
 github.com/defenseunicorns/zarf v0.33.0 h1:6Lrb8ZExt3afATyoGDENSw3pD/0BauH5VfVhxNHfWKY=
