@@ -419,8 +419,8 @@ github.com/defenseunicorns/pkg/helpers v1.1.1 h1:p3pKeK5SeFaoZUJZIX9sEsJqX1CGGMS
 github.com/defenseunicorns/pkg/helpers v1.1.1/go.mod h1:F4S5VZLDrlNWQKklzv4v9tFWjjZNhxJ1gT79j4XiLwk=
 github.com/defenseunicorns/pkg/oci v0.0.1 h1:EFRp3NeiwzhOWKpQ6mAxi0l9chnrAvDcIgjMr0o0fkM=
 github.com/defenseunicorns/pkg/oci v0.0.1/go.mod h1:zVBgRjckEAhfdvbnQrnfOP/3M/GYJkIgWtJtY7pjYdo=
-github.com/defenseunicorns/zarf v0.33.0 h1:6Lrb8ZExt3afATyoGDENSw3pD/0BauH5VfVhxNHfWKY=
-github.com/defenseunicorns/zarf v0.33.0/go.mod h1:azWKTxMMsnmqNqn+d5jBnlz3ihu4NRk4Jhm2z5Dl5UI=
+github.com/defenseunicorns/zarf v0.33.1 h1:XSJ7Yu3Ihn6KUsuDnuPRw3QEuaGSbSDz75annG4aAkY=
+github.com/defenseunicorns/zarf v0.33.1/go.mod h1:wiAsd6JEWJ2P/u72t1mc7PxfQ4rYpKZt7e/e7IvxlhY=
 github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da h1:ZOjWpVsFZ06eIhnh4mkaceTiVoktdU67+M7KDHJ268M=
 github.com/deitch/magic v0.0.0-20230404182410-1ff89d7342da/go.mod h1:B3tI9iGHi4imdLi4Asdha1Sc6feLMTfPLXh9IUYmysk=
 github.com/depcheck-test/depcheck-test v0.0.0-20220607135614-199033aaa936 h1:foGzavPWwtoyBvjWyKJYDYsyzy+23iBV7NKTwdk+LRY=
