@@ -16,7 +16,7 @@ import (
 	goyaml "github.com/goccy/go-yaml"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
-	zarfTypes "github.com/defenseunicorns/zarf/src/types"
+	zarfVariables "github.com/defenseunicorns/zarf/src/pkg/variables"
 )
 
 // TextTemplate represents a value to be templated into a text file.
@@ -24,12 +24,12 @@ import (
 type TextTemplate struct {
 	Sensitive  bool
 	AutoIndent bool
-	Type       zarfTypes.VariableType
+	Type       zarfVariables.VariableType
 	Value      string
 }
 
 // PopulateTemplateMap creates a template variable map
-func PopulateTemplateMap(zarfVariables []zarfTypes.ZarfPackageVariable, setVariables map[string]string) map[string]*TextTemplate {
+func PopulateTemplateMap(zarfVariables []zarfVariables.InteractiveVariable, setVariables map[string]string) map[string]*TextTemplate {
 	// populate text template (ie. Zarf var) with the following precedence: default < env var < set var
 	templateMap := make(map[string]*TextTemplate)
 	for _, variable := range zarfVariables {
