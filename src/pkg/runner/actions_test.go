@@ -8,10 +8,9 @@ import (
 	"reflect"
 	"testing"
 
-	zarfUtils "github.com/defenseunicorns/zarf/src/pkg/utils"
-
 	zarfTypes "github.com/defenseunicorns/zarf/src/types"
 
+	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
 	"github.com/defenseunicorns/maru-runner/src/types"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
@@ -223,7 +222,7 @@ func Test_validateActionableTaskCall(t *testing.T) {
 
 func TestRunner_performAction(t *testing.T) {
 	type fields struct {
-		TemplateMap map[string]*zarfUtils.TextTemplate
+		TemplateMap map[string]*utils.TextTemplate
 		TasksFile   types.TasksFile
 		TaskNameMap map[string]bool
 		envFilePath string
@@ -242,7 +241,7 @@ func TestRunner_performAction(t *testing.T) {
 		{
 			name: "failed action processing due to invalid command",
 			fields: fields{
-				TemplateMap: make(map[string]*zarfUtils.TextTemplate),
+				TemplateMap: make(map[string]*utils.TextTemplate),
 				TasksFile:   types.TasksFile{},
 				TaskNameMap: make(map[string]bool),
 				envFilePath: "",
@@ -274,7 +273,7 @@ func TestRunner_performAction(t *testing.T) {
 		{
 			name: "Unable to open path",
 			fields: fields{
-				TemplateMap: make(map[string]*zarfUtils.TextTemplate),
+				TemplateMap: make(map[string]*utils.TextTemplate),
 				TasksFile:   types.TasksFile{},
 				TaskNameMap: make(map[string]bool),
 				envFilePath: "test/path",
@@ -329,7 +328,7 @@ func TestRunner_performAction(t *testing.T) {
 
 func TestRunner_processAction(t *testing.T) {
 	type fields struct {
-		TemplateMap map[string]*zarfUtils.TextTemplate
+		TemplateMap map[string]*utils.TextTemplate
 		TasksFile   types.TasksFile
 		TaskNameMap map[string]bool
 		envFilePath string
@@ -347,7 +346,7 @@ func TestRunner_processAction(t *testing.T) {
 		{
 			name: "successful action processing",
 			fields: fields{
-				TemplateMap: map[string]*zarfUtils.TextTemplate{},
+				TemplateMap: map[string]*utils.TextTemplate{},
 				TasksFile:   types.TasksFile{},
 				TaskNameMap: map[string]bool{},
 				envFilePath: "",
@@ -365,7 +364,7 @@ func TestRunner_processAction(t *testing.T) {
 		{
 			name: "action processing with same task and action reference",
 			fields: fields{
-				TemplateMap: map[string]*zarfUtils.TextTemplate{},
+				TemplateMap: map[string]*utils.TextTemplate{},
 				TasksFile:   types.TasksFile{},
 				TaskNameMap: map[string]bool{},
 				envFilePath: "",
@@ -383,7 +382,7 @@ func TestRunner_processAction(t *testing.T) {
 		{
 			name: "action processing with empty task reference",
 			fields: fields{
-				TemplateMap: map[string]*zarfUtils.TextTemplate{},
+				TemplateMap: map[string]*utils.TextTemplate{},
 				TasksFile:   types.TasksFile{},
 				TaskNameMap: map[string]bool{},
 				envFilePath: "",
@@ -401,7 +400,7 @@ func TestRunner_processAction(t *testing.T) {
 		{
 			name: "action processing with non-empty task reference and different task and action reference names",
 			fields: fields{
-				TemplateMap: map[string]*zarfUtils.TextTemplate{},
+				TemplateMap: map[string]*utils.TextTemplate{},
 				TasksFile:   types.TasksFile{},
 				TaskNameMap: map[string]bool{},
 				envFilePath: "",
@@ -419,7 +418,7 @@ func TestRunner_processAction(t *testing.T) {
 		{
 			name: "action processing with task reference already processed",
 			fields: fields{
-				TemplateMap: map[string]*zarfUtils.TextTemplate{},
+				TemplateMap: map[string]*utils.TextTemplate{},
 				TasksFile: types.TasksFile{
 					Tasks: []types.Task{
 						{
