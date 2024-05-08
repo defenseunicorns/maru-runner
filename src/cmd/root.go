@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2023-Present The UDS Authors
+// SPDX-FileCopyrightText: 2023-Present the Maru Authors
 
 // Package cmd contains the CLI commands for maru.
 package cmd
@@ -7,28 +7,23 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"runtime/debug"
-	"strings"
+	"os/signal"
+	"syscall"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/config/lang"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
-	"github.com/defenseunicorns/zarf/src/cmd/common"
-	zarfCommon "github.com/defenseunicorns/zarf/src/cmd/common"
-	zarfConfig "github.com/defenseunicorns/zarf/src/config"
 	"github.com/defenseunicorns/zarf/src/pkg/message"
 	"github.com/spf13/cobra"
 )
 
+// SuppressGlobalInterrupt suppresses the global error on an interrupt
+var SuppressGlobalInterrupt = false
+
 var rootCmd = &cobra.Command{
 	Use: "maru COMMAND",
 	PersistentPreRun: func(cmd *cobra.Command, _ []string) {
-		// Skip for vendor-only commands
-		if common.CheckVendorOnlyFromPath(cmd) {
-			return
-		}
-
-		zarfCommon.ExitOnInterrupt()
+		exitOnInterrupt()
 
 		// Don't add the logo to the help command
 		if cmd.Parent() == nil {
@@ -57,15 +52,6 @@ func RootCmd() *cobra.Command {
 }
 
 func init() {
-	// grab Zarf version to make Zarf library checks happy
-	if buildInfo, ok := debug.ReadBuildInfo(); ok {
-		for _, dep := range buildInfo.Deps {
-			if dep.Path == "github.com/defenseunicorns/zarf" {
-				zarfConfig.CLIVersion = strings.Split(dep.Version, "v")[1]
-			}
-		}
-	}
-
 	initViper()
 
 	v.SetDefault(V_LOG_LEVEL, "info")
@@ -104,4 +90,16 @@ func cliSetup() {
 	if !config.SkipLogFile && !ListTasks && !ListAllTasks {
 		utils.UseLogFile()
 	}
+}
+
+// exitOnInterrupt catches an interrupt and exits with fatal error
+func exitOnInterrupt() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		if !SuppressGlobalInterrupt {
+			message.Fatal(lang.ErrInterrupt, lang.ErrInterrupt.Error())
+		}
+	}()
 }

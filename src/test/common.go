@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2023-Present The UDS Authors
+// SPDX-FileCopyrightText: 2023-Present the Maru Authors
 
 // Package test contains e2e tests for the runner
 package test
@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/defenseunicorns/pkg/exec"
 	"github.com/defenseunicorns/pkg/helpers"
-	"github.com/defenseunicorns/zarf/src/pkg/utils/exec"
 	"github.com/stretchr/testify/require"
 )
 

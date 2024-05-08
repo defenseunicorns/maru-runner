@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2023-Present The UDS Authors
+// SPDX-FileCopyrightText: 2023-Present the Maru Authors
 
 // Package cmd contains the CLI commands for maru.
 package cmd
@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
@@ -19,9 +18,7 @@ import (
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
 	"github.com/defenseunicorns/maru-runner/src/types"
 	"github.com/defenseunicorns/pkg/helpers"
-	zarfCommon "github.com/defenseunicorns/zarf/src/cmd/common"
 	"github.com/defenseunicorns/zarf/src/pkg/message"
-	zarfUtils "github.com/defenseunicorns/zarf/src/pkg/utils"
 	goyaml "github.com/goccy/go-yaml"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -36,7 +33,7 @@ var ListAllTasks bool
 var runCmd = &cobra.Command{
 	Use: "run",
 	PersistentPreRun: func(_ *cobra.Command, _ []string) {
-		zarfCommon.ExitOnInterrupt()
+		exitOnInterrupt()
 		cliSetup()
 	},
 	Short:             lang.RootCmdShort,
@@ -53,7 +50,7 @@ var runCmd = &cobra.Command{
 		// ensure vars are uppercase
 		config.SetRunnerVariables = helpers.TransformMapKeys(config.SetRunnerVariables, strings.ToUpper)
 
-		err := zarfUtils.ReadYaml(config.TaskFileLocation, &tasksFile)
+		err := utils.ReadYaml(config.TaskFileLocation, &tasksFile)
 		if err != nil {
 			message.Fatalf(err, "Cannot unmarshal %s", config.TaskFileLocation)
 		}
@@ -96,7 +93,7 @@ func ListAutoCompleteTasks(_ *cobra.Command, _ []string, _ string) ([]string, co
 		return []string{}, cobra.ShellCompDirectiveNoFileComp
 	}
 
-	err := zarfUtils.ReadYaml(config.TaskFileLocation, &tasksFile)
+	err := utils.ReadYaml(config.TaskFileLocation, &tasksFile)
 	if err != nil {
 		return []string{}, cobra.ShellCompDirectiveNoFileComp
 	}
@@ -110,16 +107,16 @@ func ListAutoCompleteTasks(_ *cobra.Command, _ []string, _ string) ([]string, co
 
 func listTasksFromIncludes(rows *[][]string, tasksFile types.TasksFile) {
 	var includedTasksFile types.TasksFile
-	templatePattern := `\${[^}]+}`
-	re := regexp.MustCompile(templatePattern)
+	// templatePattern := `\${[^}]+}`
+	// re := regexp.MustCompile(templatePattern)
 	for _, include := range tasksFile.Includes {
 		// get included TasksFile
 		for includeName, includeFileLocation := range include {
 			// check for templated variables in includeFileLocation value
-			if re.MatchString(includeFileLocation) {
-				templateMap := utils.PopulateTemplateMap(tasksFile.Variables, config.SetRunnerVariables)
-				includeFileLocation = utils.TemplateString(templateMap, includeFileLocation)
-			}
+			// if re.MatchString(includeFileLocation) {
+			// TODO: (@WSTARR) - fix this
+			// includeFileLocation = utils.TemplateString(templateMap, includeFileLocation)
+			// }
 			// check if included file is a url
 			if helpers.IsURL(includeFileLocation) {
 				includedTasksFile = loadTasksFromRemoteIncludes(includeFileLocation)
@@ -163,7 +160,7 @@ func loadTasksFromLocalIncludes(includeFileLocation string) types.TasksFile {
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 		message.Fatalf(err, "%s not found", fullPath)
 	}
-	err := zarfUtils.ReadYaml(fullPath, &includedTasksFile)
+	err := utils.ReadYaml(fullPath, &includedTasksFile)
 	if err != nil {
 		message.Fatalf(err, "Cannot unmarshal %s", fullPath)
 	}

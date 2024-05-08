@@ -1,10 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2023-Present The UDS Authors
+// SPDX-FileCopyrightText: 2023-Present the Maru Authors
 
 // Package lang contains the language strings in english used by maru
 package lang
 
+import "errors"
+
 const (
+	// common errors
+	ErrDownloading = "failed to download %s: %s"
+	ErrCreatingDir = "failed to create directory %s: %s"
+	ErrWritingFile = "failed to write file %s: %s"
+	ErrFileExtract = "failed to extract filename %s from archive %s: %s"
+
 	// root cmds
 	RootCmdShort              = "CLI for the maru runner"
 	RootCmdFlagSkipLogFile    = "Disable log file creation"
@@ -33,4 +41,8 @@ const (
 	CmdRunWithVarFlag = "Set the inputs for a task from the command line (KEY=value)"
 	CmdRunList        = "List available tasks in a task file"
 	CmdRunListAll     = "List all available tasks in a task file, including tasks from included files"
+)
+
+var (
+	ErrInterrupt = errors.New("execution cancelled due to an interrupt")
 )

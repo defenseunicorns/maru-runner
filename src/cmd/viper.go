@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2021-Present The UDS Authors
+// SPDX-FileCopyrightText: 2021-Present the Maru Authors
 
 // Package cmd contains the CLI commands for maru.
 package cmd
@@ -11,7 +11,6 @@ import (
 
 	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/config/lang"
-	"github.com/defenseunicorns/zarf/src/cmd/common"
 	"github.com/defenseunicorns/zarf/src/pkg/message"
 	"github.com/spf13/viper"
 )
@@ -41,11 +40,6 @@ func initViper() {
 	}
 
 	v = viper.New()
-
-	// Skip for vendor-only commands
-	if common.CheckVendorOnlyFromArgs() {
-		return
-	}
 
 	// Specify an alternate config file
 	cfgFile := os.Getenv("RUN_CONFIG")
