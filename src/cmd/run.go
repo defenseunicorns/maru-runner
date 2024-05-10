@@ -47,12 +47,21 @@ var runCmd = &cobra.Command{
 	Run: func(_ *cobra.Command, args []string) {
 		var tasksFile types.TasksFile
 
-		// ensure vars are uppercase
-		config.SetRunnerVariables = helpers.TransformMapKeys(config.SetRunnerVariables, strings.ToUpper)
-
 		err := utils.ReadYaml(config.TaskFileLocation, &tasksFile)
 		if err != nil {
 			message.Fatalf(err, "Cannot unmarshal %s", config.TaskFileLocation)
+		}
+
+		// ensure vars are uppercase
+		config.SetRunnerVariables = helpers.TransformMapKeys(config.SetRunnerVariables, strings.ToUpper)
+
+		// set any env vars that come from the environment
+		for _, variable := range tasksFile.Variables {
+			if _, ok := config.SetRunnerVariables[variable.Name]; !ok {
+				if value := os.Getenv(fmt.Sprintf("%s_%s", strings.ToUpper(config.EnvPrefix), variable.Name)); value != "" {
+					config.SetRunnerVariables[variable.Name] = value
+				}
+			}
 		}
 
 		if ListTasks || ListAllTasks {
