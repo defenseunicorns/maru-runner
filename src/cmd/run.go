@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
@@ -116,16 +117,19 @@ func ListAutoCompleteTasks(_ *cobra.Command, _ []string, _ string) ([]string, co
 
 func listTasksFromIncludes(rows *[][]string, tasksFile types.TasksFile) {
 	var includedTasksFile types.TasksFile
-	// templatePattern := `\${[^}]+}`
-	// re := regexp.MustCompile(templatePattern)
+
+	variableConfig := runner.GetMaruVariableConfig()
+	variableConfig.PopulateVariables(tasksFile.Variables, config.SetRunnerVariables)
+
+	templatePattern := `\${[^}]+}`
+	re := regexp.MustCompile(templatePattern)
 	for _, include := range tasksFile.Includes {
 		// get included TasksFile
 		for includeName, includeFileLocation := range include {
 			// check for templated variables in includeFileLocation value
-			// if re.MatchString(includeFileLocation) {
-			// TODO: (@WSTARR) - fix this
-			// includeFileLocation = utils.TemplateString(templateMap, includeFileLocation)
-			// }
+			if re.MatchString(includeFileLocation) {
+				includeFileLocation = utils.TemplateString(variableConfig.GetSetVariables(), includeFileLocation)
+			}
 			// check if included file is a url
 			if helpers.IsURL(includeFileLocation) {
 				includedTasksFile = loadTasksFromRemoteIncludes(includeFileLocation)

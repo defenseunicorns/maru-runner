@@ -19,13 +19,7 @@ import (
 	"github.com/defenseunicorns/pkg/helpers"
 	"github.com/defenseunicorns/pkg/variables"
 	"github.com/defenseunicorns/zarf/src/pkg/message"
-	"github.com/mholt/archiver/v3"
 )
-
-func maruVariableConfig() *variables.VariableConfig {
-	prompt := func(_ variables.InteractiveVariable) (value string, err error) { return "", nil }
-	return variables.New("", map[string]string{}, prompt, slog.New(message.ZarfHandler{}))
-}
 
 // Runner holds the necessary data to run tasks from a tasks file
 type Runner struct {
@@ -40,7 +34,7 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 	runner := Runner{
 		TasksFile:      tasksFile,
 		TaskNameMap:    map[string]bool{},
-		variableConfig: maruVariableConfig(),
+		variableConfig: GetMaruVariableConfig(),
 	}
 
 	// Populate the variables loaded in the task file
@@ -72,6 +66,12 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 
 	err = runner.executeTask(task)
 	return err
+}
+
+// GetMaruVariableConfig gets the variable configuration for Maru
+func GetMaruVariableConfig() *variables.VariableConfig {
+	prompt := func(_ variables.InteractiveVariable) (value string, err error) { return "", nil }
+	return variables.New("", map[string]string{}, prompt, slog.New(message.ZarfHandler{}))
 }
 
 func (r *Runner) processIncludes(tasksFile types.TasksFile, setVariables map[string]string, action types.Action) error {
@@ -258,12 +258,6 @@ func (r *Runner) getTask(taskName string) (types.Task, error) {
 }
 
 func (r *Runner) executeTask(task types.Task) error {
-	if len(task.Files) > 0 {
-		if err := r.placeFiles(task.Files); err != nil {
-			return err
-		}
-	}
-
 	defaultEnv := []string{}
 	for name, inputParam := range task.Inputs {
 		d := inputParam.Default
@@ -285,105 +279,6 @@ func (r *Runner) executeTask(task types.Task) error {
 		}
 	}
 	return nil
-}
-
-// TODO (@WSTARR) Evaluate if this is used / useful
-func (r *Runner) placeFiles(files []types.File) error {
-	for _, file := range files {
-		// template file.Source and file.Target
-		srcFile := utils.TemplateString(r.variableConfig.GetSetVariables(), file.Source)
-		targetFile := utils.TemplateString(r.variableConfig.GetSetVariables(), file.Target)
-
-		// get current directory
-		workingDir, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		dest := filepath.Join(workingDir, targetFile)
-		destDir := filepath.Dir(dest)
-
-		if helpers.IsURL(srcFile) {
-			// If file is a url download it
-			if err := utils.DownloadToFile(srcFile, dest); err != nil {
-				return fmt.Errorf(lang.ErrDownloading, srcFile, err.Error())
-			}
-		} else {
-			// If file is not a url copy it
-			if err := helpers.CreatePathAndCopy(srcFile, dest); err != nil {
-				return fmt.Errorf("unable to copy file %s: %w", srcFile, err)
-			}
-
-		}
-		// If file has extract path extract it
-		if file.ExtractPath != "" {
-			_ = os.RemoveAll(file.ExtractPath)
-			err = archiver.Extract(dest, file.ExtractPath, destDir)
-			if err != nil {
-				return fmt.Errorf(lang.ErrFileExtract, file.ExtractPath, srcFile, err.Error())
-			}
-		}
-
-		// if shasum is specified check it
-		if file.Shasum != "" {
-			if file.ExtractPath != "" {
-				if err := helpers.SHAsMatch(file.ExtractPath, file.Shasum); err != nil {
-					return err
-				}
-			} else {
-				if err := helpers.SHAsMatch(dest, file.Shasum); err != nil {
-					return err
-				}
-			}
-		}
-
-		r.templateTextFilesWithVars(dest)
-
-		// if executable make file executable
-		if file.Executable || helpers.IsDir(dest) {
-			_ = os.Chmod(dest, 0700)
-		} else {
-			_ = os.Chmod(dest, 0600)
-		}
-
-		// if symlinks create them
-		for _, link := range file.Symlinks {
-			// Try to remove the filepath if it exists
-			_ = os.RemoveAll(link)
-			// Make sure the parent directory exists
-			_ = helpers.CreateParentDirectory(link)
-			// Create the symlink
-			err := os.Symlink(targetFile, link)
-			if err != nil {
-				return fmt.Errorf("unable to create symlink %s->%s: %w", link, targetFile, err)
-			}
-		}
-	}
-	return nil
-}
-
-func (r *Runner) templateTextFilesWithVars(dest string) {
-	fileList := []string{}
-	if helpers.IsDir(dest) {
-		files, _ := helpers.RecursiveFileList(dest, nil, false)
-		fileList = append(fileList, files...)
-	} else {
-		fileList = append(fileList, dest)
-	}
-	for _, subFile := range fileList {
-		// Check if the file looks like a text file
-		isText, err := helpers.IsTextFile(subFile)
-		if err != nil {
-			fmt.Printf("unable to determine if file %s is a text file: %s", subFile, err)
-		}
-
-		// If the file is a text file, template it
-		if isText {
-			// TODO (@WSTARR) - I broke this because the delims are not configurable anymore
-			if err := r.variableConfig.ReplaceTextTemplate(subFile); err != nil {
-				message.Fatalf(err, "unable to template file %s", subFile)
-			}
-		}
-	}
 }
 
 func (r *Runner) checkForTaskLoops(task types.Task, tasksFile types.TasksFile, setVariables map[string]string) error {

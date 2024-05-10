@@ -19,7 +19,6 @@ type TasksFile struct {
 type Task struct {
 	Name        string                    `json:"name" jsonschema:"description=Name of the task"`
 	Description string                    `json:"description,omitempty" jsonschema:"description=Description of the task"`
-	Files       []File                    `json:"files,omitempty" jsonschema:"description=Files or folders to download or copy"`
 	Actions     []Action                  `json:"actions,omitempty" jsonschema:"description=Actions to take when running the task"`
 	Inputs      map[string]InputParameter `json:"inputs,omitempty" jsonschema:"description=Input parameters for the task"`
 	EnvPath     string                    `json:"envPath,omitempty" jsonschema:"description=Path to file containing environment variables"`
@@ -43,15 +42,4 @@ type Action struct {
 // TaskReference references the name of a task
 type TaskReference struct {
 	Name string `json:"name" jsonschema:"description=Name of the task to run"`
-}
-
-// TODO (@WSTARR) - evaluate if this is useful.
-// File defines a file to pull.
-type File struct {
-	Source      string   `json:"source" jsonschema:"description=Local folder or file path or remote URL to pull into the package"`
-	Shasum      string   `json:"shasum,omitempty" jsonschema:"description=(files only) Optional SHA256 checksum of the file"`
-	Target      string   `json:"target" jsonschema:"description=The absolute or relative path where the file or folder should be copied to during package deploy"`
-	Executable  bool     `json:"executable,omitempty" jsonschema:"description=(files only) Determines if the file should be made executable during package deploy"`
-	Symlinks    []string `json:"symlinks,omitempty" jsonschema:"description=List of symlinks to create during package deploy"`
-	ExtractPath string   `json:"extractPath,omitempty" jsonschema:"description=Local folder or file to be extracted from a 'source' archive"`
 }
