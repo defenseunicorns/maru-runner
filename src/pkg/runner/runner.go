@@ -23,7 +23,7 @@ import (
 )
 
 func maruVariableConfig() *variables.VariableConfig {
-	prompt := func(variable variables.InteractiveVariable) (value string, err error) { return "", nil }
+	prompt := func(_ variables.InteractiveVariable) (value string, err error) { return "", nil }
 	return variables.New("", map[string]string{}, prompt, slog.New(message.ZarfHandler{}))
 }
 

@@ -17,9 +17,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// SuppressGlobalInterrupt suppresses the global error on an interrupt
-var SuppressGlobalInterrupt = false
-
 var rootCmd = &cobra.Command{
 	Use: "maru COMMAND",
 	PersistentPreRun: func(cmd *cobra.Command, _ []string) {
@@ -98,8 +95,6 @@ func exitOnInterrupt() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		if !SuppressGlobalInterrupt {
-			message.Fatal(lang.ErrInterrupt, lang.ErrInterrupt.Error())
-		}
+		message.Fatal(lang.ErrInterrupt, lang.ErrInterrupt.Error())
 	}()
 }
