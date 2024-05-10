@@ -43,6 +43,9 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 		variableConfig: maruVariableConfig(),
 	}
 
+	// Populate the variables loaded in the task file
+	runner.variableConfig.PopulateVariables(runner.TasksFile.Variables, setVariables)
+
 	// Check to see if running an included task directly
 	includeTaskName, err := runner.loadIncludedTaskFile(taskName)
 	if err != nil {
@@ -57,8 +60,6 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 	if err != nil {
 		return err
 	}
-
-	runner.variableConfig.PopulateVariables(runner.TasksFile.Variables, setVariables)
 
 	// can't call a task directly from the CLI if it has inputs
 	if task.Inputs != nil {
