@@ -71,6 +71,7 @@ tasks:
       - cmd: echo "I'm set from a runner var - ${REPLACE_ME}"
       - cmd: echo "I'm set from a --set var - ${REPLACE_ME}"
       - cmd: echo "I'm set from a new --set var - ${UNICORNS}"
+      - cmd: echo "I'm set automatically - MARU=${MARU}"
   - name: reference
     actions:
       - task: referenced

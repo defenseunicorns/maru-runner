@@ -152,6 +152,9 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 	// load an env var for the architecture
 	action.Env = append(action.Env, fmt.Sprintf("%s_ARCH=%s", strings.ToUpper(config.EnvPrefix), config.GetArch()))
 
+	// add an env var to indicate the task is being ran by MARU
+	action.Env = append(action.Env, "MARU=true")
+
 	if action.Description != "" {
 		cmdEscaped = action.Description
 	} else {

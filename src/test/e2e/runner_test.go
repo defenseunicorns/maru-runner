@@ -209,6 +209,14 @@ func TestTaskRunner(t *testing.T) {
 		require.Contains(t, stdErr, "I'm set from a new --set var - defense")
 	})
 
+	t.Run("run cmd-set-variable automatic MARU variable is true", func(t *testing.T) {
+		t.Parallel()
+
+		stdOut, stdErr, err := e2e.Maru("run", "cmd-set-variable", "--file", "src/test/tasks/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "I'm set automatically - MARU=true")
+	})
+
 	t.Run("run remote-import", func(t *testing.T) {
 		t.Parallel()
 
