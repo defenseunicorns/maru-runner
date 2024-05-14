@@ -281,7 +281,6 @@ Variable precedence is as follows, from least to most specific:
 
 That is to say, variables set via the `--set` flag take precedence over all other variables. The exception to this precedence order is when a variable is modified using `setVariable`, which will change the value of the variable during runtime.
 
-
 ### Files
 
 The `files` key is used to copy local or remote files to the current working directory
