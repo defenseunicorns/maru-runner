@@ -33,7 +33,7 @@ type Runner struct {
 }
 
 // Run runs a task from tasks file
-func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]string) error {
+func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]string, extraEnvVariables map[string]string) error {
 	runner := Runner{
 		TemplateMap: map[string]*utils.TextTemplate{},
 		TasksFile:   tasksFile,
@@ -68,7 +68,7 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 		return err
 	}
 
-	err = runner.executeTask(task)
+	err = runner.executeTaskWithExtraEnv(task, extraEnvVariables)
 	return err
 }
 
@@ -270,6 +270,10 @@ func (r *Runner) getTask(taskName string) (types.Task, error) {
 }
 
 func (r *Runner) executeTask(task types.Task) error {
+	return r.executeTaskWithExtraEnv(task, map[string]string{})
+}
+
+func (r *Runner) executeTaskWithExtraEnv(task types.Task, extraEnvVariables map[string]string) error {
 	if len(task.Files) > 0 {
 		if err := r.placeFiles(task.Files); err != nil {
 			return err
@@ -285,6 +289,12 @@ func (r *Runner) executeTask(task types.Task) error {
 		defaultEnv = append(defaultEnv, utils.FormatEnvVar(name, d))
 	}
 
+	// create extraEnv
+	extraEnv := []string{}
+	for name, value := range extraEnvVariables {
+		extraEnv = append(extraEnv, utils.FormatEnvVar(name, value))
+	}
+
 	// load the tasks env file into the runner, can override previous task's env files
 	if task.EnvPath != "" {
 		r.envFilePath = task.EnvPath
@@ -292,6 +302,7 @@ func (r *Runner) executeTask(task types.Task) error {
 
 	for _, action := range task.Actions {
 		action.Env = utils.MergeEnv(action.Env, defaultEnv)
+		action.Env = utils.MergeEnv(action.Env, extraEnv)
 		if err := r.performAction(action); err != nil {
 			return err
 		}

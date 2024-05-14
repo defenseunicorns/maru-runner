@@ -39,7 +39,7 @@ func PopulateTemplateMap(zarfVariables []zarfTypes.ZarfPackageVariable, setVaria
 			AutoIndent: variable.AutoIndent,
 			Type:       variable.Type,
 		}
-		// EnvPrefix is typically RUN_, but in the case of vendoring it can be changed (ie. UDS_)
+
 		if v := os.Getenv(fmt.Sprintf("%s_%s", strings.ToUpper(config.EnvPrefix), variable.Name)); v != "" {
 			textTemplate.Value = v
 		} else {

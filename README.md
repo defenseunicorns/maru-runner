@@ -222,7 +222,7 @@ Variables can be defined in several ways:
          - cmd: echo ${FOO}
    ```
 
-1. As an environment variable prefixed with `RUN_`. In the example above, if you create an env var `RUN_FOO=bar`, then the`FOO` variable would be set to `bar`.
+1. As an environment variable prefixed with `MARU_`. In the example above, if you create an env var `MARU_FOO=bar`, then the`FOO` variable would be set to `bar`.
 
 1. Using the `--set` flag in the CLI : `run foo --set FOO=bar`
 
@@ -232,7 +232,7 @@ Note that variables also have the following attributes when setting them with YA
 
 - `sensitive`: boolean value indicating if a variable should be visible in output
 - `default`: default value of a variable
-    - In the example above, if `FOO` did not have a default, and you have an environment variable `RUN_FOO=bar`, the default would get set to `bar`.
+    - In the example above, if `FOO` did not have a default, and you have an environment variable `MARU_FOO=bar`, the default would get set to `bar`.
 
 #### Environment Variable Files
 
@@ -276,7 +276,7 @@ Example:
 #### Variable Precedence
 Variable precedence is as follows, from least to most specific:
 - Variable defaults set in YAML
-- Environment variables prefixed with `RUN_`
+- Environment variables prefixed with `MARU_`
 - Variables set with the `--set` flag in the CLI
 
 That is to say, variables set via the `--set` flag take precedence over all other variables. The exception to this precedence order is when a variable is modified using `setVariable`, which will change the value of the variable during runtime.

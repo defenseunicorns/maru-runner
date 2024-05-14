@@ -11,6 +11,9 @@ import (
 const (
 	// TasksYAML is the string for the default tasks.yaml
 	TasksYAML = "tasks.yaml"
+
+	// Prefix for environment variables
+	EnvPrefix = "MARU"
 )
 
 var (
@@ -23,9 +26,6 @@ var (
 	// CmdPrefix is used to prefix Zarf cmds (like wait-for), useful when vendoring both the runner and Zarf
 	// if not set, the system Zarf will be used
 	CmdPrefix string
-
-	// EnvPrefix is the prefix for viper configs and runner variables, useful when vendoring the runner
-	EnvPrefix = "run"
 
 	// LogLevel is the log level for the runner
 	LogLevel string
