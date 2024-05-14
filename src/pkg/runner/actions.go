@@ -139,7 +139,7 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 		action.SetVariables = []zarfTypes.ZarfComponentActionSetVariable{}
 	}
 
-	// load the contents of the env file into the Action + the RUN_ARCH
+	// load the contents of the env file into the Action
 	if r.envFilePath != "" {
 		envFilePath := filepath.Join(filepath.Dir(config.TaskFileLocation), r.envFilePath)
 		envFileContents, err := os.ReadFile(envFilePath)
@@ -149,6 +149,7 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 		action.Env = append(action.Env, strings.Split(string(envFileContents), "\n")...)
 	}
 
+	// load automatic environment variables into the action
 	appendAutomaticEnvVars(action)
 
 	if action.Description != "" {
@@ -262,7 +263,7 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 
 func appendAutomaticEnvVars(action *zarfTypes.ZarfComponentAction) {
 	// append an env var for the architecture
-	action.Env = append(action.Env, fmt.Sprintf("%s_ARCH=%s", strings.ToUpper(config.EnvPrefix), config.GetArch()))
+	action.Env = append(action.Env, fmt.Sprintf("MARU_ARCH=%s", config.GetArch()))
 
 	// append an env var to indicate the task is being ran by MARU
 	action.Env = append(action.Env, "MARU=true")

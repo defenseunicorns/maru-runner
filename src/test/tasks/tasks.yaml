@@ -77,7 +77,7 @@ tasks:
       - task: local:env-variables
   - name: print-common-env
     actions:
-      - cmd: echo RUN_ARCH=[$RUN_ARCH]
+      - cmd: echo MARU_ARCH=[$MARU_ARCH]
       - cmd: echo MARU=[$MARU]
   - name: reference
     actions:
@@ -152,7 +152,7 @@ tasks:
   - name: env-from-file
     envPath: "./my-env"
     actions:
-      - cmd: echo $RUN_ARCH
+      - cmd: echo $MARU_ARCH
       - cmd: echo $SECRET_KEY
       - cmd: echo $PORT
       - cmd: echo $SPECIAL
