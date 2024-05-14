@@ -149,7 +149,7 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 		action.Env = append(action.Env, strings.Split(string(envFileContents), "\n")...)
 	}
 
-	appendCommonEnvVars(action)
+	appendAutomaticEnvVars(action)
 
 	if action.Description != "" {
 		cmdEscaped = action.Description
@@ -260,7 +260,7 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 	}
 }
 
-func appendCommonEnvVars(action *zarfTypes.ZarfComponentAction) {
+func appendAutomaticEnvVars(action *zarfTypes.ZarfComponentAction) {
 	// append an env var for the architecture
 	action.Env = append(action.Env, fmt.Sprintf("%s_ARCH=%s", strings.ToUpper(config.EnvPrefix), config.GetArch()))
 

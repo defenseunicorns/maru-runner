@@ -250,10 +250,10 @@ tasks:
     actions:
       - cmd: echo different task $FOO
 ```
-#### Common Environment Variables
+#### Automatic Environment Variables
 The following Environment Variables are set automatically by maru-runner and are available to any action being performed:
-- MARU - Set to 'true' to indicate the action was executed by maru-runner.
-- RUN_ARCH - Set to the current architecture. e.g. 'amd64'
+- `MARU` - Set to 'true' to indicate the action was executed by maru-runner.
+- `RUN_ARCH` - Set to the current architecture. e.g. 'amd64'
 
 Example:
 
