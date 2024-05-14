@@ -14,6 +14,7 @@ import (
 	"github.com/defenseunicorns/maru-runner/src/config/lang"
 	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
+	"github.com/defenseunicorns/pkg/exec"
 	"github.com/spf13/cobra"
 )
 
@@ -90,6 +91,10 @@ func cliSetup() {
 	if !skipLogFile && !listTasks && !listAllTasks {
 		utils.UseLogFile()
 	}
+
+	// Register `uds` and `zarf` as coming from the $PATH when used directly from the CLI
+	exec.RegisterCmdMutation("uds", "uds")
+	exec.RegisterCmdMutation("zarf", "zarf")
 }
 
 // exitOnInterrupt catches an interrupt and exits with fatal error

@@ -16,7 +16,7 @@ import (
 
 var activeSpinner *Spinner
 
-var sequence = []string{" ⬒ ", " ⬔ ", " ⬓ ", " ⬕ "}
+var sequence = []string{" ⬒ ", " ⬔ ", " ◨ ", " ◪ ", " ⬓ ", " ⬕ ", " ◧ ", " ◩ "}
 
 // Spinner is a wrapper around pterm.SpinnerPrinter.
 type Spinner struct {
