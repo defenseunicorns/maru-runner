@@ -66,8 +66,8 @@ func initViper() {
 	if vConfigError != nil {
 		// Config file not found; ignore
 		if _, ok := vConfigError.(viper.ConfigFileNotFoundError); !ok {
-			message.SLogHandler.Debug(vConfigError.Error())
-			message.SLogHandler.Warn(fmt.Sprintf("%s - %s", lang.CmdViperErrLoadingConfigFile, vConfigError.Error()))
+			message.SLog.Debug(vConfigError.Error())
+			message.SLog.Warn(fmt.Sprintf("%s - %s", lang.CmdViperErrLoadingConfigFile, vConfigError.Error()))
 		}
 	}
 }
@@ -77,10 +77,10 @@ func printViperConfigUsed() {
 	if vConfigError != nil {
 		// Config file not found; ignore
 		if _, ok := vConfigError.(viper.ConfigFileNotFoundError); !ok {
-			message.SLogHandler.Debug(vConfigError.Error())
-			message.SLogHandler.Warn(fmt.Sprintf("%s - %s", lang.CmdViperErrLoadingConfigFile, vConfigError.Error()))
+			message.SLog.Debug(vConfigError.Error())
+			message.SLog.Warn(fmt.Sprintf("%s - %s", lang.CmdViperErrLoadingConfigFile, vConfigError.Error()))
 		}
 	} else {
-		message.SLogHandler.Info(fmt.Sprintf(lang.CmdViperInfoUsingConfigFile, v.ConfigFileUsed()))
+		message.SLog.Info(fmt.Sprintf(lang.CmdViperInfoUsingConfigFile, v.ConfigFileUsed()))
 	}
 }

@@ -32,7 +32,7 @@ func UseLogFile() error {
 	if err != nil {
 		return err
 	}
-	message.SLogHandler.Info(fmt.Sprintf("Saving log file to %s", message.LogFileLocation()))
+	message.SLog.Info(fmt.Sprintf("Saving log file to %s", message.LogFileLocation()))
 	logWriter := io.MultiWriter(os.Stderr, logFile)
 	pterm.SetDefaultOutput(logWriter)
 	return nil
@@ -101,14 +101,14 @@ func MakeTempDir(basePath string) (string, error) {
 		return "", err
 	}
 
-	message.SLogHandler.Debug(fmt.Sprintf("Using temporary directory: %s", tmp))
+	message.SLog.Debug(fmt.Sprintf("Using temporary directory: %s", tmp))
 
 	return tmp, nil
 }
 
 // DownloadToFile downloads a given URL to the target filepath
 func DownloadToFile(src string, dst string) (err error) {
-	message.SLogHandler.Debug("Downloading %s to %s", src, dst)
+	message.SLog.Debug("Downloading %s to %s", src, dst)
 	// check if the parsed URL has a checksum
 	// if so, remove it and use the checksum to validate the file
 	src, checksum, err := parseChecksum(src)
@@ -165,7 +165,7 @@ func httpGetFile(url string, destinationFile *os.File) error {
 	progressBar := message.NewProgressBar(resp.ContentLength, title)
 
 	if _, err = io.Copy(destinationFile, io.TeeReader(resp.Body, progressBar)); err != nil {
-		message.SLogHandler.Debug(err.Error())
+		message.SLog.Debug(err.Error())
 		progressBar.Failf("Unable to save the file %s", destinationFile.Name())
 		return err
 	}

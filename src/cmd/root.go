@@ -17,8 +17,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var logLevelString string = ""
-var skipLogFile bool = false
+var logLevelString string
+var skipLogFile bool
 
 var rootCmd = &cobra.Command{
 	Use: "maru COMMAND",
@@ -81,9 +81,9 @@ func cliSetup() {
 	if logLevelString != "" {
 		if lvl, ok := match[logLevelString]; ok {
 			message.SetLogLevel(lvl)
-			message.SLogHandler.Debug(fmt.Sprintf("Log level set to %q", logLevelString))
+			message.SLog.Debug(fmt.Sprintf("Log level set to %q", logLevelString))
 		} else {
-			message.SLogHandler.Warn(lang.RootCmdErrInvalidLogLevel)
+			message.SLog.Warn(lang.RootCmdErrInvalidLogLevel)
 		}
 	}
 

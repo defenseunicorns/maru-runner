@@ -29,7 +29,7 @@ const (
 )
 
 // logLevel is the log level for the runner
-var logLevel LogLevel = InfoLevel
+var logLevel = InfoLevel
 
 // logFile acts as a buffer for logFile generation
 var logFile *os.File
@@ -39,7 +39,8 @@ func UseLogFile(dir string) (io.Writer, error) {
 	// Prepend the log filename with a timestamp.
 	ts := time.Now().Format("2006-01-02-15-04-05")
 
-	logFile, err := os.CreateTemp(dir, fmt.Sprintf("maru-%s-*.log", ts))
+	var err error
+	logFile, err = os.CreateTemp(dir, fmt.Sprintf("maru-%s-*.log", ts))
 	if err != nil {
 		return nil, err
 	}

@@ -158,7 +158,7 @@ func (r *Runner) performZarfAction(action *types.BaseAction) error {
 	cfg := GetBaseActionCfg(types.ActionDefaults{}, *action, r.variableConfig.GetAllTemplates())
 
 	if cmd = exec.MutateCommand(cmd, cfg.Shell); err != nil {
-		message.SLogHandler.Debug(err.Error())
+		message.SLog.Debug(err.Error())
 		spinner.Failf("Error mutating command: %s", cmdEscaped)
 	}
 
@@ -188,8 +188,8 @@ retryLoop:
 			for _, v := range action.SetVariables {
 				r.variableConfig.SetVariable(v.Name, out, v.Sensitive, v.AutoIndent, v.Type)
 				if err = r.variableConfig.CheckVariablePattern(v.Name, v.Pattern); err != nil {
-					message.SLogHandler.Debug(err.Error())
-					message.SLogHandler.Warn(err.Error())
+					message.SLog.Debug(err.Error())
+					message.SLog.Warn(err.Error())
 					return err
 				}
 			}
@@ -290,7 +290,7 @@ func GetBaseActionCfg(cfg types.ActionDefaults, a types.BaseAction, vars map[str
 func RunAction(ctx context.Context, cfg types.ActionDefaults, cmd string, shellPref exec.Shell, spinner helpers.ProgressWriter) (string, error) {
 	shell, shellArgs := exec.GetOSShell(shellPref)
 
-	message.SLogHandler.Debug(fmt.Sprintf("Running command in %s: %s", shell, cmd))
+	message.SLog.Debug(fmt.Sprintf("Running command in %s: %s", shell, cmd))
 
 	execCfg := exec.Config{
 		Env: cfg.Env,
@@ -305,7 +305,7 @@ func RunAction(ctx context.Context, cfg types.ActionDefaults, cmd string, shellP
 	out, errOut, err := exec.CmdWithContext(ctx, execCfg, shell, append(shellArgs, cmd)...)
 	// Dump final complete output (respect mute to prevent sensitive values from hitting the logs).
 	if !cfg.Mute {
-		message.SLogHandler.Debug(fmt.Sprintf("%s %s %s", cmd, out, errOut))
+		message.SLog.Debug(fmt.Sprintf("%s %s %s", cmd, out, errOut))
 	}
 
 	return out, err
@@ -388,14 +388,14 @@ func validateActionableTaskCall(inputTaskName string, inputs map[string]types.In
 		for inputKey, input := range inputs {
 			if withKey == inputKey {
 				if input.DeprecatedMessage != "" {
-					message.SLogHandler.Warn(fmt.Sprintf("This input has been marked deprecated: %s", input.DeprecatedMessage))
+					message.SLog.Warn(fmt.Sprintf("This input has been marked deprecated: %s", input.DeprecatedMessage))
 				}
 				matched = true
 				break
 			}
 		}
 		if !matched {
-			message.SLogHandler.Warn(fmt.Sprintf("Task %s does not have an input named %s", inputTaskName, withKey))
+			message.SLog.Warn(fmt.Sprintf("Task %s does not have an input named %s", inputTaskName, withKey))
 		}
 	}
 	return nil

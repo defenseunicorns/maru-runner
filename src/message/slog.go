@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	// SLogHandler sets the default structured log handler for messages
-	SLogHandler = slog.New(MaruHandler{})
+	// SLog sets the default structured log handler for messages
+	SLog = slog.New(MaruHandler{})
 )
 
 // MaruHandler is a simple handler that implements the slog.Handler interface

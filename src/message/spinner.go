@@ -85,7 +85,7 @@ func (p *Spinner) Updatef(format string, a ...any) {
 	p.spinner.UpdateText(text)
 }
 
-// Stop the spinner.
+// Close stops the spinner.
 func (p *Spinner) Close() error {
 	if p.spinner != nil && p.spinner.IsActive {
 		return p.spinner.Stop()

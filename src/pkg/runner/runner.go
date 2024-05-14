@@ -70,7 +70,7 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 // GetMaruVariableConfig gets the variable configuration for Maru
 func GetMaruVariableConfig() *variables.VariableConfig {
 	prompt := func(_ variables.InteractiveVariable) (value string, err error) { return "", nil }
-	return variables.New("", map[string]string{}, prompt, message.SLogHandler)
+	return variables.New("", map[string]string{}, prompt, message.SLog)
 }
 
 func (r *Runner) processIncludes(tasksFile types.TasksFile, setVariables map[string]string, action types.Action) error {

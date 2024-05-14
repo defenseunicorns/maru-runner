@@ -70,7 +70,7 @@ func (p *ProgressBar) Close() error {
 	return nil
 }
 
-// UpdateTitle updates the ProgressBar with new text.
+// Updatef updates the ProgressBar with new text.
 func (p *ProgressBar) Updatef(format string, a ...any) {
 	text := fmt.Sprintf(format, a...)
 	if NoProgress {
@@ -86,7 +86,7 @@ func (p *ProgressBar) Successf(format string, a ...any) {
 	successf(format, a...)
 }
 
-// Errorf marks the ProgressBar as failed in the CLI.
+// Failf marks the ProgressBar as failed in the CLI.
 func (p *ProgressBar) Failf(format string, a ...any) {
 	p.Close()
 	errorf(format, a...)
