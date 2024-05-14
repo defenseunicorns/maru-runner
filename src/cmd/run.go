@@ -15,21 +15,24 @@ import (
 
 	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/config/lang"
+	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/defenseunicorns/maru-runner/src/pkg/runner"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
 	"github.com/defenseunicorns/maru-runner/src/types"
 	"github.com/defenseunicorns/pkg/helpers"
-	"github.com/defenseunicorns/zarf/src/pkg/message"
 	goyaml "github.com/goccy/go-yaml"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
-// ListTasks is a flag to print available tasks in a TaskFileLocation (no includes)
-var ListTasks bool
+// listTasks is a flag to print available tasks in a TaskFileLocation (no includes)
+var listTasks bool
 
-// ListAllTasks is a flag to print available tasks in a TaskFileLocation
-var ListAllTasks bool
+// listAllTasks is a flag to print available tasks in a TaskFileLocation
+var listAllTasks bool
+
+// setRunnerVariables provides a map of set variables from the command line
+var setRunnerVariables map[string]string
 
 var runCmd = &cobra.Command{
 	Use: "run",
@@ -54,18 +57,18 @@ var runCmd = &cobra.Command{
 		}
 
 		// ensure vars are uppercase
-		config.SetRunnerVariables = helpers.TransformMapKeys(config.SetRunnerVariables, strings.ToUpper)
+		setRunnerVariables = helpers.TransformMapKeys(setRunnerVariables, strings.ToUpper)
 
 		// set any env vars that come from the environment
 		for _, variable := range tasksFile.Variables {
-			if _, ok := config.SetRunnerVariables[variable.Name]; !ok {
+			if _, ok := setRunnerVariables[variable.Name]; !ok {
 				if value := os.Getenv(fmt.Sprintf("%s_%s", strings.ToUpper(config.EnvPrefix), variable.Name)); value != "" {
-					config.SetRunnerVariables[variable.Name] = value
+					setRunnerVariables[variable.Name] = value
 				}
 			}
 		}
 
-		if ListTasks || ListAllTasks {
+		if listTasks || listAllTasks {
 			rows := [][]string{
 				{"Name", "Description"},
 			}
@@ -73,13 +76,13 @@ var runCmd = &cobra.Command{
 				rows = append(rows, []string{task.Name, task.Description})
 			}
 			// If ListAllTasks, add tasks from included files
-			if ListAllTasks {
+			if listAllTasks {
 				listTasksFromIncludes(&rows, tasksFile)
 			}
 
 			err := pterm.DefaultTable.WithHasHeader().WithData(rows).Render()
 			if err != nil {
-				message.Fatal(err, "error listing tasks")
+				message.Fatalf(err, "Error listing tasks: %s", err.Error())
 			}
 
 			return
@@ -89,8 +92,8 @@ var runCmd = &cobra.Command{
 		if len(args) > 0 {
 			taskName = args[0]
 		}
-		if err := runner.Run(tasksFile, taskName, config.SetRunnerVariables); err != nil {
-			message.Fatalf(err, "Failed to run action: %s", err)
+		if err := runner.Run(tasksFile, taskName, setRunnerVariables); err != nil {
+			message.Fatalf(err, "Failed to run action: %s", err.Error())
 		}
 	},
 }
@@ -119,7 +122,7 @@ func listTasksFromIncludes(rows *[][]string, tasksFile types.TasksFile) {
 	var includedTasksFile types.TasksFile
 
 	variableConfig := runner.GetMaruVariableConfig()
-	variableConfig.PopulateVariables(tasksFile.Variables, config.SetRunnerVariables)
+	variableConfig.PopulateVariables(tasksFile.Variables, setRunnerVariables)
 
 	templatePattern := `\${[^}]+}`
 	re := regexp.MustCompile(templatePattern)
@@ -185,7 +188,7 @@ func init() {
 	rootCmd.AddCommand(runCmd)
 	runFlags := runCmd.Flags()
 	runFlags.StringVarP(&config.TaskFileLocation, "file", "f", config.TasksYAML, lang.CmdRunFlag)
-	runFlags.BoolVar(&ListTasks, "list", false, lang.CmdRunList)
-	runFlags.BoolVar(&ListAllTasks, "list-all", false, lang.CmdRunListAll)
-	runFlags.StringToStringVar(&config.SetRunnerVariables, "set", nil, lang.CmdRunSetVarFlag)
+	runFlags.BoolVar(&listTasks, "list", false, lang.CmdRunList)
+	runFlags.BoolVar(&listAllTasks, "list-all", false, lang.CmdRunListAll)
+	runFlags.StringToStringVar(&setRunnerVariables, "set", nil, lang.CmdRunSetVarFlag)
 }

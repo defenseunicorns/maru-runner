@@ -172,11 +172,12 @@ func TestTaskRunner(t *testing.T) {
 		setVar := fmt.Sprintf("GIT_REVISION=%s", gitRev)
 
 		stdOut, stdErr, err := e2e.Maru("run", "--list", setVar, "--file", "src/test/tasks/tasks.yaml")
+
 		require.NoError(t, err, stdOut, stdErr)
-		require.Contains(t, stdErr, "echo-env-var")
-		require.Contains(t, stdErr, "Test that env vars take precedence")
-		require.Contains(t, stdErr, "remote-import")
-		require.Contains(t, stdErr, "action")
+		require.Contains(t, stdOut, "echo-env-var")
+		require.Contains(t, stdOut, "Test that env vars take precedence")
+		require.Contains(t, stdOut, "remote-import")
+		require.Contains(t, stdOut, "action")
 	})
 
 	t.Run("run --list-all tasks", func(t *testing.T) {
@@ -189,10 +190,10 @@ func TestTaskRunner(t *testing.T) {
 
 		stdOut, stdErr, err := e2e.Maru("run", "--list-all", "--set", setVar, "--file", "src/test/tasks/tasks.yaml")
 		require.NoError(t, err, stdOut, stdErr)
-		require.Contains(t, stdErr, "echo-env-var")
-		require.Contains(t, stdErr, "Test that env vars take precedence")
-		require.Contains(t, stdErr, "foo:foobar")
-		require.Contains(t, stdErr, "remote:echo-var")
+		require.Contains(t, stdOut, "echo-env-var")
+		require.Contains(t, stdOut, "Test that env vars take precedence")
+		require.Contains(t, stdOut, "foo:foobar")
+		require.Contains(t, stdOut, "remote:echo-var")
 	})
 
 	t.Run("test bad call to zarf tools wait-for", func(t *testing.T) {

@@ -8,7 +8,7 @@ import "errors"
 
 // Common Error Messages
 const (
-	ErrDownloading = "failed to download %s: %s"
+	ErrDownloading = "failed to download %s: %w"
 	ErrCreatingDir = "failed to create directory %s: %s"
 	ErrWritingFile = "failed to write file %s: %s"
 	ErrFileExtract = "failed to extract filename %s from archive %s: %s"

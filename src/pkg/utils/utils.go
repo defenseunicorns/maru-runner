@@ -15,8 +15,8 @@ import (
 	"strings"
 
 	"github.com/defenseunicorns/maru-runner/src/config/lang"
+	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/defenseunicorns/pkg/helpers"
-	"github.com/defenseunicorns/zarf/src/pkg/message"
 	goyaml "github.com/goccy/go-yaml"
 	"github.com/pterm/pterm"
 )
@@ -32,7 +32,7 @@ func UseLogFile() error {
 	if err != nil {
 		return err
 	}
-	message.Notef("Saving log file to %s", message.LogFileLocation())
+	message.SLogHandler.Info(fmt.Sprintf("Saving log file to %s", message.LogFileLocation()))
 	logWriter := io.MultiWriter(os.Stderr, logFile)
 	pterm.SetDefaultOutput(logWriter)
 	return nil
@@ -101,14 +101,14 @@ func MakeTempDir(basePath string) (string, error) {
 		return "", err
 	}
 
-	message.Debug("Using temporary directory:", tmp)
+	message.SLogHandler.Debug(fmt.Sprintf("Using temporary directory: %s", tmp))
 
 	return tmp, nil
 }
 
 // DownloadToFile downloads a given URL to the target filepath
 func DownloadToFile(src string, dst string) (err error) {
-	message.Debugf("Downloading %s to %s", src, dst)
+	message.SLogHandler.Debug("Downloading %s to %s", src, dst)
 	// check if the parsed URL has a checksum
 	// if so, remove it and use the checksum to validate the file
 	src, checksum, err := parseChecksum(src)
@@ -165,12 +165,14 @@ func httpGetFile(url string, destinationFile *os.File) error {
 	progressBar := message.NewProgressBar(resp.ContentLength, title)
 
 	if _, err = io.Copy(destinationFile, io.TeeReader(resp.Body, progressBar)); err != nil {
-		progressBar.Errorf(err, "Unable to save the file %s", destinationFile.Name())
+		message.SLogHandler.Debug(err.Error())
+		progressBar.Failf("Unable to save the file %s", destinationFile.Name())
 		return err
 	}
 
 	title = fmt.Sprintf("Downloaded %s", url)
 	progressBar.Successf("%s", title)
+
 	return nil
 }
 

@@ -27,17 +27,8 @@ var (
 	// EnvPrefix is the prefix for viper configs and runner variables, useful when vendoring the runner
 	EnvPrefix = "run"
 
-	// LogLevel is the log level for the runner
-	LogLevel string
-
 	// TaskFileLocation is the location of the tasks file to run
 	TaskFileLocation string
-
-	// SetRunnerVariables is a map of the run time variables defined using --set
-	SetRunnerVariables map[string]string
-
-	// SkipLogFile is a flag to skip logging to a file
-	SkipLogFile bool
 
 	// TempDirectory is the directory to store temporary files
 	TempDirectory string

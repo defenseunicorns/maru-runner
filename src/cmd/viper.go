@@ -11,7 +11,7 @@ import (
 
 	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/config/lang"
-	"github.com/defenseunicorns/zarf/src/pkg/message"
+	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/spf13/viper"
 )
 
@@ -66,7 +66,8 @@ func initViper() {
 	if vConfigError != nil {
 		// Config file not found; ignore
 		if _, ok := vConfigError.(viper.ConfigFileNotFoundError); !ok {
-			message.WarnErr(vConfigError, fmt.Sprintf("%s - %s", lang.CmdViperErrLoadingConfigFile, vConfigError.Error()))
+			message.SLogHandler.Debug(vConfigError.Error())
+			message.SLogHandler.Warn(fmt.Sprintf("%s - %s", lang.CmdViperErrLoadingConfigFile, vConfigError.Error()))
 		}
 	}
 }
@@ -76,9 +77,10 @@ func printViperConfigUsed() {
 	if vConfigError != nil {
 		// Config file not found; ignore
 		if _, ok := vConfigError.(viper.ConfigFileNotFoundError); !ok {
-			message.WarnErr(vConfigError, fmt.Sprintf("%s - %s", lang.CmdViperErrLoadingConfigFile, vConfigError.Error()))
+			message.SLogHandler.Debug(vConfigError.Error())
+			message.SLogHandler.Warn(fmt.Sprintf("%s - %s", lang.CmdViperErrLoadingConfigFile, vConfigError.Error()))
 		}
 	} else {
-		message.Notef(lang.CmdViperInfoUsingConfigFile, v.ConfigFileUsed())
+		message.SLogHandler.Info(fmt.Sprintf(lang.CmdViperInfoUsingConfigFile, v.ConfigFileUsed()))
 	}
 }

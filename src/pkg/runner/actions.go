@@ -17,9 +17,9 @@ import (
 	"github.com/defenseunicorns/pkg/variables"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
+	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
 	"github.com/defenseunicorns/maru-runner/src/types"
-	"github.com/defenseunicorns/zarf/src/pkg/message"
 )
 
 func (r *Runner) performAction(action types.Action) error {
@@ -154,13 +154,12 @@ func (r *Runner) performZarfAction(action *types.BaseAction) error {
 	}
 
 	spinner := message.NewProgressSpinner("Running \"%s\"", cmdEscaped)
-	// Persist the spinner output so it doesn't get overwritten by the command output.
-	spinner.EnablePreserveWrites()
 
 	cfg := GetBaseActionCfg(types.ActionDefaults{}, *action, r.variableConfig.GetAllTemplates())
 
 	if cmd = exec.MutateCommand(cmd, cfg.Shell); err != nil {
-		spinner.Errorf(err, "Error mutating command: %s", cmdEscaped)
+		message.SLogHandler.Debug(err.Error())
+		spinner.Failf("Error mutating command: %s", cmdEscaped)
 	}
 
 	// Template dir string
@@ -189,16 +188,17 @@ retryLoop:
 			for _, v := range action.SetVariables {
 				r.variableConfig.SetVariable(v.Name, out, v.Sensitive, v.AutoIndent, v.Type)
 				if err = r.variableConfig.CheckVariablePattern(v.Name, v.Pattern); err != nil {
-					message.WarnErr(err, err.Error())
+					message.SLogHandler.Debug(err.Error())
+					message.SLogHandler.Warn(err.Error())
 					return err
 				}
 			}
 
 			// If the action has a wait, change the spinner message to reflect that on success.
 			if action.Wait != nil {
-				spinner.Successf("Wait for \"%s\" succeeded", cmdEscaped)
+				spinner.Successf("Wait for %q succeeded", cmdEscaped)
 			} else {
-				spinner.Successf("Completed \"%s\"", cmdEscaped)
+				spinner.Successf("Completed %q", cmdEscaped)
 			}
 
 			// If the command ran successfully, continue to the next action.
@@ -287,10 +287,10 @@ func GetBaseActionCfg(cfg types.ActionDefaults, a types.BaseAction, vars map[str
 }
 
 // RunAction executes the given action configuration with the provided context
-func RunAction(ctx context.Context, cfg types.ActionDefaults, cmd string, shellPref exec.Shell, spinner *message.Spinner) (string, error) {
+func RunAction(ctx context.Context, cfg types.ActionDefaults, cmd string, shellPref exec.Shell, spinner helpers.ProgressWriter) (string, error) {
 	shell, shellArgs := exec.GetOSShell(shellPref)
 
-	message.Debugf("Running command in %s: %s", shell, cmd)
+	message.SLogHandler.Debug(fmt.Sprintf("Running command in %s: %s", shell, cmd))
 
 	execCfg := exec.Config{
 		Env: cfg.Env,
@@ -305,7 +305,7 @@ func RunAction(ctx context.Context, cfg types.ActionDefaults, cmd string, shellP
 	out, errOut, err := exec.CmdWithContext(ctx, execCfg, shell, append(shellArgs, cmd)...)
 	// Dump final complete output (respect mute to prevent sensitive values from hitting the logs).
 	if !cfg.Mute {
-		message.Debug(cmd, out, errOut)
+		message.SLogHandler.Debug(fmt.Sprintf("%s %s %s", cmd, out, errOut))
 	}
 
 	return out, err
@@ -388,14 +388,14 @@ func validateActionableTaskCall(inputTaskName string, inputs map[string]types.In
 		for inputKey, input := range inputs {
 			if withKey == inputKey {
 				if input.DeprecatedMessage != "" {
-					message.Warnf("This input has been marked deprecated: %s", input.DeprecatedMessage)
+					message.SLogHandler.Warn(fmt.Sprintf("This input has been marked deprecated: %s", input.DeprecatedMessage))
 				}
 				matched = true
 				break
 			}
 		}
 		if !matched {
-			message.Warnf("Task %s does not have an input named %s", inputTaskName, withKey)
+			message.SLogHandler.Warn(fmt.Sprintf("Task %s does not have an input named %s", inputTaskName, withKey))
 		}
 	}
 	return nil

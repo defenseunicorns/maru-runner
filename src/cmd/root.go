@@ -12,10 +12,13 @@ import (
 
 	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/config/lang"
+	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
-	"github.com/defenseunicorns/zarf/src/pkg/message"
 	"github.com/spf13/cobra"
 )
+
+var logLevelString string = ""
+var skipLogFile bool = false
 
 var rootCmd = &cobra.Command{
 	Use: "maru COMMAND",
@@ -24,7 +27,7 @@ var rootCmd = &cobra.Command{
 
 		// Don't add the logo to the help command
 		if cmd.Parent() == nil {
-			config.SkipLogFile = true
+			skipLogFile = true
 		}
 		cliSetup()
 	},
@@ -33,7 +36,7 @@ var rootCmd = &cobra.Command{
 		_, _ = fmt.Fprintln(os.Stderr)
 		err := cmd.Help()
 		if err != nil {
-			message.Fatal(err, "error calling help command")
+			message.Fatalf(err, "error calling help command")
 		}
 	},
 }
@@ -57,10 +60,10 @@ func init() {
 	v.SetDefault(V_TMP_DIR, "")
 	v.SetDefault(V_ENV_PREFIX, "RUN")
 
-	rootCmd.PersistentFlags().StringVarP(&config.LogLevel, "log-level", "l", v.GetString(V_LOG_LEVEL), lang.RootCmdFlagLogLevel)
+	rootCmd.PersistentFlags().StringVarP(&logLevelString, "log-level", "l", v.GetString(V_LOG_LEVEL), lang.RootCmdFlagLogLevel)
 	rootCmd.PersistentFlags().StringVarP(&config.CLIArch, "architecture", "a", v.GetString(V_ARCHITECTURE), lang.RootCmdFlagArch)
 	rootCmd.PersistentFlags().BoolVar(&message.NoProgress, "no-progress", v.GetBool(V_NO_PROGRESS), lang.RootCmdFlagNoProgress)
-	rootCmd.PersistentFlags().BoolVar(&config.SkipLogFile, "no-log-file", v.GetBool(V_NO_LOG_FILE), lang.RootCmdFlagSkipLogFile)
+	rootCmd.PersistentFlags().BoolVar(&skipLogFile, "no-log-file", v.GetBool(V_NO_LOG_FILE), lang.RootCmdFlagSkipLogFile)
 	rootCmd.PersistentFlags().StringVar(&config.TempDirectory, "tmpdir", v.GetString(V_TMP_DIR), lang.RootCmdFlagTempDir)
 }
 
@@ -75,16 +78,16 @@ func cliSetup() {
 	printViperConfigUsed()
 
 	// No log level set, so use the default
-	if config.LogLevel != "" {
-		if lvl, ok := match[config.LogLevel]; ok {
+	if logLevelString != "" {
+		if lvl, ok := match[logLevelString]; ok {
 			message.SetLogLevel(lvl)
-			message.Debug("Log level set to " + config.LogLevel)
+			message.SLogHandler.Debug(fmt.Sprintf("Log level set to %q", logLevelString))
 		} else {
-			message.Warn(lang.RootCmdErrInvalidLogLevel)
+			message.SLogHandler.Warn(lang.RootCmdErrInvalidLogLevel)
 		}
 	}
 
-	if !config.SkipLogFile && !ListTasks && !ListAllTasks {
+	if !skipLogFile && !listTasks && !listAllTasks {
 		utils.UseLogFile()
 	}
 }
@@ -95,6 +98,6 @@ func exitOnInterrupt() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		message.Fatal(lang.ErrInterrupt, lang.ErrInterrupt.Error())
+		message.Fatalf(lang.ErrInterrupt, "%s", lang.ErrInterrupt.Error())
 	}()
 }

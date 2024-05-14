@@ -35,20 +35,16 @@ help: ## Display this help information
 build: ## Build the CLI for the current machine's OS and architecture
 	$(MAKE) $(BUILD_CLI_FOR_SYSTEM)
 
-build-cli-linux-amd: build/maru ## Build the CLI for Linux AMD64
-build/maru: $(SRC_FILES)
+build-cli-linux-amd: ## Build the CLI for Linux AMD64
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="$(BUILD_ARGS)" -o build/maru main.go
 
-build-cli-linux-arm: build/maru-arm ## Build the CLI for Linux ARM64
-build/maru-arm: $(SRC_FILES)
+build-cli-linux-arm: ## Build the CLI for Linux ARM64
 	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags="$(BUILD_ARGS)" -o build/maru-arm main.go
 
-build-cli-mac-intel: build/maru-mac-intel ## Build the CLI for Mac Intel
-build/maru-mac-intel: $(SRC_FILES)
+build-cli-mac-intel: ## Build the CLI for Mac Intel
 	GOOS=darwin GOARCH=amd64 go build -ldflags="$(BUILD_ARGS)" -o build/maru-mac-intel main.go
 
-build-cli-mac-apple: build/maru-mac-apple ## Build the CLI for Mac Apple
-build/maru-mac-apple: $(SRC_FILES)
+build-cli-mac-apple: ## Build the CLI for Mac Apple
 	GOOS=darwin GOARCH=arm64 go build -ldflags="$(BUILD_ARGS)" -o build/maru-mac-apple main.go
 
 .PHONY: test-e2e

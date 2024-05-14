@@ -16,7 +16,7 @@ var versionCmd = &cobra.Command{
 	Use:     "version",
 	Aliases: []string{"v"},
 	PersistentPreRun: func(_ *cobra.Command, _ []string) {
-		config.SkipLogFile = true
+		skipLogFile = true
 		cliSetup()
 	},
 	Short: lang.CmdVersionShort,

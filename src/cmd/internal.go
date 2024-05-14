@@ -10,8 +10,8 @@ import (
 
 	"github.com/alecthomas/jsonschema"
 	"github.com/defenseunicorns/maru-runner/src/config/lang"
+	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/defenseunicorns/maru-runner/src/types"
-	"github.com/defenseunicorns/zarf/src/pkg/message"
 	"github.com/spf13/cobra"
 )
 
@@ -30,7 +30,7 @@ var configTasksSchemaCmd = &cobra.Command{
 		schema := jsonschema.Reflect(&types.TasksFile{})
 		output, err := json.MarshalIndent(schema, "", "  ")
 		if err != nil {
-			message.Fatal(err, lang.CmdInternalConfigSchemaErr)
+			message.Fatalf(err, "%s", lang.CmdInternalConfigSchemaErr)
 		}
 		fmt.Print(string(output) + "\n")
 	},

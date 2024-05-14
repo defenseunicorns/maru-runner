@@ -239,7 +239,7 @@ func TestRunner_performAction(t *testing.T) {
 				TasksFile:      types.TasksFile{},
 				TaskNameMap:    make(map[string]bool),
 				envFilePath:    "",
-				variableConfig: maruVariableConfig(),
+				variableConfig: GetMaruVariableConfig(),
 			},
 			args: args{
 				task: types.Task{
@@ -271,7 +271,7 @@ func TestRunner_performAction(t *testing.T) {
 				TasksFile:      types.TasksFile{},
 				TaskNameMap:    make(map[string]bool),
 				envFilePath:    "test/path",
-				variableConfig: maruVariableConfig(),
+				variableConfig: GetMaruVariableConfig(),
 			},
 			args: args{
 				task: types.Task{
@@ -344,7 +344,7 @@ func TestRunner_processAction(t *testing.T) {
 				TasksFile:      types.TasksFile{},
 				TaskNameMap:    map[string]bool{},
 				envFilePath:    "",
-				variableConfig: maruVariableConfig(),
+				variableConfig: GetMaruVariableConfig(),
 			},
 			args: args{
 				task: types.Task{
@@ -362,7 +362,7 @@ func TestRunner_processAction(t *testing.T) {
 				TasksFile:      types.TasksFile{},
 				TaskNameMap:    map[string]bool{},
 				envFilePath:    "",
-				variableConfig: maruVariableConfig(),
+				variableConfig: GetMaruVariableConfig(),
 			},
 			args: args{
 				task: types.Task{
@@ -380,7 +380,7 @@ func TestRunner_processAction(t *testing.T) {
 				TasksFile:      types.TasksFile{},
 				TaskNameMap:    map[string]bool{},
 				envFilePath:    "",
-				variableConfig: maruVariableConfig(),
+				variableConfig: GetMaruVariableConfig(),
 			},
 			args: args{
 				task: types.Task{
@@ -398,7 +398,7 @@ func TestRunner_processAction(t *testing.T) {
 				TasksFile:      types.TasksFile{},
 				TaskNameMap:    map[string]bool{},
 				envFilePath:    "",
-				variableConfig: maruVariableConfig(),
+				variableConfig: GetMaruVariableConfig(),
 			},
 			args: args{
 				task: types.Task{
@@ -422,7 +422,7 @@ func TestRunner_processAction(t *testing.T) {
 				},
 				TaskNameMap:    map[string]bool{},
 				envFilePath:    "",
-				variableConfig: maruVariableConfig(),
+				variableConfig: GetMaruVariableConfig(),
 			},
 			args: args{
 				task: types.Task{

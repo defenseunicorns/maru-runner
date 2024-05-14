@@ -47,7 +47,7 @@ var logRegex = regexp.MustCompile(`Saving log file to (?P<logFile>.*?\.log)`)
 // Maru executes a run command.
 func (e2e *MaruE2ETest) Maru(args ...string) (string, string, error) {
 	e2e.CommandLog = append(e2e.CommandLog, strings.Join(args, " "))
-	return exec.CmdWithContext(context.TODO(), exec.PrintCfg(), e2e.RunnerBinPath, args...)
+	return exec.CmdWithContext(context.TODO(), exec.Config{Print: true}, e2e.RunnerBinPath, args...)
 }
 
 // CleanFiles removes files and directories that have been created during the test.
@@ -88,7 +88,7 @@ func (e2e *MaruE2ETest) GetMaruVersion(t *testing.T) string {
 
 // GetGitRevision returns the current git revision
 func (e2e *MaruE2ETest) GetGitRevision() (string, error) {
-	out, _, err := exec.Cmd("git", "rev-parse", "--short", "HEAD")
+	out, _, err := exec.Cmd(exec.Config{Print: true}, "git", "rev-parse", "--short", "HEAD")
 	if err != nil {
 		return "", err
 	}
@@ -100,8 +100,7 @@ func (e2e *MaruE2ETest) GetGitRevision() (string, error) {
 func (e2e *MaruE2ETest) HelmDepUpdate(t *testing.T, path string) {
 	cmd := "helm"
 	args := strings.Split("dependency update .", " ")
-	tmp := exec.PrintCfg()
-	tmp.Dir = path
-	_, _, err := exec.CmdWithContext(context.TODO(), tmp, cmd, args...)
+	cfg := exec.Config{Print: true, Dir: path}
+	_, _, err := exec.CmdWithContext(context.TODO(), cfg, cmd, args...)
 	require.NoError(t, err)
 }

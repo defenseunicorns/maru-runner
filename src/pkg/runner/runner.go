@@ -6,7 +6,6 @@ package runner
 
 import (
 	"fmt"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -14,11 +13,11 @@ import (
 
 	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/config/lang"
+	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
 	"github.com/defenseunicorns/maru-runner/src/types"
 	"github.com/defenseunicorns/pkg/helpers"
 	"github.com/defenseunicorns/pkg/variables"
-	"github.com/defenseunicorns/zarf/src/pkg/message"
 )
 
 // Runner holds the necessary data to run tasks from a tasks file
@@ -71,7 +70,7 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 // GetMaruVariableConfig gets the variable configuration for Maru
 func GetMaruVariableConfig() *variables.VariableConfig {
 	prompt := func(_ variables.InteractiveVariable) (value string, err error) { return "", nil }
-	return variables.New("", map[string]string{}, prompt, slog.New(message.ZarfHandler{}))
+	return variables.New("", map[string]string{}, prompt, message.SLogHandler)
 }
 
 func (r *Runner) processIncludes(tasksFile types.TasksFile, setVariables map[string]string, action types.Action) error {
@@ -121,7 +120,7 @@ func (r *Runner) importTasks(includes []map[string]string, dir string, setVariab
 			}
 			includePath = filepath.Join(tmpDir, filepath.Base(includeFilename))
 			if err := utils.DownloadToFile(includeFilename, includePath); err != nil {
-				return fmt.Errorf(lang.ErrDownloading, includeFilename, err.Error())
+				return fmt.Errorf(lang.ErrDownloading, includeFilename, err)
 			}
 		} else {
 			includePath = filepath.Join(dir, includeFilename)
@@ -214,13 +213,14 @@ func (r *Runner) loadIncludeTask(includeFileLocation string, includeTaskName str
 		// If file is a url download it to a tmp directory
 		tmpDir, err := utils.MakeTempDir(config.TempDirectory)
 		if err != nil {
-			message.Fatalf(err, "error creating %s", tmpDir)
+			return "", fmt.Errorf("error creating %s: %w", tmpDir, err)
 		}
+
 		// Remove tmpDir, but not until tasks have been loaded
 		defer os.RemoveAll(tmpDir)
 		fullPath = filepath.Join(tmpDir, filepath.Base(includeFileLocation))
 		if err := utils.DownloadToFile(includeFileLocation, fullPath); err != nil {
-			message.Fatalf(lang.ErrDownloading, includeFileLocation, err.Error())
+			return "", fmt.Errorf(lang.ErrDownloading, includeFileLocation, err)
 		}
 	} else {
 		// set include path based on task file location
@@ -230,22 +230,27 @@ func (r *Runner) loadIncludeTask(includeFileLocation string, includeTaskName str
 	config.TaskFileLocation = fullPath
 
 	// Set TasksFile to include task file
-	r.TasksFile = loadTasksFileFromPath(fullPath)
+	var err error
+	r.TasksFile, err = loadTasksFileFromPath(fullPath)
+	if err != nil {
+		return "", err
+	}
+
 	taskName := includeTaskName
 	return taskName, nil
 }
 
-func loadTasksFileFromPath(fullPath string) types.TasksFile {
+func loadTasksFileFromPath(fullPath string) (types.TasksFile, error) {
 	var tasksFile types.TasksFile
 	// get included TasksFile
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-		message.Fatalf(err, "%s not found", config.TaskFileLocation)
+		return types.TasksFile{}, fmt.Errorf("%s not found: %w", config.TaskFileLocation, err)
 	}
 	err := utils.ReadYaml(fullPath, &tasksFile)
 	if err != nil {
-		message.Fatalf(err, "Cannot unmarshal %s", config.TaskFileLocation)
+		return types.TasksFile{}, fmt.Errorf("cannot unmarshal %s: %w", config.TaskFileLocation, err)
 	}
-	return tasksFile
+	return tasksFile, nil
 }
 
 func (r *Runner) getTask(taskName string) (types.Task, error) {
