@@ -14,3 +14,7 @@ tasks:
     files:
       - source: https://github.com/${PRETTY_OK_COMPANY}/zarf/releases/download/v0.31.1/${CHECKSUMS}
         target: ${CHECKSUMS}
+
+  - name: env-variables
+    actions:
+      - cmd: echo "I'm set automatically - MARU=${MARU}"

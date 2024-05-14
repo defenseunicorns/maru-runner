@@ -149,11 +149,7 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 		action.Env = append(action.Env, strings.Split(string(envFileContents), "\n")...)
 	}
 
-	// load an env var for the architecture
-	action.Env = append(action.Env, fmt.Sprintf("%s_ARCH=%s", strings.ToUpper(config.EnvPrefix), config.GetArch()))
-
-	// add an env var to indicate the task is being ran by MARU
-	action.Env = append(action.Env, "MARU=true")
+	addCommonEnvVars(action)
 
 	if action.Description != "" {
 		cmdEscaped = action.Description
@@ -262,6 +258,14 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 		// If we reached this point, the retry limit was reached.
 		return fmt.Errorf("command \"%s\" failed after %d retries", cmdEscaped, cfg.MaxRetries)
 	}
+}
+
+func addCommonEnvVars(action *zarfTypes.ZarfComponentAction) {
+	// append an env var for the architecture
+	action.Env = append(action.Env, fmt.Sprintf("%s_ARCH=%s", strings.ToUpper(config.EnvPrefix), config.GetArch()))
+
+	// append an env var to indicate the task is being ran by MARU
+	action.Env = append(action.Env, "MARU=true")
 }
 
 // Perform some basic string mutations to make commands more useful.

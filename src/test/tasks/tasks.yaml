@@ -72,6 +72,13 @@ tasks:
       - cmd: echo "I'm set from a --set var - ${REPLACE_ME}"
       - cmd: echo "I'm set from a new --set var - ${UNICORNS}"
       - cmd: echo "I'm set automatically - MARU=${MARU}"
+  - name: local-import-set-variable
+    actions:
+      - task: local:env-variables
+  - name: print-common-env
+    actions:
+      - cmd: echo RUN_ARCH=[$RUN_ARCH]
+      - cmd: echo MARU=[$MARU]
   - name: reference
     actions:
       - task: referenced

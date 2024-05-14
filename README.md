@@ -250,7 +250,28 @@ tasks:
     actions:
       - cmd: echo different task $FOO
 ```
+#### Common Environment Variables
+The following Environment Variables are set automatically by maru-runner and are available to any action being performed:
+- MARU - Set to 'true' to indicate the action was executed by maru-runner.
+- RUN_ARCH - Set to the current architecture. e.g. 'amd64'
 
+Example:
+
+- tasks.yaml
+  ```yaml
+    - name: print-common-env
+      actions:
+        - cmd: echo RUN_ARCH=[$RUN_ARCH]
+        - cmd: echo MARU=[$MARU]
+  ```
+- `maru run print-common-env` output:
+  ```
+      RUN_ARCH=[amd64]
+    ✔  Completed "echo RUN_ARCH=[$RUN_ARCH]"
+
+      MARU=[true]
+    ✔  Completed "echo MARU=[$MARU]"
+  ```
 
 #### Variable Precedence
 Variable precedence is as follows, from least to most specific:
@@ -259,6 +280,7 @@ Variable precedence is as follows, from least to most specific:
 - Variables set with the `--set` flag in the CLI
 
 That is to say, variables set via the `--set` flag take precedence over all other variables. The exception to this precedence order is when a variable is modified using `setVariable`, which will change the value of the variable during runtime.
+
 
 ### Files
 
