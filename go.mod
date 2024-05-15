@@ -4,7 +4,7 @@ go 1.21.8
 
 require (
 	github.com/alecthomas/jsonschema v0.0.0-20220216202328-9eeeec9d044b
-	github.com/defenseunicorns/pkg/helpers v1.1.1
+	github.com/defenseunicorns/pkg/helpers v1.1.3
 	github.com/defenseunicorns/zarf v0.33.0
 	github.com/goccy/go-yaml v1.11.3
 	github.com/mholt/archiver/v3 v3.5.1
