@@ -1,4 +1,4 @@
-name: E2E Tests
+name: Unit Tests
 on:
   pull_request:
     paths-ignore:
