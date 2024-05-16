@@ -41,6 +41,8 @@ var (
 
 	// TempDirectory is the directory to store temporary files
 	TempDirectory string
+
+	extraEnv map[string]string
 )
 
 // GetArch returns the arch based on a priority list with options for overriding.
@@ -56,4 +58,16 @@ func GetArch(archs ...string) string {
 	}
 
 	return runtime.GOARCH
+}
+
+func AddExtraEnv(key string, value string) {
+	extraEnv[key] = value
+}
+
+func RemoveExtraEnv(key string) {
+	delete(extraEnv, key)
+}
+
+func GetExtraEnv() map[string]string {
+	return extraEnv
 }
