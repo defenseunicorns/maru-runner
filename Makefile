@@ -47,6 +47,7 @@ build-cli-mac-intel: ## Build the CLI for Mac Intel
 build-cli-mac-apple: ## Build the CLI for Mac Apple
 	GOOS=darwin GOARCH=arm64 go build -ldflags="$(BUILD_ARGS)" -o build/maru-mac-apple main.go
 
+.PHONY: test-unit
 test-unit: ## Run unit tests
 	cd src/pkg && go test ./... -failfast -v -timeout 30m
 
