@@ -95,7 +95,7 @@ func getUniqueTaskActions(actions []types.Action) []types.Action {
 	return uniqueArray
 }
 
-func (r *Runner) performZarfAction(action *types.BaseAction) error {
+func (r *Runner) performZarfAction(action *types.BaseAction[variables.ExtraVariableInfo]) error {
 	var (
 		ctx        context.Context
 		cancel     context.CancelFunc
@@ -131,7 +131,7 @@ func (r *Runner) performZarfAction(action *types.BaseAction) error {
 		d := ""
 		action.Dir = &d
 		action.Env = []string{}
-		action.SetVariables = []variables.Variable{}
+		action.SetVariables = []variables.Variable[variables.ExtraVariableInfo]{}
 	}
 
 	// load the contents of the env file into the Action + the RUN_ARCH
@@ -186,8 +186,8 @@ retryLoop:
 
 			// If an output variable is defined, set it.
 			for _, v := range action.SetVariables {
-				r.variableConfig.SetVariable(v.Name, out, v.Sensitive, v.AutoIndent, v.Type)
-				if err = r.variableConfig.CheckVariablePattern(v.Name, v.Pattern); err != nil {
+				r.variableConfig.SetVariable(v.Name, out, v.Pattern, v.Extra)
+				if err = r.variableConfig.CheckVariablePattern(v.Name); err != nil {
 					message.SLog.Debug(err.Error())
 					message.SLog.Warn(err.Error())
 					return err
@@ -246,7 +246,7 @@ retryLoop:
 }
 
 // GetBaseActionCfg merges the ActionDefaults with the BaseAction's configuration
-func GetBaseActionCfg(cfg types.ActionDefaults, a types.BaseAction, vars variables.SetVariableMap) types.ActionDefaults {
+func GetBaseActionCfg[T any](cfg types.ActionDefaults, a types.BaseAction[T], vars variables.SetVariableMap[T]) types.ActionDefaults {
 	if a.Mute != nil {
 		cfg.Mute = *a.Mute
 	}

@@ -56,7 +56,7 @@ func TemplateTaskActionsWithInputs(task types.Task, withs map[string]string) ([]
 }
 
 // TemplateString replaces ${...} with the value from the template map
-func TemplateString(setVariableMap variables.SetVariableMap, s string) string {
+func TemplateString(setVariableMap variables.SetVariableMap[variables.ExtraVariableInfo], s string) string {
 	// Create a regular expression to match ${...}
 	re := regexp.MustCompile(`\${(.*?)}`)
 

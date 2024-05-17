@@ -25,7 +25,7 @@ type Runner struct {
 	TasksFile      types.TasksFile
 	TaskNameMap    map[string]bool
 	envFilePath    string
-	variableConfig *variables.VariableConfig
+	variableConfig *variables.VariableConfig[variables.ExtraVariableInfo]
 }
 
 // Run runs a task from tasks file
@@ -68,9 +68,11 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 }
 
 // GetMaruVariableConfig gets the variable configuration for Maru
-func GetMaruVariableConfig() *variables.VariableConfig {
-	prompt := func(_ variables.InteractiveVariable) (value string, err error) { return "", nil }
-	return variables.New("", map[string]string{}, prompt, message.SLog)
+func GetMaruVariableConfig() *variables.VariableConfig[variables.ExtraVariableInfo] {
+	prompt := func(_ variables.InteractiveVariable[variables.ExtraVariableInfo]) (value string, err error) {
+		return "", nil
+	}
+	return variables.New[variables.ExtraVariableInfo](prompt, message.SLog)
 }
 
 func (r *Runner) processIncludes(tasksFile types.TasksFile, setVariables map[string]string, action types.Action) error {
@@ -176,7 +178,7 @@ func (r *Runner) processTemplateMapVariables(tasksFile types.TasksFile) {
 	// grab variables from included file
 	for _, v := range tasksFile.Variables {
 		if _, ok := r.variableConfig.GetSetVariable(v.Name); !ok {
-			r.variableConfig.SetVariable(v.Name, v.Default, v.Sensitive, v.AutoIndent, v.Type)
+			r.variableConfig.SetVariable(v.Name, v.Default, v.Pattern, v.Extra)
 		}
 	}
 }

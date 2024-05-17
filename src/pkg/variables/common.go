@@ -9,22 +9,17 @@ import (
 )
 
 // VariableConfig represents a value to be templated into a text file.
-type VariableConfig struct {
-	templatePrefix string
-	deprecatedKeys map[string]string
+type VariableConfig[T any] struct {
+	setVariableMap SetVariableMap[T]
 
-	setVariableMap SetVariableMap
-
-	prompt func(variable InteractiveVariable) (value string, err error)
+	prompt func(variable InteractiveVariable[T]) (value string, err error)
 	logger *slog.Logger
 }
 
 // New creates a new VariableConfig
-func New(templatePrefix string, deprecatedKeys map[string]string, prompt func(variable InteractiveVariable) (value string, err error), logger *slog.Logger) *VariableConfig {
-	return &VariableConfig{
-		templatePrefix: templatePrefix,
-		deprecatedKeys: deprecatedKeys,
-		setVariableMap: make(SetVariableMap),
+func New[T any](prompt func(variable InteractiveVariable[T]) (value string, err error), logger *slog.Logger) *VariableConfig[T] {
+	return &VariableConfig[T]{
+		setVariableMap: make(SetVariableMap[T]),
 		prompt:         prompt,
 		logger:         logger,
 	}

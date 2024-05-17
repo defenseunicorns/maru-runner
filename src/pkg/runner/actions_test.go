@@ -220,7 +220,7 @@ func TestRunner_performAction(t *testing.T) {
 		TasksFile      types.TasksFile
 		TaskNameMap    map[string]bool
 		envFilePath    string
-		variableConfig *variables.VariableConfig
+		variableConfig *variables.VariableConfig[variables.ExtraVariableInfo]
 	}
 	type args struct {
 		task   types.Task
@@ -258,7 +258,7 @@ func TestRunner_performAction(t *testing.T) {
 					With: map[string]string{
 						"cmd": "exit 1",
 					},
-					BaseAction: &types.BaseAction{
+					BaseAction: &types.BaseAction[variables.ExtraVariableInfo]{
 						Description: "Test action for failure scenario",
 						Wait:        nil,
 					},
@@ -290,7 +290,7 @@ func TestRunner_performAction(t *testing.T) {
 					With: map[string]string{
 						"cmd": "zarf tools wait-for pod my-pod Running",
 					},
-					BaseAction: &types.BaseAction{
+					BaseAction: &types.BaseAction[variables.ExtraVariableInfo]{
 						Description: "Test action for wait command",
 						Wait: &types.ActionWait{
 							Cluster: &types.ActionWaitCluster{
@@ -326,7 +326,7 @@ func TestRunner_processAction(t *testing.T) {
 		TasksFile      types.TasksFile
 		TaskNameMap    map[string]bool
 		envFilePath    string
-		variableConfig *variables.VariableConfig
+		variableConfig *variables.VariableConfig[variables.ExtraVariableInfo]
 	}
 	type args struct {
 		task   types.Task

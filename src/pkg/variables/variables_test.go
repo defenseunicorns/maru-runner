@@ -9,100 +9,112 @@ import (
 	"testing"
 )
 
+type testVariableInfo struct {
+	Sensitive  bool
+	AutoIndent bool
+	Type       VariableType
+}
+
 func TestPopulateVariables(t *testing.T) {
+
+	nonZeroTestVariableInfo := testVariableInfo{Sensitive: true, AutoIndent: true, Type: FileVariableType}
+
 	type test struct {
-		vc       VariableConfig
-		vars     []InteractiveVariable
+		vc       VariableConfig[testVariableInfo]
+		vars     []InteractiveVariable[testVariableInfo]
 		presets  map[string]string
 		wantErr  error
-		wantVars SetVariableMap
+		wantVars SetVariableMap[testVariableInfo]
 	}
 
-	prompt := func(_ InteractiveVariable) (value string, err error) { return "Prompt", nil }
+	prompt := func(_ InteractiveVariable[testVariableInfo]) (value string, err error) { return "Prompt", nil }
 
 	tests := []test{
 		{
-			vc:       VariableConfig{setVariableMap: SetVariableMap{}},
-			vars:     []InteractiveVariable{{Variable: Variable{Name: "NAME"}}},
-			presets:  map[string]string{},
-			wantErr:  nil,
-			wantVars: SetVariableMap{"NAME": {Variable: Variable{Name: "NAME"}}},
-		},
-		{
-			vc: VariableConfig{setVariableMap: SetVariableMap{}},
-			vars: []InteractiveVariable{
-				{Variable: Variable{Name: "NAME"}, Default: "Default"},
+			vc: VariableConfig[testVariableInfo]{setVariableMap: SetVariableMap[testVariableInfo]{}},
+			vars: []InteractiveVariable[testVariableInfo]{
+				createInteractiveVariable("NAME", "", "", false, testVariableInfo{}),
 			},
 			presets: map[string]string{},
 			wantErr: nil,
-			wantVars: SetVariableMap{
-				"NAME": {Variable: Variable{Name: "NAME"}, Value: "Default"},
+			wantVars: SetVariableMap[testVariableInfo]{
+				"NAME": createSetVariable("NAME", "", "", testVariableInfo{})},
+		},
+		{
+			vc: VariableConfig[testVariableInfo]{setVariableMap: SetVariableMap[testVariableInfo]{}},
+			vars: []InteractiveVariable[testVariableInfo]{
+				createInteractiveVariable("NAME", "", "Default", false, testVariableInfo{}),
+			},
+			presets: map[string]string{},
+			wantErr: nil,
+			wantVars: SetVariableMap[testVariableInfo]{
+				"NAME": createSetVariable("NAME", "Default", "", testVariableInfo{}),
 			},
 		},
 		{
-			vc: VariableConfig{setVariableMap: SetVariableMap{}},
-			vars: []InteractiveVariable{
-				{Variable: Variable{Name: "NAME"}, Default: "Default"},
+			vc: VariableConfig[testVariableInfo]{setVariableMap: SetVariableMap[testVariableInfo]{}},
+			vars: []InteractiveVariable[testVariableInfo]{
+				createInteractiveVariable("NAME", "", "Default", false, testVariableInfo{}),
 			},
 			presets: map[string]string{"NAME": "Set"},
 			wantErr: nil,
-			wantVars: SetVariableMap{
-				"NAME": {Variable: Variable{Name: "NAME"}, Value: "Set"},
+			wantVars: SetVariableMap[testVariableInfo]{
+				"NAME": createSetVariable("NAME", "Set", "", testVariableInfo{}),
 			},
 		},
 		{
-			vc: VariableConfig{setVariableMap: SetVariableMap{}},
-			vars: []InteractiveVariable{
-				{Variable: Variable{Name: "NAME", Sensitive: true, AutoIndent: true, Type: FileVariableType}},
+			vc: VariableConfig[testVariableInfo]{setVariableMap: SetVariableMap[testVariableInfo]{}},
+			vars: []InteractiveVariable[testVariableInfo]{
+				createInteractiveVariable("NAME", "", "", false, nonZeroTestVariableInfo),
 			},
 			presets: map[string]string{},
 			wantErr: nil,
-			wantVars: SetVariableMap{
-				"NAME": {Variable: Variable{Name: "NAME", Sensitive: true, AutoIndent: true, Type: FileVariableType}},
+			wantVars: SetVariableMap[testVariableInfo]{
+				"NAME": createSetVariable("NAME", "", "", nonZeroTestVariableInfo),
 			},
 		},
 		{
-			vc: VariableConfig{setVariableMap: SetVariableMap{}},
-			vars: []InteractiveVariable{
-				{Variable: Variable{Name: "NAME", Sensitive: true, AutoIndent: true, Type: FileVariableType}},
+			vc: VariableConfig[testVariableInfo]{setVariableMap: SetVariableMap[testVariableInfo]{}},
+			vars: []InteractiveVariable[testVariableInfo]{
+				createInteractiveVariable("NAME", "", "", false, nonZeroTestVariableInfo),
 			},
 			presets: map[string]string{"NAME": "Set"},
 			wantErr: nil,
-			wantVars: SetVariableMap{
-				"NAME": {Variable: Variable{Name: "NAME", Sensitive: true, AutoIndent: true, Type: FileVariableType}, Value: "Set"},
+			wantVars: SetVariableMap[testVariableInfo]{
+				"NAME": createSetVariable("NAME", "Set", "", nonZeroTestVariableInfo),
 			},
 		},
 		{
-			vc: VariableConfig{setVariableMap: SetVariableMap{}, prompt: prompt},
-			vars: []InteractiveVariable{
-				{Variable: Variable{Name: "NAME"}, Prompt: true},
+			vc: VariableConfig[testVariableInfo]{setVariableMap: SetVariableMap[testVariableInfo]{}, prompt: prompt},
+			vars: []InteractiveVariable[testVariableInfo]{
+				createInteractiveVariable("NAME", "", "", true, testVariableInfo{}),
 			},
 			presets: map[string]string{},
 			wantErr: nil,
-			wantVars: SetVariableMap{
-				"NAME": {Variable: Variable{Name: "NAME"}, Value: "Prompt"},
+			wantVars: SetVariableMap[testVariableInfo]{
+				"NAME": createSetVariable("NAME", "Prompt", "", testVariableInfo{}),
 			},
 		},
 		{
-			vc: VariableConfig{setVariableMap: SetVariableMap{}, prompt: prompt},
-			vars: []InteractiveVariable{
-				{Variable: Variable{Name: "NAME"}, Default: "Default", Prompt: true},
+			vc: VariableConfig[testVariableInfo]{setVariableMap: SetVariableMap[testVariableInfo]{}, prompt: prompt},
+			vars: []InteractiveVariable[testVariableInfo]{
+				createInteractiveVariable("NAME", "", "Default", true, testVariableInfo{}),
 			},
 			presets: map[string]string{},
 			wantErr: nil,
-			wantVars: SetVariableMap{
-				"NAME": {Variable: Variable{Name: "NAME"}, Value: "Prompt"},
+			wantVars: SetVariableMap[testVariableInfo]{
+				"NAME": createSetVariable("NAME", "Prompt", "", testVariableInfo{}),
 			},
 		},
 		{
-			vc: VariableConfig{setVariableMap: SetVariableMap{}, prompt: prompt},
-			vars: []InteractiveVariable{
-				{Variable: Variable{Name: "NAME"}, Prompt: true},
+			vc: VariableConfig[testVariableInfo]{setVariableMap: SetVariableMap[testVariableInfo]{}, prompt: prompt},
+			vars: []InteractiveVariable[testVariableInfo]{
+				createInteractiveVariable("NAME", "", "", true, testVariableInfo{}),
 			},
 			presets: map[string]string{"NAME": "Set"},
 			wantErr: nil,
-			wantVars: SetVariableMap{
-				"NAME": {Variable: Variable{Name: "NAME"}, Value: "Set"},
+			wantVars: SetVariableMap[testVariableInfo]{
+				"NAME": createSetVariable("NAME", "Set", "", testVariableInfo{}),
 			},
 		},
 	}
@@ -133,32 +145,39 @@ func TestPopulateVariables(t *testing.T) {
 
 func TestCheckVariablePattern(t *testing.T) {
 	type test struct {
-		vc      VariableConfig
-		name    string
-		pattern string
-		want    error
+		vc   VariableConfig[testVariableInfo]
+		name string
+		want error
 	}
 
 	tests := []test{
 		{
-			vc: VariableConfig{setVariableMap: SetVariableMap{}}, name: "NAME", pattern: "n[a-z]me",
+			vc:   VariableConfig[testVariableInfo]{setVariableMap: SetVariableMap[testVariableInfo]{}},
+			name: "NAME",
 			want: errors.New("variable \"NAME\" was not found in the current variable map"),
 		},
 		{
-			vc: VariableConfig{
-				setVariableMap: SetVariableMap{"NAME": &SetVariable{Value: "name"}},
-			}, name: "NAME", pattern: "n[^a]me",
+			vc: VariableConfig[testVariableInfo]{
+				setVariableMap: SetVariableMap[testVariableInfo]{
+					"NAME": createSetVariable("NAME", "name", "n[^a]me", testVariableInfo{}),
+				},
+			},
+			name: "NAME",
 			want: errors.New("provided value for variable \"NAME\" does not match pattern \"n[^a]me\""),
 		},
 		{
-			vc: VariableConfig{
-				setVariableMap: SetVariableMap{"NAME": &SetVariable{Value: "name"}},
-			}, name: "NAME", pattern: "n[a-z]me", want: nil,
+			vc: VariableConfig[testVariableInfo]{
+				setVariableMap: SetVariableMap[testVariableInfo]{
+					"NAME": createSetVariable("NAME", "name", "n[a-z]me", testVariableInfo{}),
+				},
+			},
+			name: "NAME",
+			want: nil,
 		},
 	}
 
 	for _, tc := range tests {
-		got := tc.vc.CheckVariablePattern(tc.name, tc.pattern)
+		got := tc.vc.CheckVariablePattern(tc.name)
 		if got != nil && tc.want != nil {
 			if got.Error() != tc.want.Error() {
 				t.Fatalf("wanted err: %s, got err: %s", tc.want, got)
@@ -166,5 +185,28 @@ func TestCheckVariablePattern(t *testing.T) {
 		} else if got != nil {
 			t.Fatalf("got unexpected err: %s", got)
 		}
+	}
+}
+
+func createSetVariable(name, value, pattern string, extra testVariableInfo) *SetVariable[testVariableInfo] {
+	return &SetVariable[testVariableInfo]{
+		Value:    value,
+		Variable: createVariable(name, pattern, extra),
+	}
+}
+
+func createInteractiveVariable(name, pattern, def string, prompt bool, extra testVariableInfo) InteractiveVariable[testVariableInfo] {
+	return InteractiveVariable[testVariableInfo]{
+		Prompt:   prompt,
+		Default:  def,
+		Variable: createVariable(name, pattern, extra),
+	}
+}
+
+func createVariable(name, pattern string, extra testVariableInfo) Variable[testVariableInfo] {
+	return Variable[testVariableInfo]{
+		Name:    name,
+		Pattern: pattern,
+		Extra:   extra,
 	}
 }

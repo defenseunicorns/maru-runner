@@ -9,23 +9,24 @@ import (
 )
 
 // SetVariableMap represents a map of variable names to their set values
-type SetVariableMap map[string]*SetVariable
+type SetVariableMap[T any] map[string]*SetVariable[T]
 
 // GetSetVariable gets a variable set within a VariableConfig by its name
-func (vc *VariableConfig) GetSetVariable(name string) (variable *SetVariable, ok bool) {
+func (vc *VariableConfig[T]) GetSetVariable(name string) (variable *SetVariable[T], ok bool) {
 	variable, ok = vc.setVariableMap[name]
 	return variable, ok
 }
 
 // GetSetVariables gets the variables set within a VariableConfig
-func (vc *VariableConfig) GetSetVariables() SetVariableMap {
+func (vc *VariableConfig[T]) GetSetVariables() SetVariableMap[T] {
 	return vc.setVariableMap
 }
 
 // PopulateVariables handles setting the active variables within a VariableConfig's SetVariableMap
-func (vc *VariableConfig) PopulateVariables(variables []InteractiveVariable, presetVariables map[string]string) error {
+func (vc *VariableConfig[T]) PopulateVariables(variables []InteractiveVariable[T], presetVariables map[string]string) error {
 	for name, value := range presetVariables {
-		vc.SetVariable(name, value, false, false, "")
+		var extra T
+		vc.SetVariable(name, value, "", extra)
 	}
 
 	for _, variable := range variables {
@@ -33,17 +34,15 @@ func (vc *VariableConfig) PopulateVariables(variables []InteractiveVariable, pre
 
 		// Variable is present, no need to continue checking
 		if present {
-			vc.setVariableMap[variable.Name].Sensitive = variable.Sensitive
-			vc.setVariableMap[variable.Name].AutoIndent = variable.AutoIndent
-			vc.setVariableMap[variable.Name].Type = variable.Type
-			if err := vc.CheckVariablePattern(variable.Name, variable.Pattern); err != nil {
+			vc.setVariableMap[variable.Name].Extra = variable.Extra
+			if err := vc.CheckVariablePattern(variable.Name); err != nil {
 				return err
 			}
 			continue
 		}
 
 		// First set default (may be overridden by prompt)
-		vc.SetVariable(variable.Name, variable.Default, variable.Sensitive, variable.AutoIndent, variable.Type)
+		vc.SetVariable(variable.Name, variable.Default, variable.Pattern, variable.Extra)
 
 		// Variable is set to prompt the user
 		if variable.Prompt {
@@ -54,10 +53,10 @@ func (vc *VariableConfig) PopulateVariables(variables []InteractiveVariable, pre
 				return err
 			}
 
-			vc.SetVariable(variable.Name, val, variable.Sensitive, variable.AutoIndent, variable.Type)
+			vc.SetVariable(variable.Name, val, variable.Pattern, variable.Extra)
 		}
 
-		if err := vc.CheckVariablePattern(variable.Name, variable.Pattern); err != nil {
+		if err := vc.CheckVariablePattern(variable.Name); err != nil {
 			return err
 		}
 	}
@@ -66,26 +65,25 @@ func (vc *VariableConfig) PopulateVariables(variables []InteractiveVariable, pre
 }
 
 // SetVariable sets a variable in a VariableConfig's SetVariableMap
-func (vc *VariableConfig) SetVariable(name, value string, sensitive bool, autoIndent bool, varType VariableType) {
-	vc.setVariableMap[name] = &SetVariable{
-		Variable: Variable{
-			Name:       name,
-			Sensitive:  sensitive,
-			AutoIndent: autoIndent,
-			Type:       varType,
+func (vc *VariableConfig[T]) SetVariable(name, value, pattern string, extra T) {
+	vc.setVariableMap[name] = &SetVariable[T]{
+		Variable: Variable[T]{
+			Name:    name,
+			Pattern: pattern,
+			Extra:   extra,
 		},
 		Value: value,
 	}
 }
 
 // CheckVariablePattern checks to see if a current variable is set to a value that matches its pattern
-func (vc *VariableConfig) CheckVariablePattern(name, pattern string) error {
+func (vc *VariableConfig[T]) CheckVariablePattern(name string) error {
 	if variable, ok := vc.setVariableMap[name]; ok {
-		if regexp.MustCompile(pattern).MatchString(variable.Value) {
+		if regexp.MustCompile(variable.Pattern).MatchString(variable.Value) {
 			return nil
 		}
 
-		return fmt.Errorf("provided value for variable %q does not match pattern %q", name, pattern)
+		return fmt.Errorf("provided value for variable %q does not match pattern %q", name, variable.Pattern)
 	}
 
 	return fmt.Errorf("variable %q was not found in the current variable map", name)

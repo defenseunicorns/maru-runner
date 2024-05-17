@@ -10,9 +10,9 @@ import (
 
 // TasksFile represents the contents of a tasks file
 type TasksFile struct {
-	Includes  []map[string]string             `json:"includes,omitempty" jsonschema:"description=List of local task files to include"`
-	Variables []variables.InteractiveVariable `json:"variables,omitempty" jsonschema:"description=Definitions and default values for variables used in run.yaml"`
-	Tasks     []Task                          `json:"tasks" jsonschema:"description=The list of tasks that can be run"`
+	Includes  []map[string]string                                          `json:"includes,omitempty" jsonschema:"description=List of local task files to include"`
+	Variables []variables.InteractiveVariable[variables.ExtraVariableInfo] `json:"variables,omitempty" jsonschema:"description=Definitions and default values for variables used in run.yaml"`
+	Tasks     []Task                                                       `json:"tasks" jsonschema:"description=The list of tasks that can be run"`
 }
 
 // Task represents a single task
@@ -34,9 +34,9 @@ type InputParameter struct {
 
 // Action is a wrapped BaseAction action inside a Task to provide additional functionality
 type Action struct {
-	*BaseAction   `json:",inline"`
-	TaskReference string            `json:"task,omitempty" jsonschema:"description=The task to run, mutually exclusive with cmd and wait"`
-	With          map[string]string `json:"with,omitempty" jsonschema:"description=Input parameters to pass to the task,type=object"`
+	*BaseAction[variables.ExtraVariableInfo] `json:",inline"`
+	TaskReference                            string            `json:"task,omitempty" jsonschema:"description=The task to run, mutually exclusive with cmd and wait"`
+	With                                     map[string]string `json:"with,omitempty" jsonschema:"description=Input parameters to pass to the task,type=object"`
 }
 
 // TaskReference references the name of a task
