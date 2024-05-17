@@ -5,7 +5,7 @@
 package types
 
 import (
-	"github.com/defenseunicorns/pkg/variables"
+	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
 )
 
 // TasksFile represents the contents of a tasks file

@@ -9,7 +9,7 @@ import (
 
 	"github.com/defenseunicorns/maru-runner/src/types"
 
-	"github.com/defenseunicorns/pkg/variables"
+	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
 )
 
 func Test_getUniqueTaskActions(t *testing.T) {

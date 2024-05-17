@@ -5,8 +5,8 @@
 package types
 
 import (
+	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
 	"github.com/defenseunicorns/pkg/exec"
-	"github.com/defenseunicorns/pkg/variables"
 )
 
 // ActionDefaults sets the default configs for actions and represents an interface shared with Zarf

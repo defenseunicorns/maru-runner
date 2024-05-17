@@ -9,8 +9,8 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
 	"github.com/defenseunicorns/maru-runner/src/types"
-	"github.com/defenseunicorns/pkg/variables"
 	goyaml "github.com/goccy/go-yaml"
 )
 
