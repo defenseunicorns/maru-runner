@@ -13,14 +13,6 @@ const (
 	FileVariableType VariableType = "file"
 )
 
-// TextTemplate represents a value to be templated into a text file.
-type TextTemplate struct {
-	Sensitive  bool
-	AutoIndent bool
-	Type       VariableType
-	Value      string
-}
-
 // Variable represents a variable that has a value set programmatically
 type Variable struct {
 	Name       string       `json:"name" jsonschema:"description=The name to be used for the variable,pattern=^[A-Z0-9_]+$"`

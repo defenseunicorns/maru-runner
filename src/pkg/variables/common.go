@@ -13,8 +13,7 @@ type VariableConfig struct {
 	templatePrefix string
 	deprecatedKeys map[string]string
 
-	applicationTemplates map[string]*TextTemplate
-	setVariableMap       SetVariableMap
+	setVariableMap SetVariableMap
 
 	prompt func(variable InteractiveVariable) (value string, err error)
 	logger *slog.Logger
@@ -23,16 +22,10 @@ type VariableConfig struct {
 // New creates a new VariableConfig
 func New(templatePrefix string, deprecatedKeys map[string]string, prompt func(variable InteractiveVariable) (value string, err error), logger *slog.Logger) *VariableConfig {
 	return &VariableConfig{
-		templatePrefix:       templatePrefix,
-		deprecatedKeys:       deprecatedKeys,
-		applicationTemplates: make(map[string]*TextTemplate),
-		setVariableMap:       make(SetVariableMap),
-		prompt:               prompt,
-		logger:               logger,
+		templatePrefix: templatePrefix,
+		deprecatedKeys: deprecatedKeys,
+		setVariableMap: make(SetVariableMap),
+		prompt:         prompt,
+		logger:         logger,
 	}
-}
-
-// SetApplicationTemplates sets the application-specific templates for the variable config (i.e. ZARF_REGISTRY for Zarf)
-func (vc *VariableConfig) SetApplicationTemplates(applicationTemplates map[string]*TextTemplate) {
-	vc.applicationTemplates = applicationTemplates
 }
