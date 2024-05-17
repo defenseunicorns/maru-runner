@@ -15,7 +15,6 @@ type VariableConfig struct {
 
 	applicationTemplates map[string]*TextTemplate
 	setVariableMap       SetVariableMap
-	constants            []Constant
 
 	prompt func(variable InteractiveVariable) (value string, err error)
 	logger *slog.Logger
@@ -36,9 +35,4 @@ func New(templatePrefix string, deprecatedKeys map[string]string, prompt func(va
 // SetApplicationTemplates sets the application-specific templates for the variable config (i.e. ZARF_REGISTRY for Zarf)
 func (vc *VariableConfig) SetApplicationTemplates(applicationTemplates map[string]*TextTemplate) {
 	vc.applicationTemplates = applicationTemplates
-}
-
-// SetConstants sets the constants for a variable config (templated as PREFIX_CONST_NAME)
-func (vc *VariableConfig) SetConstants(constants []Constant) {
-	vc.constants = constants
 }

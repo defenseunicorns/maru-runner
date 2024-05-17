@@ -155,7 +155,7 @@ func (r *Runner) performZarfAction(action *types.BaseAction) error {
 
 	spinner := message.NewProgressSpinner("Running \"%s\"", cmdEscaped)
 
-	cfg := GetBaseActionCfg(types.ActionDefaults{}, *action, r.variableConfig.GetAllTemplates())
+	cfg := GetBaseActionCfg(types.ActionDefaults{}, *action, r.variableConfig.GetSetVariables())
 
 	if cmd = exec.MutateCommand(cmd, cfg.Shell); err != nil {
 		message.SLog.Debug(err.Error())
@@ -246,7 +246,7 @@ retryLoop:
 }
 
 // GetBaseActionCfg merges the ActionDefaults with the BaseAction's configuration
-func GetBaseActionCfg(cfg types.ActionDefaults, a types.BaseAction, vars map[string]*variables.TextTemplate) types.ActionDefaults {
+func GetBaseActionCfg(cfg types.ActionDefaults, a types.BaseAction, vars variables.SetVariableMap) types.ActionDefaults {
 	if a.Mute != nil {
 		cfg.Mute = *a.Mute
 	}

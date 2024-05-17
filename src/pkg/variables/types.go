@@ -38,16 +38,6 @@ type InteractiveVariable struct {
 	Prompt      bool   `json:"prompt,omitempty" jsonschema:"description=Whether to prompt the user for input for this variable"`
 }
 
-// Constant are constants that can be used to dynamically template K8s resources or run in actions.
-type Constant struct {
-	Name  string `json:"name" jsonschema:"description=The name to be used for the constant,pattern=^[A-Z0-9_]+$"`
-	Value string `json:"value" jsonschema:"description=The value to set for the constant during deploy"`
-	// Include a description that will only be displayed during package create/deploy confirm prompts
-	Description string `json:"description,omitempty" jsonschema:"description=A description of the constant to explain its purpose on package create or deploy confirmation prompts"`
-	AutoIndent  bool   `json:"autoIndent,omitempty" jsonschema:"description=Whether to automatically indent the variable's value (if multiline) when templating. Based on the number of chars before the start of the template."`
-	Pattern     string `json:"pattern,omitempty" jsonschema:"description=An optional regex pattern that a constant value must match before a package can be created."`
-}
-
 // SetVariable tracks internal variables that have been set during this execution run
 type SetVariable struct {
 	Variable `json:",inline"`

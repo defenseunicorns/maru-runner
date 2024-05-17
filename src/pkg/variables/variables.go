@@ -6,7 +6,6 @@ package variables
 import (
 	"fmt"
 	"regexp"
-	"strings"
 )
 
 // SetVariableMap represents a map of variable names to their set values
@@ -90,29 +89,4 @@ func (vc *VariableConfig) CheckVariablePattern(name, pattern string) error {
 	}
 
 	return fmt.Errorf("variable %q was not found in the current variable map", name)
-}
-
-// GetAllTemplates gets all of the current templates stored in the VariableConfig
-func (vc *VariableConfig) GetAllTemplates() map[string]*TextTemplate {
-	templateMap := vc.applicationTemplates
-
-	for key, variable := range vc.setVariableMap {
-		// Variable keys are always uppercase in the format i.e. ###ZARF_VAR_KEY### or ###UDS_VAR_KEY###
-		templateMap[strings.ToUpper(fmt.Sprintf("###%s_VAR_%s###", vc.templatePrefix, key))] = &TextTemplate{
-			Value:      variable.Value,
-			Sensitive:  variable.Sensitive,
-			AutoIndent: variable.AutoIndent,
-			Type:       variable.Type,
-		}
-	}
-
-	for _, constant := range vc.constants {
-		// Constant keys are always uppercase in the format i.e. ###ZARF_CONST_KEY###
-		templateMap[strings.ToUpper(fmt.Sprintf("###%s_CONST_%s###", vc.templatePrefix, constant.Name))] = &TextTemplate{
-			Value:      constant.Value,
-			AutoIndent: constant.AutoIndent,
-		}
-	}
-
-	return templateMap
 }

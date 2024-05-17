@@ -21,18 +21,16 @@ type ActionDefaults struct {
 
 // BaseAction represents a single action to run and represents an interface shared with Zarf
 type BaseAction struct {
-	Description     string      `json:"description,omitempty" jsonschema:"description=Description of the action to be displayed during package execution instead of the command"`
-	Cmd             string      `json:"cmd,omitempty" jsonschema:"description=The command to run. Must specify either cmd or wait for the action to do anything."`
-	Wait            *ActionWait `json:"wait,omitempty" jsonschema:"description=Wait for a condition to be met before continuing. Must specify either cmd or wait for the action."`
-	Env             []string    `json:"env,omitempty" jsonschema:"description=Additional environment variables to set for the command"`
-	Mute            *bool       `json:"mute,omitempty" jsonschema:"description=Hide the output of the command during package deployment (default false)"`
-	MaxTotalSeconds *int        `json:"maxTotalSeconds,omitempty" jsonschema:"description=Timeout in seconds for the command (default to 0, no timeout for cmd actions and 300, 5 minutes for wait actions)"`
-	MaxRetries      *int        `json:"maxRetries,omitempty" jsonschema:"description=Retry the command if it fails up to given number of times (default 0)"`
-	Dir             *string     `json:"dir,omitempty" jsonschema:"description=The working directory to run the command in (default is CWD)"`
-	Shell           *exec.Shell `json:"shell,omitempty" jsonschema:"description=(cmd only) Indicates a preference for a shell for the provided cmd to be executed in on supported operating systems"`
-	// TODO: (@WSTARR) - we will need to work with the Zarf team to manage any shared interfaces.  We may want to intentionally divest some of this as well.
-	DeprecatedSetVariable string               `json:"setVariable,omitempty" jsonschema:"description=[Deprecated] (replaced by setVariables) (onDeploy/cmd only) The name of a variable to update with the output of the command. This variable will be available to all remaining actions and components in the package.  This will be removed in Zarf v1.0.0.,pattern=^[A-Z0-9_]+$"`
-	SetVariables          []variables.Variable `json:"setVariables,omitempty" jsonschema:"description=(onDeploy/cmd only) An array of variables to update with the output of the command. These variables will be available to all remaining actions and components in the package."`
+	Description     string               `json:"description,omitempty" jsonschema:"description=Description of the action to be displayed during package execution instead of the command"`
+	Cmd             string               `json:"cmd,omitempty" jsonschema:"description=The command to run. Must specify either cmd or wait for the action to do anything."`
+	Wait            *ActionWait          `json:"wait,omitempty" jsonschema:"description=Wait for a condition to be met before continuing. Must specify either cmd or wait for the action."`
+	Env             []string             `json:"env,omitempty" jsonschema:"description=Additional environment variables to set for the command"`
+	Mute            *bool                `json:"mute,omitempty" jsonschema:"description=Hide the output of the command during package deployment (default false)"`
+	MaxTotalSeconds *int                 `json:"maxTotalSeconds,omitempty" jsonschema:"description=Timeout in seconds for the command (default to 0, no timeout for cmd actions and 300, 5 minutes for wait actions)"`
+	MaxRetries      *int                 `json:"maxRetries,omitempty" jsonschema:"description=Retry the command if it fails up to given number of times (default 0)"`
+	Dir             *string              `json:"dir,omitempty" jsonschema:"description=The working directory to run the command in (default is CWD)"`
+	Shell           *exec.Shell          `json:"shell,omitempty" jsonschema:"description=(cmd only) Indicates a preference for a shell for the provided cmd to be executed in on supported operating systems"`
+	SetVariables    []variables.Variable `json:"setVariables,omitempty" jsonschema:"description=(onDeploy/cmd only) An array of variables to update with the output of the command. These variables will be available to all remaining actions and components in the package."`
 }
 
 // ActionWait specifies a condition to wait for before continuing
