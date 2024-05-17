@@ -215,51 +215,82 @@ func Test_validateActionableTaskCall(t *testing.T) {
 	}
 }
 
-func TestRunner_RunAction(t *testing.T) {
-	type args struct {
-		action         *types.BaseAction[variables.ExtraVariableInfo]
+func TestRunner_performAction(t *testing.T) {
+	type fields struct {
+		TasksFile      types.TasksFile
+		TaskNameMap    map[string]bool
 		envFilePath    string
 		variableConfig *variables.VariableConfig[variables.ExtraVariableInfo]
 	}
+	type args struct {
+		action types.Action
+	}
 	tests := []struct {
 		name    string
+		fields  fields
 		args    args
 		wantErr bool
 	}{
 		// TODO: Add more test cases
 		{
 			name: "failed action processing due to invalid command",
-			args: args{
-				action: &types.BaseAction[variables.ExtraVariableInfo]{
-					Description: "Test action for failure scenario",
-					Wait:        nil,
-				},
+			fields: fields{
+				TasksFile:      types.TasksFile{},
+				TaskNameMap:    make(map[string]bool),
 				envFilePath:    "",
 				variableConfig: GetMaruVariableConfig(),
+			},
+			args: args{
+				action: types.Action{
+					TaskReference: "",
+					With: map[string]string{
+						"cmd": "exit 1",
+					},
+					BaseAction: &types.BaseAction[variables.ExtraVariableInfo]{
+						Description: "Test action for failure scenario",
+						Wait:        nil,
+					},
+				},
 			},
 		},
 		{
 			name: "Unable to open path",
+			fields: fields{
+				TasksFile:      types.TasksFile{},
+				TaskNameMap:    make(map[string]bool),
+				envFilePath:    "test/path",
+				variableConfig: GetMaruVariableConfig(),
+			},
 			args: args{
-				action: &types.BaseAction[variables.ExtraVariableInfo]{
-					Description: "Test action for wait command",
-					Wait: &types.ActionWait{
-						Cluster: &types.ActionWaitCluster{
-							Kind:       "pod",
-							Identifier: "my-pod",
-							Condition:  "Running",
+				action: types.Action{
+					TaskReference: "",
+					With: map[string]string{
+						"cmd": "zarf tools wait-for pod my-pod Running",
+					},
+					BaseAction: &types.BaseAction[variables.ExtraVariableInfo]{
+						Description: "Test action for wait command",
+						Wait: &types.ActionWait{
+							Cluster: &types.ActionWaitCluster{
+								Kind:       "pod",
+								Identifier: "my-pod",
+								Condition:  "Running",
+							},
 						},
 					},
 				},
-				envFilePath:    "test/path",
-				variableConfig: GetMaruVariableConfig(),
 			},
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := RunAction(tt.args.action, tt.args.envFilePath, tt.args.variableConfig)
+			r := &Runner{
+				TasksFile:      tt.fields.TasksFile,
+				TaskNameMap:    tt.fields.TaskNameMap,
+				envFilePath:    tt.fields.envFilePath,
+				variableConfig: tt.fields.variableConfig,
+			}
+			err := r.performAction(tt.args.action)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("performAction() error = %v, wantErr %v", err, tt.wantErr)
 			}

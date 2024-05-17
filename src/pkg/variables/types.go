@@ -34,6 +34,6 @@ type SetVariable[T any] struct {
 	Value       string `json:"value" jsonschema:"description=The value the variable is currently set with"`
 }
 
-// ExtraVariableInfo carries any additional information that may be desired through variables passed and set by actions.
+// ExtraVariableInfo carries any additional information that may be desired through variables passed and set by actions (available to library users).
 type ExtraVariableInfo struct {
 }
