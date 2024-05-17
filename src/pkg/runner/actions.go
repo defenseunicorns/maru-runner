@@ -54,7 +54,7 @@ func (r *Runner) performAction(action types.Action) error {
 			return err
 		}
 	} else {
-		err := r.performZarfAction(action.BaseAction)
+		err := RunAction(action.BaseAction, r.envFilePath, r.variableConfig)
 		if err != nil {
 			return err
 		}
@@ -95,7 +95,7 @@ func getUniqueTaskActions(actions []types.Action) []types.Action {
 	return uniqueArray
 }
 
-func (r *Runner) performZarfAction(action *types.BaseAction[variables.ExtraVariableInfo]) error {
+func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableConfig *variables.VariableConfig[T]) error {
 	var (
 		ctx        context.Context
 		cancel     context.CancelFunc
@@ -131,12 +131,12 @@ func (r *Runner) performZarfAction(action *types.BaseAction[variables.ExtraVaria
 		d := ""
 		action.Dir = &d
 		action.Env = []string{}
-		action.SetVariables = []variables.Variable[variables.ExtraVariableInfo]{}
+		action.SetVariables = []variables.Variable[T]{}
 	}
 
 	// load the contents of the env file into the Action + the RUN_ARCH
-	if r.envFilePath != "" {
-		envFilePath := filepath.Join(filepath.Dir(config.TaskFileLocation), r.envFilePath)
+	if envFilePath != "" {
+		envFilePath := filepath.Join(filepath.Dir(config.TaskFileLocation), envFilePath)
 		envFileContents, err := os.ReadFile(envFilePath)
 		if err != nil {
 			return err
@@ -155,7 +155,7 @@ func (r *Runner) performZarfAction(action *types.BaseAction[variables.ExtraVaria
 
 	spinner := message.NewProgressSpinner("Running \"%s\"", cmdEscaped)
 
-	cfg := GetBaseActionCfg(types.ActionDefaults{}, *action, r.variableConfig.GetSetVariables())
+	cfg := GetBaseActionCfg(types.ActionDefaults{}, *action, variableConfig.GetSetVariables())
 
 	if cmd = exec.MutateCommand(cmd, cfg.Shell); err != nil {
 		message.SLog.Debug(err.Error())
@@ -163,10 +163,10 @@ func (r *Runner) performZarfAction(action *types.BaseAction[variables.ExtraVaria
 	}
 
 	// Template dir string
-	cfg.Dir = utils.TemplateString(r.variableConfig.GetSetVariables(), cfg.Dir)
+	cfg.Dir = utils.TemplateString(variableConfig.GetSetVariables(), cfg.Dir)
 
 	// template cmd string
-	cmd = utils.TemplateString(r.variableConfig.GetSetVariables(), cmd)
+	cmd = utils.TemplateString(variableConfig.GetSetVariables(), cmd)
 
 	duration := time.Duration(cfg.MaxTotalSeconds) * time.Second
 	timeout := time.After(duration)
@@ -178,7 +178,7 @@ retryLoop:
 		// Perform the action run.
 		tryCmd := func(ctx context.Context) error {
 			// Try running the command and continue the retry loop if it fails.
-			if out, err = RunAction(ctx, cfg, cmd, cfg.Shell, spinner); err != nil {
+			if out, err = ExecAction(ctx, cfg, cmd, cfg.Shell, spinner); err != nil {
 				return err
 			}
 
@@ -186,8 +186,8 @@ retryLoop:
 
 			// If an output variable is defined, set it.
 			for _, v := range action.SetVariables {
-				r.variableConfig.SetVariable(v.Name, out, v.Pattern, v.Extra)
-				if err = r.variableConfig.CheckVariablePattern(v.Name); err != nil {
+				variableConfig.SetVariable(v.Name, out, v.Pattern, v.Extra)
+				if err = variableConfig.CheckVariablePattern(v.Name); err != nil {
 					message.SLog.Debug(err.Error())
 					message.SLog.Warn(err.Error())
 					return err
@@ -274,20 +274,14 @@ func GetBaseActionCfg[T any](cfg types.ActionDefaults, a types.BaseAction[T], va
 
 	// Add variables to the environment.
 	for k, v := range vars {
-		// Remove # from env variable name.
-		k = strings.ReplaceAll(k, "#", "")
-		// Make terraform variables available to the action as TF_VAR_lowercase_name.
-		// TODO (@WSTARR) - very Zarf specific
-		k1 := strings.ReplaceAll(strings.ToLower(k), "zarf_var", "TF_VAR")
 		cfg.Env = append(cfg.Env, fmt.Sprintf("%s=%s", k, v.Value))
-		cfg.Env = append(cfg.Env, fmt.Sprintf("%s=%s", k1, v.Value))
 	}
 
 	return cfg
 }
 
-// RunAction executes the given action configuration with the provided context
-func RunAction(ctx context.Context, cfg types.ActionDefaults, cmd string, shellPref exec.Shell, spinner helpers.ProgressWriter) (string, error) {
+// ExecAction executes the given action configuration with the provided context
+func ExecAction(ctx context.Context, cfg types.ActionDefaults, cmd string, shellPref exec.Shell, spinner helpers.ProgressWriter) (string, error) {
 	shell, shellArgs := exec.GetOSShell(shellPref)
 
 	message.SLog.Debug(fmt.Sprintf("Running command in %s: %s", shell, cmd))
