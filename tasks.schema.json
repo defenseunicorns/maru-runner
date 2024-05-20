@@ -17,8 +17,8 @@
         },
         "with": {
           "patternProperties": {
-            ".*": {
-              "type": "string"
+            "^[_a-zA-Z][a-zA-Z0-9_-]*$": {
+              "additionalProperties": true
             }
           },
           "type": "object",
@@ -26,7 +26,10 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "patternProperties": {
+        "^x-": {}
+      }
     },
     "ActionWait": {
       "properties": {
@@ -42,7 +45,10 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "patternProperties": {
+        "^x-": {}
+      }
     },
     "ActionWaitCluster": {
       "required": [
@@ -63,7 +69,7 @@
           "description": "The name of the resource or selector to wait for",
           "examples": [
             "podinfo",
-            "app\u0026#61;podinfo"
+            "app&#61;podinfo"
           ]
         },
         "namespace": {
@@ -80,7 +86,10 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "patternProperties": {
+        "^x-": {}
+      }
     },
     "ActionWaitNetwork": {
       "required": [
@@ -115,7 +124,10 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "patternProperties": {
+        "^x-": {}
+      }
     },
     "BaseAction[github.com/defenseunicorns/maru-runner/src/pkg/variables.ExtraVariableInfo]": {
       "properties": {
@@ -169,12 +181,18 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "patternProperties": {
+        "^x-": {}
+      }
     },
     "ExtraVariableInfo": {
       "properties": {},
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "patternProperties": {
+        "^x-": {}
+      }
     },
     "InputParameter": {
       "required": [
@@ -199,7 +217,10 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "patternProperties": {
+        "^x-": {}
+      }
     },
     "InteractiveVariable[github.com/defenseunicorns/maru-runner/src/pkg/variables.ExtraVariableInfo]": {
       "required": [
@@ -224,13 +245,16 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "patternProperties": {
+        "^x-": {}
+      }
     },
     "Shell": {
       "properties": {
         "windows": {
           "type": "string",
-          "description": "(default 'powershell') Indicates a preference for the shell to use on Windows systems (note that choosing 'cmd' will turn off migrations like touch -\u003e New-Item)",
+          "description": "(default 'powershell') Indicates a preference for the shell to use on Windows systems (note that choosing 'cmd' will turn off migrations like touch -> New-Item)",
           "examples": [
             "powershell",
             "cmd",
@@ -264,7 +288,10 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "patternProperties": {
+        "^x-": {}
+      }
     },
     "Task": {
       "required": [
@@ -289,7 +316,7 @@
         },
         "inputs": {
           "patternProperties": {
-            ".*": {
+            "^[_a-zA-Z][a-zA-Z0-9_-]*$": {
               "$schema": "http://json-schema.org/draft-04/schema#",
               "$ref": "#/definitions/InputParameter"
             }
@@ -303,7 +330,10 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "patternProperties": {
+        "^x-": {}
+      }
     },
     "TasksFile": {
       "required": [
@@ -340,7 +370,10 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "patternProperties": {
+        "^x-": {}
+      }
     },
     "Variable[github.com/defenseunicorns/maru-runner/src/pkg/variables.ExtraVariableInfo]": {
       "required": [
@@ -363,8 +396,10 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "patternProperties": {
+        "^x-": {}
+      }
     }
   }
 }
-tests
