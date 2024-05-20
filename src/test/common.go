@@ -19,7 +19,7 @@ import (
 
 // MaruE2ETest Struct holding common fields most of the tests will utilize.
 type MaruE2ETest struct {
-	RunnerBinPath     string
+	MaruBinPath       string
 	Arch              string
 	ApplianceMode     bool
 	ApplianceModeKeep bool
@@ -27,7 +27,7 @@ type MaruE2ETest struct {
 	CommandLog        []string
 }
 
-// GetCLIName looks at the OS and CPU architecture to determine which Zarf binary needs to be run.
+// GetCLIName looks at the OS and CPU architecture to determine which Maru binary needs to be run.
 func GetCLIName() string {
 	var binaryName string
 	if runtime.GOOS == "linux" {
@@ -47,7 +47,7 @@ var logRegex = regexp.MustCompile(`Saving log file to (?P<logFile>.*?\.log)`)
 // Maru executes a run command.
 func (e2e *MaruE2ETest) Maru(args ...string) (string, string, error) {
 	e2e.CommandLog = append(e2e.CommandLog, strings.Join(args, " "))
-	return exec.CmdWithContext(context.TODO(), exec.Config{Print: true}, e2e.RunnerBinPath, args...)
+	return exec.CmdWithContext(context.TODO(), exec.Config{Print: true}, e2e.MaruBinPath, args...)
 }
 
 // CleanFiles removes files and directories that have been created during the test.

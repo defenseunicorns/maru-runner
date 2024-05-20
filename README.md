@@ -5,10 +5,8 @@
 [![Build Status](https://img.shields.io/github/actions/workflow/status/defenseunicorns/maru-runner/release.yaml)](https://github.com/defenseunicorns/maru-runner/actions/workflows/release.yaml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/defenseunicorns/maru-runner/badge)](https://api.securityscorecards.dev/projects/github.com/defenseunicorns/maru-runner)
 
-Maru is a task runner that enables developers to automate builds and perform common shell tasks. It
-uses [Zarf](https://zarf.dev/) under the hood to perform tasks and shares a syntax similar to `zarf.yaml` manifests.
-Many [Zarf Actions features](https://docs.zarf.dev/ref/actions/) are also available in
-the runner.
+Maru is a task runner that enables developers to automate builds and perform common shell tasks and shares a syntax similar to `zarf.yaml` `actions`.
+Many [Zarf Actions features](https://docs.zarf.dev/ref/actions/) are also available in the runner.
 
 ## Table of Contents
 
@@ -20,7 +18,6 @@ the runner.
             - [Task](#task)
             - [Cmd](#cmd)
         - [Variables](#variables)
-        - [Files](#files)
         - [Wait](#wait)
         - [Includes](#includes)
         - [Task Inputs and Reusable Tasks](#task-inputs-and-reusable-tasks)
@@ -259,28 +256,6 @@ Variable precedence is as follows, from least to most specific:
 - Variables set with the `--set` flag in the CLI
 
 That is to say, variables set via the `--set` flag take precedence over all other variables. The exception to this precedence order is when a variable is modified using `setVariable`, which will change the value of the variable during runtime.
-
-### Files
-
-The `files` key is used to copy local or remote files to the current working directory
-
-```yaml
-tasks:
-  - name: copy-local
-    files:
-      - source: /tmp/foo
-        target: foo
-  - name: copy-remote
-    files:
-      - source: https://cataas.com/cat
-        target: cat.jpeg
-```
-
-Files blocks can also use the following attributes:
-
-- `executable`: boolean value indicating if the file is executable
-- `shasum`: SHA string to verify the integrity of the file
-- `symlinks`: list of strings referring to symlink the file to
 
 ### Wait
 

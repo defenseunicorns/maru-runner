@@ -51,16 +51,16 @@ func doAllTheThings(m *testing.M) (int, error) {
 
 	// Set up constants in the global variable that all the tests are able to access
 	e2e.Arch = config.GetArch()
-	e2e.RunnerBinPath = path.Join("build", test.GetCLIName())
+	e2e.MaruBinPath = path.Join("build", test.GetCLIName())
 	e2e.ApplianceMode = os.Getenv(applianceModeEnvVar) == "true"
 	e2e.ApplianceModeKeep = os.Getenv(applianceModeKeepEnvVar) == "true"
 	e2e.RunClusterTests = os.Getenv(skipK8sEnvVar) != "true"
 
-	// Validate that the runner binary exists. If it doesn't that means the dev hasn't built it, usually by running
+	// Validate that the Maru binary exists. If it doesn't that means the dev hasn't built it, usually by running
 	// `make build-cli`
-	_, err = os.Stat(e2e.RunnerBinPath)
+	_, err = os.Stat(e2e.MaruBinPath)
 	if err != nil {
-		return 1, fmt.Errorf("zarf binary %s not found", e2e.RunnerBinPath)
+		return 1, fmt.Errorf("maru binary %s not found", e2e.MaruBinPath)
 	}
 
 	// Run the tests, with the cluster cleanup being deferred to the end of the function call

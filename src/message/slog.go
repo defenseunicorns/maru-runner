@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2021-Present The Zarf Authors
+// SPDX-FileCopyrightText: 2023-Present the Maru Authors
 
 // Package message provides a rich set of functions for displaying messages to the user.
 package message
@@ -32,7 +32,7 @@ func (z MaruHandler) WithGroup(_ string) slog.Handler {
 	return z
 }
 
-// Handle prints the respective logging function in zarf
+// Handle prints the respective logging function in Maru
 // This function ignores any key pairs passed through the record
 func (z MaruHandler) Handle(_ context.Context, record slog.Record) error {
 	level := record.Level

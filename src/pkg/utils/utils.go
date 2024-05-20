@@ -88,7 +88,7 @@ func ReadYaml(path string, destConfig any) error {
 	return goyaml.Unmarshal(file, destConfig)
 }
 
-// MakeTempDir creates a temp directory with the zarf- prefix.
+// MakeTempDir creates a temp directory with the maru- prefix.
 func MakeTempDir(basePath string) (string, error) {
 	if basePath != "" {
 		if err := helpers.CreateDirectory(basePath, helpers.ReadWriteExecuteUser); err != nil {
