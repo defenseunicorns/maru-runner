@@ -26,6 +26,9 @@ var configTasksSchemaCmd = &cobra.Command{
 	Use:     "config-tasks-schema",
 	Aliases: []string{"c"},
 	Short:   lang.CmdInternalConfigSchemaShort,
+	PersistentPreRun: func(cmd *cobra.Command, _ []string) {
+		skipLogFile = true
+	},
 	Run: func(_ *cobra.Command, _ []string) {
 		schema := jsonschema.Reflect(&types.TasksFile{})
 		output, err := json.MarshalIndent(schema, "", "  ")
