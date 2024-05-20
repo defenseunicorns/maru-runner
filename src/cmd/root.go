@@ -93,8 +93,12 @@ func cliSetup() {
 	}
 
 	// Register `uds` and `zarf` as coming from the $PATH when used directly from the CLI
-	exec.RegisterCmdMutation("uds", "uds")
-	exec.RegisterCmdMutation("zarf", "zarf")
+	if _, ok := exec.GetCmdMutation("uds"); !ok {
+		exec.RegisterCmdMutation("uds", "uds")
+	}
+	if _, ok := exec.GetCmdMutation("zarf"); !ok {
+		exec.RegisterCmdMutation("zarf", "zarf")
+	}
 }
 
 // exitOnInterrupt catches an interrupt and exits with fatal error
