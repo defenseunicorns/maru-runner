@@ -89,7 +89,9 @@ func cliSetup() {
 	}
 
 	if !skipLogFile && !listTasks && !listAllTasks {
-		utils.UseLogFile()
+		if err := utils.UseLogFile(); err != nil {
+			message.SLog.Warn(fmt.Sprintf("Unable to setup log file: %s", err.Error()))
+		}
 	}
 
 	// Register `uds` and `zarf` as coming from the $PATH when used directly from the CLI

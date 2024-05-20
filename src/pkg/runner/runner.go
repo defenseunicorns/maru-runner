@@ -37,7 +37,10 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 	}
 
 	// Populate the variables loaded in the task file
-	runner.variableConfig.PopulateVariables(runner.TasksFile.Variables, setVariables)
+	err := runner.variableConfig.PopulateVariables(runner.TasksFile.Variables, setVariables)
+	if err != nil {
+		return err
+	}
 
 	// Check to see if running an included task directly
 	includeTaskName, err := runner.loadIncludedTaskFile(taskName)

@@ -77,7 +77,10 @@ var runCmd = &cobra.Command{
 			}
 			// If ListAllTasks, add tasks from included files
 			if listAllTasks {
-				listTasksFromIncludes(&rows, tasksFile)
+				err = listTasksFromIncludes(&rows, tasksFile)
+				if err != nil {
+					message.Fatalf(err, "Cannot list tasks: %s", err.Error())
+				}
 			}
 
 			err := pterm.DefaultTable.WithHasHeader().WithData(rows).Render()
@@ -118,11 +121,14 @@ func ListAutoCompleteTasks(_ *cobra.Command, _ []string, _ string) ([]string, co
 	return taskNames, cobra.ShellCompDirectiveNoFileComp
 }
 
-func listTasksFromIncludes(rows *[][]string, tasksFile types.TasksFile) {
+func listTasksFromIncludes(rows *[][]string, tasksFile types.TasksFile) error {
 	var includedTasksFile types.TasksFile
 
 	variableConfig := runner.GetMaruVariableConfig()
-	variableConfig.PopulateVariables(tasksFile.Variables, setRunnerVariables)
+	err := variableConfig.PopulateVariables(tasksFile.Variables, setRunnerVariables)
+	if err != nil {
+		return err
+	}
 
 	templatePattern := `\${[^}]+}`
 	re := regexp.MustCompile(templatePattern)
@@ -144,6 +150,8 @@ func listTasksFromIncludes(rows *[][]string, tasksFile types.TasksFile) {
 			}
 		}
 	}
+
+	return nil
 }
 
 func loadTasksFromRemoteIncludes(includeFileLocation string) types.TasksFile {
