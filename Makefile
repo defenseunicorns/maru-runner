@@ -55,13 +55,11 @@ test-unit: ## Run unit tests
 test-e2e: ## Run End to End (e2e) tests
 	cd src/test/e2e && go test -failfast -v -timeout 30m
 
-schema: tasks.schema.json ## Update JSON schema for maru tasks
-
-test-schema: tasks.schema.json ## Test if the schema has been modified
-	./hack/test-generate-schema.sh
-
-tasks.schema.json: $(SRC_FILES)
+schema: ## Update JSON schema for maru tasks
 	./hack/generate-schema.sh
+
+test-schema: schema ## Test if the schema has been modified
+	./hack/test-generate-schema.sh
 
 clean: ## Clean up build artifacts
 	rm -rf build

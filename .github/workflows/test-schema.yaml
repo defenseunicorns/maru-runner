@@ -16,7 +16,7 @@ jobs:
         uses: ./.github/actions/golang
 
       - name: Docs and schemas
-        run: "make schema test-schema"
+        run: make test-schema
 
       - name: Save logs
         if: always()
