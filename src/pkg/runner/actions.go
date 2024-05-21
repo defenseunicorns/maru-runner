@@ -281,7 +281,7 @@ func GetBaseActionCfg[T any](cfg types.ActionDefaults, a types.BaseAction[T], va
 }
 
 // ExecAction executes the given action configuration with the provided context
-func ExecAction(ctx context.Context, cfg types.ActionDefaults, cmd string, shellPref exec.Shell, spinner helpers.ProgressWriter) (string, error) {
+func ExecAction(ctx context.Context, cfg types.ActionDefaults, cmd string, shellPref exec.ShellPreference, spinner helpers.ProgressWriter) (string, error) {
 	shell, shellArgs := exec.GetOSShell(shellPref)
 
 	message.SLog.Debug(fmt.Sprintf("Running command in %s: %s", shell, cmd))

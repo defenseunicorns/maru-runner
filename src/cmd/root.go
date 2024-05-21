@@ -14,7 +14,6 @@ import (
 	"github.com/defenseunicorns/maru-runner/src/config/lang"
 	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
-	"github.com/defenseunicorns/pkg/exec"
 	"github.com/spf13/cobra"
 )
 
@@ -92,14 +91,6 @@ func cliSetup() {
 		if err := utils.UseLogFile(); err != nil {
 			message.SLog.Warn(fmt.Sprintf("Unable to setup log file: %s", err.Error()))
 		}
-	}
-
-	// Register `uds` and `zarf` as coming from the $PATH when used directly from the CLI
-	if _, ok := exec.GetCmdMutation("uds"); !ok {
-		exec.RegisterCmdMutation("uds", "uds")
-	}
-	if _, ok := exec.GetCmdMutation("zarf"); !ok {
-		exec.RegisterCmdMutation("zarf", "zarf")
 	}
 }
 

@@ -4,8 +4,8 @@ go 1.21.8
 
 require (
 	github.com/alecthomas/jsonschema v0.0.0-20220216202328-9eeeec9d044b
-	github.com/defenseunicorns/pkg/exec v0.0.0-20240520144013-19bd4fe9ed34
-	github.com/defenseunicorns/pkg/helpers v1.1.4-0.20240520144013-19bd4fe9ed34
+	github.com/defenseunicorns/pkg/exec v0.0.1
+	github.com/defenseunicorns/pkg/helpers v1.1.4-0.20240515202339-7d8cf08f6cf7
 	github.com/goccy/go-yaml v1.11.3
 	github.com/pterm/pterm v0.12.79
 	github.com/spf13/cobra v1.8.0

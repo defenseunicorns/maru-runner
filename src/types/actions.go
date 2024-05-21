@@ -11,12 +11,12 @@ import (
 
 // ActionDefaults sets the default configs for actions and represents an interface shared with Zarf
 type ActionDefaults struct {
-	Env             []string   `json:"env,omitempty" jsonschema:"description=Additional environment variables for commands"`
-	Mute            bool       `json:"mute,omitempty" jsonschema:"description=Hide the output of commands during execution (default false)"`
-	MaxTotalSeconds int        `json:"maxTotalSeconds,omitempty" jsonschema:"description=Default timeout in seconds for commands (default to 0, no timeout)"`
-	MaxRetries      int        `json:"maxRetries,omitempty" jsonschema:"description=Retry commands given number of times if they fail (default 0)"`
-	Dir             string     `json:"dir,omitempty" jsonschema:"description=Working directory for commands (default CWD)"`
-	Shell           exec.Shell `json:"shell,omitempty" jsonschema:"description=(cmd only) Indicates a preference for a shell for the provided cmd to be executed in on supported operating systems"`
+	Env             []string             `json:"env,omitempty" jsonschema:"description=Additional environment variables for commands"`
+	Mute            bool                 `json:"mute,omitempty" jsonschema:"description=Hide the output of commands during execution (default false)"`
+	MaxTotalSeconds int                  `json:"maxTotalSeconds,omitempty" jsonschema:"description=Default timeout in seconds for commands (default to 0, no timeout)"`
+	MaxRetries      int                  `json:"maxRetries,omitempty" jsonschema:"description=Retry commands given number of times if they fail (default 0)"`
+	Dir             string               `json:"dir,omitempty" jsonschema:"description=Working directory for commands (default CWD)"`
+	Shell           exec.ShellPreference `json:"shell,omitempty" jsonschema:"description=(cmd only) Indicates a preference for a shell for the provided cmd to be executed in on supported operating systems"`
 }
 
 // BaseAction represents a single action to run and represents an interface shared with Zarf
@@ -29,7 +29,7 @@ type BaseAction[T any] struct {
 	MaxTotalSeconds *int                    `json:"maxTotalSeconds,omitempty" jsonschema:"description=Timeout in seconds for the command (default to 0, no timeout for cmd actions and 300, 5 minutes for wait actions)"`
 	MaxRetries      *int                    `json:"maxRetries,omitempty" jsonschema:"description=Retry the command if it fails up to given number of times (default 0)"`
 	Dir             *string                 `json:"dir,omitempty" jsonschema:"description=The working directory to run the command in (default is CWD)"`
-	Shell           *exec.Shell             `json:"shell,omitempty" jsonschema:"description=(cmd only) Indicates a preference for a shell for the provided cmd to be executed in on supported operating systems"`
+	Shell           *exec.ShellPreference   `json:"shell,omitempty" jsonschema:"description=(cmd only) Indicates a preference for a shell for the provided cmd to be executed in on supported operating systems"`
 	SetVariables    []variables.Variable[T] `json:"setVariables,omitempty" jsonschema:"description=(onDeploy/cmd only) An array of variables to update with the output of the command. These variables will be available to all remaining actions and components in the package."`
 }
 
