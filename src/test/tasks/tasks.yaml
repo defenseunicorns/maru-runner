@@ -41,7 +41,15 @@ tasks:
       - cmd: echo "I'm set from setVariables - ${ACTION_VAR}"
       - cmd: echo "I'm set from a runner var - ${REPLACE_ME}"
       - cmd: echo "I'm set from a --set var - ${REPLACE_ME}"
+      - cmd: echo "I'm set from a --set var - $REPLACE_ME"
       - cmd: echo "I'm set from a new --set var - ${UNICORNS}"
+      - cmd: echo "I'm set automatically - MARU=${MARU}"
+      - cmd: echo "I'm set from extra env - EXTRA_ENV=${EXTRA_ENV}"
+      - cmd: echo "I'm set from extra env - EXTRA_ENV=$EXTRA_ENV"
+  - name: print-common-env
+    actions:
+      - cmd: echo MARU_ARCH=[$MARU_ARCH]
+      - cmd: echo MARU=[$MARU]
   - name: reference
     actions:
       - task: referenced
@@ -115,7 +123,7 @@ tasks:
   - name: env-from-file
     envPath: "./my-env"
     actions:
-      - cmd: echo $RUN_ARCH
+      - cmd: echo $MARU_ARCH
       - cmd: echo $SECRET_KEY
       - cmd: echo $PORT
       - cmd: echo $SPECIAL

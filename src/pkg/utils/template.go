@@ -9,6 +9,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
 	"github.com/defenseunicorns/maru-runner/src/types"
 	goyaml "github.com/goccy/go-yaml"
@@ -63,6 +64,10 @@ func TemplateString[T any](setVariableMap variables.SetVariableMap[T], s string)
 	// template string using values from the set variable map
 	result := re.ReplaceAllStringFunc(s, func(matched string) string {
 		varName := strings.TrimSuffix(strings.TrimPrefix(matched, "${"), "}")
+
+		if value, ok := config.GetExtraEnv()[varName]; ok {
+			return value
+		}
 		if value, ok := setVariableMap[varName]; ok {
 			return value.Value
 		}

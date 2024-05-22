@@ -219,7 +219,7 @@ Variables can be defined in several ways:
          - cmd: echo ${FOO}
    ```
 
-1. As an environment variable prefixed with `RUN_`. In the example above, if you create an env var `RUN_FOO=bar`, then the`FOO` variable would be set to `bar`.
+1. As an environment variable prefixed with `MARU_`. In the example above, if you create an env var `MARU_FOO=bar`, then the`FOO` variable would be set to `bar`.
 
 1. Using the `--set` flag in the CLI : `run foo --set FOO=bar`
 
@@ -229,7 +229,7 @@ Note that variables also have the following attributes when setting them with YA
 
 - `sensitive`: boolean value indicating if a variable should be visible in output
 - `default`: default value of a variable
-    - In the example above, if `FOO` did not have a default, and you have an environment variable `RUN_FOO=bar`, the default would get set to `bar`.
+    - In the example above, if `FOO` did not have a default, and you have an environment variable `MARU_FOO=bar`, the default would get set to `bar`.
 
 #### Environment Variable Files
 
@@ -240,7 +240,7 @@ tasks:
   - name: env
     actions:
       - cmd: echo $FOO
-      - cmd: echo $RUN_ARCH
+      - cmd: echo $MARU_ARCH
       - task: echo-env
   - name: echo-env
     envPath: ./path/to/.env
@@ -248,14 +248,40 @@ tasks:
       - cmd: echo different task $FOO
 ```
 
+#### Automatic Environment Variables
+The following Environment Variables are set automatically by maru-runner and are available to any action being performed:
+- `MARU` - Set to 'true' to indicate the action was executed by maru-runner.
+- `MARU_ARCH` - Set to the current architecture. e.g. 'amd64'
+
+Example:
+
+- tasks.yaml
+  ```yaml
+    - name: print-common-env
+      actions:
+        - cmd: echo MARU_ARCH=[$MARU_ARCH]
+        - cmd: echo MARU=[$MARU]
+  ```
+- `maru run print-common-env` output:
+  ```
+      MARU_ARCH=[amd64]
+    ✔  Completed "echo MARU_ARCH=[$MARU_ARCH]"
+      MARU=[true]
+    ✔  Completed "echo MARU=[$MARU]"
+  ```
 
 #### Variable Precedence
 Variable precedence is as follows, from least to most specific:
 - Variable defaults set in YAML
-- Environment variables prefixed with `RUN_`
+- Environment variables prefixed with `MARU_`
 - Variables set with the `--set` flag in the CLI
 
-That is to say, variables set via the `--set` flag take precedence over all other variables. The exception to this precedence order is when a variable is modified using `setVariable`, which will change the value of the variable during runtime.
+That is to say, variables set via the `--set` flag take precedence over all other variables. 
+
+There are a couple of exceptions to this precedence order:
+- When a variable is modified using `setVariable`, which will change the value of the variable during runtime.
+- When another application is vendoring in maru, it can use config.AddExtraEnv to add extra environment variables. Any variables set by an application in this way take precedence over everything else.
+
 
 ### Wait
 

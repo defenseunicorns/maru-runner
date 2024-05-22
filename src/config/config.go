@@ -11,6 +11,9 @@ import (
 const (
 	// TasksYAML is the string for the default tasks.yaml
 	TasksYAML = "tasks.yaml"
+
+	// EnvPrefix is the prefix for environment variables
+	EnvPrefix = "MARU"
 )
 
 var (
@@ -24,14 +27,13 @@ var (
 	// if not set, the system Zarf will be used
 	CmdPrefix string
 
-	// EnvPrefix is the prefix for viper configs and runner variables, useful when vendoring the runner
-	EnvPrefix = "run"
-
 	// TaskFileLocation is the location of the tasks file to run
 	TaskFileLocation string
 
 	// TempDirectory is the directory to store temporary files
 	TempDirectory string
+
+	extraEnv map[string]string
 )
 
 // GetArch returns the arch based on a priority list with options for overriding.
@@ -47,4 +49,22 @@ func GetArch(archs ...string) string {
 	}
 
 	return runtime.GOARCH
+}
+
+// AddExtraEnv adds a new envirmentment variable to the extraEnv to make it available to actions
+func AddExtraEnv(key string, value string) {
+	if extraEnv == nil {
+		extraEnv = make(map[string]string)
+	}
+	extraEnv[key] = value
+}
+
+// GetExtraEnv returns the map of extra environment variables that have been set and made available to actions
+func GetExtraEnv() map[string]string {
+	return extraEnv
+}
+
+// ClearExtraEnv clears extraEnv back to empty map
+func ClearExtraEnv() {
+	extraEnv = make(map[string]string)
 }
