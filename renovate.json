@@ -30,5 +30,19 @@
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
     }
+  ],
+  "packageRules": [
+    {
+      "groupName": "Maru Support Dependencies",
+      "labels": ["support-deps"],
+      "commitMessageTopic": "support-deps",
+      "packagePatterns": ["*"]
+    },
+    {
+      "groupName": "Maru Code Dependencies",
+      "labels": ["code-deps"],
+      "commitMessageTopic": "code-deps",
+      "matchDatasources": ["go"]
+    }
   ]
 }
