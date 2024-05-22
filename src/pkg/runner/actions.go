@@ -54,7 +54,7 @@ func (r *Runner) performAction(action types.Action) error {
 			return err
 		}
 	} else {
-		err := RunAction(action.BaseAction, r.envFilePath, r.variableConfig)
+		err := runAction(action.BaseAction, r.envFilePath, r.variableConfig)
 		if err != nil {
 			return err
 		}
@@ -95,7 +95,7 @@ func getUniqueTaskActions(actions []types.Action) []types.Action {
 	return uniqueArray
 }
 
-func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableConfig *variables.VariableConfig[T]) error {
+func runAction[T any](action *types.BaseAction[T], envFilePath string, variableConfig *variables.VariableConfig[T]) error {
 	var (
 		ctx        context.Context
 		cancel     context.CancelFunc
