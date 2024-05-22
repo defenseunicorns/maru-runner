@@ -33,7 +33,7 @@ var (
 	// TempDirectory is the directory to store temporary files
 	TempDirectory string
 
-	extraEnv map[string]string
+	extraEnv = map[string]string{"MARU": "true", "MARU_ARCH": GetArch()}
 )
 
 // GetArch returns the arch based on a priority list with options for overriding.

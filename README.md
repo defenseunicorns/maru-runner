@@ -186,7 +186,7 @@ Command blocks can have several other properties including:
       ```
 
     - `maxRetries`: number of times to retry the command
-    - `maxTotalSeconds`: max number of seconds the command can run until it is killed; takes precendence
+    - `maxTotalSeconds`: max number of seconds the command can run until it is killed; takes precedence
       over `maxRetries`
 
 ### Variables

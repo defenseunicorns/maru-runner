@@ -134,7 +134,7 @@ func runAction[T any](action *types.BaseAction[T], envFilePath string, variableC
 		action.SetVariables = []variables.Variable[T]{}
 	}
 
-	// load the contents of the env file into the Action + the RUN_ARCH
+	// load the contents of the env file into the Action + the MARU_ARCH
 	if envFilePath != "" {
 		envFilePath := filepath.Join(filepath.Dir(config.TaskFileLocation), envFilePath)
 		envFileContents, err := os.ReadFile(envFilePath)
@@ -143,9 +143,6 @@ func runAction[T any](action *types.BaseAction[T], envFilePath string, variableC
 		}
 		action.Env = append(action.Env, strings.Split(string(envFileContents), "\n")...)
 	}
-
-	// append automatic environment variables that are always added
-	appendAutomaticEnvVars(action)
 
 	if action.Description != "" {
 		cmdEscaped = action.Description
@@ -164,9 +161,6 @@ func runAction[T any](action *types.BaseAction[T], envFilePath string, variableC
 
 	// Template dir string
 	cfg.Dir = utils.TemplateString(variableConfig.GetSetVariables(), cfg.Dir)
-
-	// template cmd string
-	cmd = utils.TemplateString(variableConfig.GetSetVariables(), cmd)
 
 	duration := time.Duration(cfg.MaxTotalSeconds) * time.Second
 	timeout := time.After(duration)
@@ -245,14 +239,6 @@ retryLoop:
 	}
 }
 
-func appendAutomaticEnvVars[T any](action *types.BaseAction[T]) {
-	// append an env var for the architecture
-	action.Env = append(action.Env, fmt.Sprintf("%s_ARCH=%s", config.EnvPrefix, config.GetArch()))
-
-	// append an env var to indicate the task is being ran by MARU
-	action.Env = append(action.Env, "MARU=true")
-}
-
 // GetBaseActionCfg merges the ActionDefaults with the BaseAction's configuration
 func GetBaseActionCfg[T any](cfg types.ActionDefaults, a types.BaseAction[T], vars variables.SetVariableMap[T]) types.ActionDefaults {
 	if a.Mute != nil {
@@ -272,59 +258,20 @@ func GetBaseActionCfg[T any](cfg types.ActionDefaults, a types.BaseAction[T], va
 		cfg.Dir = *a.Dir
 	}
 
+	if len(a.Env) > 0 {
+		cfg.Env = append(cfg.Env, a.Env...)
+	}
+
 	if a.Shell != nil {
 		cfg.Shell = *a.Shell
 	}
 
-	defaultEnv := cfg.Env
-
-	var combinedEnv map[string]string = make(map[string]string)
-
-	// Add the sets of variables to the combined environment in the following order of priority:
-	// 1 - anything from config.GetExtraEnv()
-	// 2 - any vars passed in. These are the --set variables
-	// 3 - any Env from the action
-	// 4 - any default environment from types.ActionDefaults
-	//
-	// Each one will only add the key if it is not already present, enforcing the above order of precedence.
+	// Add variables to the environment.
+	for k, v := range vars {
+		cfg.Env = append(cfg.Env, fmt.Sprintf("%s=%s", k, v.Value))
+	}
 
 	for k, v := range config.GetExtraEnv() {
-		combinedEnv[k] = v
-	}
-
-	for k, v := range vars {
-		if _, exists := combinedEnv[k]; !exists {
-			combinedEnv[k] = v.Value
-		}
-	}
-
-	for _, envVar := range a.Env {
-		parts := strings.SplitN(envVar, "=", 2)
-		if len(parts) == 2 {
-			k := parts[0]
-			v := parts[1]
-
-			if _, exists := combinedEnv[k]; !exists {
-				combinedEnv[k] = v
-			}
-		}
-	}
-
-	for _, envVar := range defaultEnv {
-		parts := strings.SplitN(envVar, "=", 2)
-		if len(parts) == 2 {
-			k := parts[0]
-			v := parts[1]
-
-			if _, exists := combinedEnv[k]; !exists {
-				combinedEnv[k] = v
-			}
-		}
-	}
-
-	// format all the combinedEnv back into "KEY=VALUE" strings and put into cfg.Env
-	cfg.Env = nil
-	for k, v := range combinedEnv {
 		cfg.Env = append(cfg.Env, fmt.Sprintf("%s=%s", k, v))
 	}
 

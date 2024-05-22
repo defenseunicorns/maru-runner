@@ -44,6 +44,7 @@ tasks:
       - cmd: echo "I'm set from a --set var - $REPLACE_ME"
       - cmd: echo "I'm set from a new --set var - ${UNICORNS}"
       - cmd: echo "I'm set automatically - MARU=${MARU}"
+      - cmd: MARU=hello; echo "I was changed on the command line - MARU=${MARU}"
   - name: print-common-env
     actions:
       - cmd: echo MARU_ARCH=[$MARU_ARCH]

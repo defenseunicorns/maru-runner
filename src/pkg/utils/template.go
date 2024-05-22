@@ -70,6 +70,7 @@ func TemplateString[T any](setVariableMap variables.SetVariableMap[T], s string)
 		if value, ok := config.GetExtraEnv()[varName]; ok {
 			return value
 		}
+
 		if value, ok := setVariableMap[varName]; ok {
 			return value.Value
 		}
