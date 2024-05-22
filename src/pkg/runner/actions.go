@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present the Maru Authors
+// SPDX-FileCopyrightText: 2023-Present the Maru Authors
 
 // Package runner provides functions for running tasks in a tasks.yaml
 package runner
@@ -15,8 +16,12 @@ import (
 	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
 	"github.com/defenseunicorns/pkg/exec"
 	"github.com/defenseunicorns/pkg/helpers"
+	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
+	"github.com/defenseunicorns/pkg/exec"
+	"github.com/defenseunicorns/pkg/helpers"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
+	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
 	"github.com/defenseunicorns/maru-runner/src/types"
@@ -32,6 +37,7 @@ func (r *Runner) performAction(action types.Action) error {
 
 		// template the withs with variables
 		for k, v := range action.With {
+			action.With[k] = utils.TemplateString(r.variableConfig.GetSetVariables(), v)
 			action.With[k] = utils.TemplateString(r.variableConfig.GetSetVariables(), v)
 		}
 
@@ -54,6 +60,7 @@ func (r *Runner) performAction(action types.Action) error {
 			return err
 		}
 	} else {
+		err := RunAction(action.BaseAction, r.envFilePath, r.variableConfig)
 		err := RunAction(action.BaseAction, r.envFilePath, r.variableConfig)
 		if err != nil {
 			return err
@@ -96,6 +103,7 @@ func getUniqueTaskActions(actions []types.Action) []types.Action {
 }
 
 func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableConfig *variables.VariableConfig[T]) error {
+func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableConfig *variables.VariableConfig[T]) error {
 	var (
 		ctx        context.Context
 		cancel     context.CancelFunc
@@ -132,6 +140,7 @@ func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableC
 		action.Dir = &d
 		action.Env = []string{}
 		action.SetVariables = []variables.Variable[T]{}
+		action.SetVariables = []variables.Variable[T]{}
 	}
 
 	// load the contents of the env file into the Action + the MARU_ARCH
@@ -150,12 +159,17 @@ func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableC
 		cmdEscaped = action.Description
 	} else {
 		cmdEscaped = helpers.Truncate(cmd, 60, false)
+		cmdEscaped = helpers.Truncate(cmd, 60, false)
 	}
 
 	spinner := message.NewProgressSpinner("Running \"%s\"", cmdEscaped)
 
 	cfg := GetBaseActionCfg(types.ActionDefaults{}, *action, variableConfig.GetSetVariables())
+	cfg := GetBaseActionCfg(types.ActionDefaults{}, *action, variableConfig.GetSetVariables())
 
+	if cmd = exec.MutateCommand(cmd, cfg.Shell); err != nil {
+		message.SLog.Debug(err.Error())
+		spinner.Failf("Error mutating command: %s", cmdEscaped)
 	if cmd = exec.MutateCommand(cmd, cfg.Shell); err != nil {
 		message.SLog.Debug(err.Error())
 		spinner.Failf("Error mutating command: %s", cmdEscaped)
@@ -163,8 +177,10 @@ func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableC
 
 	// Template dir string
 	cfg.Dir = utils.TemplateString(variableConfig.GetSetVariables(), cfg.Dir)
+	cfg.Dir = utils.TemplateString(variableConfig.GetSetVariables(), cfg.Dir)
 
 	// template cmd string
+	cmd = utils.TemplateString(variableConfig.GetSetVariables(), cmd)
 	cmd = utils.TemplateString(variableConfig.GetSetVariables(), cmd)
 
 	duration := time.Duration(cfg.MaxTotalSeconds) * time.Second
@@ -172,11 +188,13 @@ func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableC
 
 	// Keep trying until the max retries is reached.
 retryLoop:
+retryLoop:
 	for remaining := cfg.MaxRetries + 1; remaining > 0; remaining-- {
 
 		// Perform the action run.
 		tryCmd := func(ctx context.Context) error {
 			// Try running the command and continue the retry loop if it fails.
+			if out, err = ExecAction(ctx, cfg, cmd, cfg.Shell, spinner); err != nil {
 			if out, err = ExecAction(ctx, cfg, cmd, cfg.Shell, spinner); err != nil {
 				return err
 			}
@@ -189,6 +207,10 @@ retryLoop:
 				if err = variableConfig.CheckVariablePattern(v.Name); err != nil {
 					message.SLog.Debug(err.Error())
 					message.SLog.Warn(err.Error())
+				variableConfig.SetVariable(v.Name, out, v.Pattern, v.Extra)
+				if err = variableConfig.CheckVariablePattern(v.Name); err != nil {
+					message.SLog.Debug(err.Error())
+					message.SLog.Warn(err.Error())
 					return err
 				}
 			}
@@ -196,7 +218,9 @@ retryLoop:
 			// If the action has a wait, change the spinner message to reflect that on success.
 			if action.Wait != nil {
 				spinner.Successf("Wait for %q succeeded", cmdEscaped)
+				spinner.Successf("Wait for %q succeeded", cmdEscaped)
 			} else {
+				spinner.Successf("Completed %q", cmdEscaped)
 				spinner.Successf("Completed %q", cmdEscaped)
 			}
 
@@ -219,6 +243,7 @@ retryLoop:
 		select {
 		// On timeout break the loop to abort.
 		case <-timeout:
+			break retryLoop
 			break retryLoop
 
 		// Otherwise, try running the command.
@@ -358,6 +383,7 @@ func ExecAction(ctx context.Context, cfg types.ActionDefaults, cmd string, shell
 // TODO: (@WSTARR) - this is broken in Maru right now - this should not shell to Kubectl and instead should internally talk to a cluster
 // convertWaitToCmd will return the wait command if it exists, otherwise it will return the original command.
 func convertWaitToCmd(wait types.ActionWait, timeout *int) (string, error) {
+func convertWaitToCmd(wait types.ActionWait, timeout *int) (string, error) {
 	// Build the timeout string.
 	timeoutString := fmt.Sprintf("--timeout %ds", *timeout)
 
@@ -433,12 +459,14 @@ func validateActionableTaskCall(inputTaskName string, inputs map[string]types.In
 			if withKey == inputKey {
 				if input.DeprecatedMessage != "" {
 					message.SLog.Warn(fmt.Sprintf("This input has been marked deprecated: %s", input.DeprecatedMessage))
+					message.SLog.Warn(fmt.Sprintf("This input has been marked deprecated: %s", input.DeprecatedMessage))
 				}
 				matched = true
 				break
 			}
 		}
 		if !matched {
+			message.SLog.Warn(fmt.Sprintf("Task %s does not have an input named %s", inputTaskName, withKey))
 			message.SLog.Warn(fmt.Sprintf("Task %s does not have an input named %s", inputTaskName, withKey))
 		}
 	}
