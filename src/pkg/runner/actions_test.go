@@ -449,8 +449,6 @@ func TestRunner_GetBaseActionCfg(t *testing.T) {
 					Env: []string{"ENV1=fromDefault", "ENV2=xyz"},
 				},
 				a: types.BaseAction[string]{},
-				//vars: variables.SetVariableMap[string]{"ENV1": {Value: "fromSet"}},
-				//extraEnv: map[string]string{"ENV1": "fromExtra"},
 			},
 			want: []string{"ENV1=fromDefault", "ENV2=xyz"},
 		},
