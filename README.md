@@ -276,7 +276,7 @@ Variable precedence is as follows, from least to most specific:
 - Environment variables prefixed with `MARU_`
 - Variables set with the `--set` flag in the CLI
 
-That is to say, variables set via the `--set` flag take precedence over all other variables. 
+That is to say, variables set via the `--set` flag take precedence over all other variables.
 
 There are a couple of exceptions to this precedence order:
 - When a variable is modified using `setVariable`, which will change the value of the variable during runtime.
