@@ -63,7 +63,6 @@ func TemplateString[T any](setVariableMap variables.SetVariableMap[T], s string)
 	re := regexp.MustCompile(`\${(.*?)}`)
 
 	// template string using values from the set variable map
-	// template string using values from the set variable map
 	result := re.ReplaceAllStringFunc(s, func(matched string) string {
 		varName := strings.TrimSuffix(strings.TrimPrefix(matched, "${"), "}")
 
