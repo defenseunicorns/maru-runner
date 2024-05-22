@@ -7,8 +7,6 @@
 
 Maru is a task runner that enables developers to automate builds and perform common shell tasks and shares a syntax similar to `zarf.yaml` `actions`.
 Many [Zarf Actions features](https://docs.zarf.dev/ref/actions/) are also available in the runner.
-Maru is a task runner that enables developers to automate builds and perform common shell tasks and shares a syntax similar to `zarf.yaml` `actions`.
-Many [Zarf Actions features](https://docs.zarf.dev/ref/actions/) are also available in the runner.
 
 ## Table of Contents
 
