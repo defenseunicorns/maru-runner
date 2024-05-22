@@ -53,9 +53,6 @@ func GetArch(archs ...string) string {
 
 // AddExtraEnv adds a new envirmentment variable to the extraEnv to make it available to actions
 func AddExtraEnv(key string, value string) {
-	if extraEnv == nil {
-		extraEnv = make(map[string]string)
-	}
 	extraEnv[key] = value
 }
 

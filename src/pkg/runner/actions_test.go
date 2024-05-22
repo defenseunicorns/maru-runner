@@ -11,6 +11,8 @@ import (
 	"github.com/defenseunicorns/maru-runner/src/types"
 
 	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
+
+	"github.com/stretchr/testify/require"
 )
 
 func Test_getUniqueTaskActions(t *testing.T) {
@@ -462,7 +464,7 @@ func TestRunner_GetBaseActionCfg(t *testing.T) {
 				vars:     variables.SetVariableMap[string]{"ENV1": {Value: "fromSet"}},
 				extraEnv: map[string]string{"ENV1": "fromExtra"},
 			},
-			want: []string{"ENV1=fromExtra", "ENV2=xyz1"},
+			want: []string{"ENV1=fromDefault", "ENV2=xyz1", "ENV1=fromSet", "ENV1=fromExtra"},
 		},
 		{
 			name: "extraEnv adds to defaults",
@@ -474,7 +476,7 @@ func TestRunner_GetBaseActionCfg(t *testing.T) {
 				vars:     variables.SetVariableMap[string]{"ENV1": {Value: "fromSet"}},
 				extraEnv: map[string]string{"ENV3": "fromExtra"},
 			},
-			want: []string{"ENV1=fromSet", "ENV2=xyz1", "ENV3=fromExtra"},
+			want: []string{"ENV1=fromDefault", "ENV2=xyz1", "ENV1=fromSet", "ENV3=fromExtra"},
 		},
 		{
 			name: "extraEnv adds and overrides defaults",
@@ -486,7 +488,7 @@ func TestRunner_GetBaseActionCfg(t *testing.T) {
 				vars:     variables.SetVariableMap[string]{"ENV4": {Value: "fromSet"}},
 				extraEnv: map[string]string{"ENV2": "alsoFromEnv", "ENV3": "fromExtra"},
 			},
-			want: []string{"ENV1=fromDefault", "ENV2=alsoFromEnv", "ENV3=fromExtra", "ENV4=fromSet"},
+			want: []string{"ENV1=fromDefault", "ENV2=xyz1", "ENV4=fromSet", "ENV2=alsoFromEnv", "ENV3=fromExtra"},
 		},
 	}
 
@@ -499,21 +501,8 @@ func TestRunner_GetBaseActionCfg(t *testing.T) {
 
 			got := GetBaseActionCfg(tt.args.cfg, tt.args.a, tt.args.vars)
 
-			for _, want := range tt.want {
-				if !contains(got.Env, want) {
-					t.Errorf("TestRunner_GetBaseActionCfg GetBaseActionCfg [%s] Env wanted to contain %q in slice but received %v", tt.name, want, got.Env)
-				}
-			}
+			require.Equal(t, tt.want, got.Env, "The returned Env array did not match what was wanted")
 		})
 	}
 
-}
-
-func contains(s []string, e string) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
 }

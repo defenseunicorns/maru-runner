@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
+	"github.com/stretchr/testify/require"
 
 	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
 )
@@ -67,10 +68,9 @@ func Test_TemplateString(t *testing.T) {
 			for k, v := range tt.args.extraEnv {
 				config.AddExtraEnv(k, v)
 			}
+			got := TemplateString(tt.args.vars, tt.args.s)
 
-			if got := TemplateString(tt.args.vars, tt.args.s); got != tt.want {
-				t.Errorf("TemplateString() [%s] got = %q, want %q", tt.name, got, tt.want)
-			}
+			require.Equal(t, tt.want, got, "The returned string did not match what was wanted")
 		})
 	}
 
