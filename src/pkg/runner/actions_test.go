@@ -7,9 +7,12 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/types"
 
 	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
+
+	"github.com/stretchr/testify/require"
 )
 
 func Test_getUniqueTaskActions(t *testing.T) {
@@ -425,4 +428,79 @@ func TestRunner_processAction(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRunner_GetBaseActionCfg(t *testing.T) {
+	type args struct {
+		cfg      types.ActionDefaults
+		a        types.BaseAction[string]
+		vars     variables.SetVariableMap[string]
+		extraEnv map[string]string
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{
+			name: "ActionDefaults used when no overrides",
+			args: args{
+				cfg: types.ActionDefaults{
+					Env: []string{"ENV1=fromDefault", "ENV2=xyz"},
+				},
+				a: types.BaseAction[string]{},
+			},
+			want: []string{"ENV1=fromDefault", "ENV2=xyz"},
+		},
+		{
+			name: "extraEnv overrides defaults",
+			args: args{
+				cfg: types.ActionDefaults{
+					Env: []string{"ENV1=fromDefault", "ENV2=xyz1"},
+				},
+				a:        types.BaseAction[string]{},
+				vars:     variables.SetVariableMap[string]{"ENV1": {Value: "fromSet"}},
+				extraEnv: map[string]string{"ENV1": "fromExtra"},
+			},
+			want: []string{"ENV1=fromDefault", "ENV2=xyz1", "ENV1=fromSet", "ENV1=fromExtra"},
+		},
+		{
+			name: "extraEnv adds to defaults",
+			args: args{
+				cfg: types.ActionDefaults{
+					Env: []string{"ENV1=fromDefault", "ENV2=xyz1"},
+				},
+				a:        types.BaseAction[string]{},
+				vars:     variables.SetVariableMap[string]{"ENV1": {Value: "fromSet"}},
+				extraEnv: map[string]string{"ENV3": "fromExtra"},
+			},
+			want: []string{"ENV1=fromDefault", "ENV2=xyz1", "ENV1=fromSet", "ENV3=fromExtra"},
+		},
+		{
+			name: "extraEnv adds and overrides defaults",
+			args: args{
+				cfg: types.ActionDefaults{
+					Env: []string{"ENV1=fromDefault", "ENV2=xyz1"},
+				},
+				a:        types.BaseAction[string]{},
+				vars:     variables.SetVariableMap[string]{"ENV4": {Value: "fromSet"}},
+				extraEnv: map[string]string{"ENV2": "alsoFromEnv", "ENV3": "fromExtra"},
+			},
+			want: []string{"ENV1=fromDefault", "ENV2=xyz1", "ENV4=fromSet", "ENV2=alsoFromEnv", "ENV3=fromExtra"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config.ClearExtraEnv()
+			for k, v := range tt.args.extraEnv {
+				config.AddExtraEnv(k, v)
+			}
+
+			got := GetBaseActionCfg(tt.args.cfg, tt.args.a, tt.args.vars)
+
+			require.Equal(t, tt.want, got.Env, "The returned Env array did not match what was wanted")
+		})
+	}
+
 }

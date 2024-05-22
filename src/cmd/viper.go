@@ -22,7 +22,6 @@ const (
 	V_NO_PROGRESS  = "options.no_progress"
 	V_NO_LOG_FILE  = "options.no_log_file"
 	V_TMP_DIR      = "options.tmp_dir"
-	V_ENV_PREFIX   = "options.env_prefix"
 )
 
 var (
@@ -42,7 +41,7 @@ func initViper() {
 	v = viper.New()
 
 	// Specify an alternate config file
-	cfgFile := os.Getenv("RUN_CONFIG")
+	cfgFile := os.Getenv("MARU_CONFIG")
 
 	// Don't forget to read config either from cfgFile or from home directory!
 	if cfgFile != "" {
@@ -51,13 +50,13 @@ func initViper() {
 	} else {
 		// Search config paths (order matters!)
 		v.AddConfigPath(".")
-		v.AddConfigPath("$HOME/.run")
+		v.AddConfigPath("$HOME/.maru")
 		// todo: make configurable
-		v.SetConfigName("run-config")
+		v.SetConfigName("maru-config")
 	}
 
-	// we replace 'OPTIONS.' because in a run-config.yaml, the key is options.<opt>, but in the environment, it's RUN_<OPT>
-	// e.g. RUN_LOG_LEVEL=debug
+	// we replace 'OPTIONS.' because in a maru-config.yaml, the key is options.<opt>, but in the environment, it's MARU_<OPT>
+	// e.g. MARU_LOG_LEVEL=debug
 	v.SetEnvPrefix(config.EnvPrefix)
 	v.SetEnvKeyReplacer(strings.NewReplacer("OPTIONS.", ""))
 	v.AutomaticEnv()
