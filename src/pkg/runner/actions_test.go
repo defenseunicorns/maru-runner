@@ -1,21 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2023-Present The UDS Authors
+// SPDX-FileCopyrightText: 2023-Present the Maru Authors
 
 package runner
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 
-	zarfUtils "github.com/defenseunicorns/zarf/src/pkg/utils"
-
-	zarfTypes "github.com/defenseunicorns/zarf/src/types"
-
 	"github.com/defenseunicorns/maru-runner/src/types"
 
-	"github.com/defenseunicorns/maru-runner/src/config"
-	"github.com/stretchr/testify/require"
+	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
 )
 
 func Test_getUniqueTaskActions(t *testing.T) {
@@ -89,7 +83,7 @@ func Test_getUniqueTaskActions(t *testing.T) {
 
 func Test_convertWaitToCmd(t *testing.T) {
 	type args struct {
-		wait    zarfTypes.ZarfComponentActionWait
+		wait    types.ActionWait
 		timeout *int
 	}
 	tests := []struct {
@@ -101,8 +95,8 @@ func Test_convertWaitToCmd(t *testing.T) {
 		{
 			name: "Cluster wait command",
 			args: args{
-				wait: zarfTypes.ZarfComponentActionWait{
-					Cluster: &zarfTypes.ZarfComponentActionWaitCluster{
+				wait: types.ActionWait{
+					Cluster: &types.ActionWaitCluster{
 						Kind:       "pod",
 						Identifier: "my-pod",
 						Condition:  "Ready",
@@ -117,8 +111,8 @@ func Test_convertWaitToCmd(t *testing.T) {
 		{
 			name: "Network wait command",
 			args: args{
-				wait: zarfTypes.ZarfComponentActionWait{
-					Network: &zarfTypes.ZarfComponentActionWaitNetwork{
+				wait: types.ActionWait{
+					Network: &types.ActionWaitNetwork{
 						Protocol: "http",
 						Address:  "http://example.com",
 						Code:     200,
@@ -132,7 +126,7 @@ func Test_convertWaitToCmd(t *testing.T) {
 		{
 			name: "Invalid wait action",
 			args: args{
-				wait:    zarfTypes.ZarfComponentActionWait{},
+				wait:    types.ActionWait{},
 				timeout: IntPtr(30),
 			},
 			want:    "",
@@ -223,13 +217,12 @@ func Test_validateActionableTaskCall(t *testing.T) {
 
 func TestRunner_performAction(t *testing.T) {
 	type fields struct {
-		TemplateMap map[string]*zarfUtils.TextTemplate
-		TasksFile   types.TasksFile
-		TaskNameMap map[string]bool
-		envFilePath string
+		TasksFile      types.TasksFile
+		TaskNameMap    map[string]bool
+		envFilePath    string
+		variableConfig *variables.VariableConfig[variables.ExtraVariableInfo]
 	}
 	type args struct {
-		task   types.Task
 		action types.Action
 	}
 	tests := []struct {
@@ -238,33 +231,22 @@ func TestRunner_performAction(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		//TODO: Add more test cases
+		// TODO: Add more test cases
 		{
 			name: "failed action processing due to invalid command",
 			fields: fields{
-				TemplateMap: make(map[string]*zarfUtils.TextTemplate),
-				TasksFile:   types.TasksFile{},
-				TaskNameMap: make(map[string]bool),
-				envFilePath: "",
+				TasksFile:      types.TasksFile{},
+				TaskNameMap:    make(map[string]bool),
+				envFilePath:    "",
+				variableConfig: GetMaruVariableConfig(),
 			},
 			args: args{
-				task: types.Task{
-					Name: "testTask",
-					Actions: []types.Action{
-						{
-							TaskReference: "",
-							With: map[string]string{
-								"cmd": "exit 1",
-							},
-						},
-					},
-				},
 				action: types.Action{
 					TaskReference: "",
 					With: map[string]string{
 						"cmd": "exit 1",
 					},
-					ZarfComponentAction: &zarfTypes.ZarfComponentAction{
+					BaseAction: &types.BaseAction[variables.ExtraVariableInfo]{
 						Description: "Test action for failure scenario",
 						Wait:        nil,
 					},
@@ -274,32 +256,21 @@ func TestRunner_performAction(t *testing.T) {
 		{
 			name: "Unable to open path",
 			fields: fields{
-				TemplateMap: make(map[string]*zarfUtils.TextTemplate),
-				TasksFile:   types.TasksFile{},
-				TaskNameMap: make(map[string]bool),
-				envFilePath: "test/path",
+				TasksFile:      types.TasksFile{},
+				TaskNameMap:    make(map[string]bool),
+				envFilePath:    "test/path",
+				variableConfig: GetMaruVariableConfig(),
 			},
 			args: args{
-				task: types.Task{
-					Name: "waitTask",
-					Actions: []types.Action{
-						{
-							TaskReference: "",
-							With: map[string]string{
-								"cmd": "zarf tools wait-for pod my-pod Running",
-							},
-						},
-					},
-				},
 				action: types.Action{
 					TaskReference: "",
 					With: map[string]string{
 						"cmd": "zarf tools wait-for pod my-pod Running",
 					},
-					ZarfComponentAction: &zarfTypes.ZarfComponentAction{
+					BaseAction: &types.BaseAction[variables.ExtraVariableInfo]{
 						Description: "Test action for wait command",
-						Wait: &zarfTypes.ZarfComponentActionWait{
-							Cluster: &zarfTypes.ZarfComponentActionWaitCluster{
+						Wait: &types.ActionWait{
+							Cluster: &types.ActionWaitCluster{
 								Kind:       "pod",
 								Identifier: "my-pod",
 								Condition:  "Running",
@@ -314,10 +285,10 @@ func TestRunner_performAction(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &Runner{
-				TemplateMap: tt.fields.TemplateMap,
-				TasksFile:   tt.fields.TasksFile,
-				TaskNameMap: tt.fields.TaskNameMap,
-				envFilePath: tt.fields.envFilePath,
+				TasksFile:      tt.fields.TasksFile,
+				TaskNameMap:    tt.fields.TaskNameMap,
+				envFilePath:    tt.fields.envFilePath,
+				variableConfig: tt.fields.variableConfig,
 			}
 			err := r.performAction(tt.args.action)
 			if (err != nil) != tt.wantErr {
@@ -329,10 +300,10 @@ func TestRunner_performAction(t *testing.T) {
 
 func TestRunner_processAction(t *testing.T) {
 	type fields struct {
-		TemplateMap map[string]*zarfUtils.TextTemplate
-		TasksFile   types.TasksFile
-		TaskNameMap map[string]bool
-		envFilePath string
+		TasksFile      types.TasksFile
+		TaskNameMap    map[string]bool
+		envFilePath    string
+		variableConfig *variables.VariableConfig[variables.ExtraVariableInfo]
 	}
 	type args struct {
 		task   types.Task
@@ -347,10 +318,10 @@ func TestRunner_processAction(t *testing.T) {
 		{
 			name: "successful action processing",
 			fields: fields{
-				TemplateMap: map[string]*zarfUtils.TextTemplate{},
-				TasksFile:   types.TasksFile{},
-				TaskNameMap: map[string]bool{},
-				envFilePath: "",
+				TasksFile:      types.TasksFile{},
+				TaskNameMap:    map[string]bool{},
+				envFilePath:    "",
+				variableConfig: GetMaruVariableConfig(),
 			},
 			args: args{
 				task: types.Task{
@@ -365,10 +336,10 @@ func TestRunner_processAction(t *testing.T) {
 		{
 			name: "action processing with same task and action reference",
 			fields: fields{
-				TemplateMap: map[string]*zarfUtils.TextTemplate{},
-				TasksFile:   types.TasksFile{},
-				TaskNameMap: map[string]bool{},
-				envFilePath: "",
+				TasksFile:      types.TasksFile{},
+				TaskNameMap:    map[string]bool{},
+				envFilePath:    "",
+				variableConfig: GetMaruVariableConfig(),
 			},
 			args: args{
 				task: types.Task{
@@ -383,10 +354,10 @@ func TestRunner_processAction(t *testing.T) {
 		{
 			name: "action processing with empty task reference",
 			fields: fields{
-				TemplateMap: map[string]*zarfUtils.TextTemplate{},
-				TasksFile:   types.TasksFile{},
-				TaskNameMap: map[string]bool{},
-				envFilePath: "",
+				TasksFile:      types.TasksFile{},
+				TaskNameMap:    map[string]bool{},
+				envFilePath:    "",
+				variableConfig: GetMaruVariableConfig(),
 			},
 			args: args{
 				task: types.Task{
@@ -401,10 +372,10 @@ func TestRunner_processAction(t *testing.T) {
 		{
 			name: "action processing with non-empty task reference and different task and action reference names",
 			fields: fields{
-				TemplateMap: map[string]*zarfUtils.TextTemplate{},
-				TasksFile:   types.TasksFile{},
-				TaskNameMap: map[string]bool{},
-				envFilePath: "",
+				TasksFile:      types.TasksFile{},
+				TaskNameMap:    map[string]bool{},
+				envFilePath:    "",
+				variableConfig: GetMaruVariableConfig(),
 			},
 			args: args{
 				task: types.Task{
@@ -419,7 +390,6 @@ func TestRunner_processAction(t *testing.T) {
 		{
 			name: "action processing with task reference already processed",
 			fields: fields{
-				TemplateMap: map[string]*zarfUtils.TextTemplate{},
 				TasksFile: types.TasksFile{
 					Tasks: []types.Task{
 						{
@@ -427,8 +397,9 @@ func TestRunner_processAction(t *testing.T) {
 						},
 					},
 				},
-				TaskNameMap: map[string]bool{},
-				envFilePath: "",
+				TaskNameMap:    map[string]bool{},
+				envFilePath:    "",
+				variableConfig: GetMaruVariableConfig(),
 			},
 			args: args{
 				task: types.Task{
@@ -444,50 +415,14 @@ func TestRunner_processAction(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &Runner{
-				TemplateMap: tt.fields.TemplateMap,
-				TasksFile:   tt.fields.TasksFile,
-				TaskNameMap: tt.fields.TaskNameMap,
-				envFilePath: tt.fields.envFilePath,
+				TasksFile:      tt.fields.TasksFile,
+				TaskNameMap:    tt.fields.TaskNameMap,
+				envFilePath:    tt.fields.envFilePath,
+				variableConfig: tt.fields.variableConfig,
 			}
 			if got := r.processAction(tt.args.task, tt.args.action); got != tt.want {
 				t.Errorf("processAction() got = %v, want %v", got, tt.want)
 			}
-		})
-	}
-}
-
-func Test_actionCmdMutation(t *testing.T) {
-	// Initialize test cases
-	testCases := []struct {
-		input    string
-		expected string
-		config   string
-	}{
-		{
-			input:    "./uds mycommand",
-			expected: "/path/to/executable mycommand",
-			config:   "uds",
-		},
-		{
-			input:    "./uds ../uds/mycommand",
-			expected: "/path/to/executable ../uds/mycommand",
-			config:   "uds",
-		},
-		{
-			input:    "./run ../run/mycommand",
-			expected: "/path/to/executable ../run/mycommand",
-			config:   "",
-		},
-	}
-
-	// Run tests
-	runCmd := "/path/to/executable"
-	for _, tc := range testCases {
-		config.CmdPrefix = tc.config
-		t.Run(fmt.Sprintf("Input: %s", tc.input), func(t *testing.T) {
-			mutatedCmd, err := actionCmdMutation(tc.input, runCmd)
-			require.NoError(t, err)
-			require.Equal(t, tc.expected, mutatedCmd)
 		})
 	}
 }

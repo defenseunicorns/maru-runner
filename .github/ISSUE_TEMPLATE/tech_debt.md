@@ -2,7 +2,7 @@
 name: Tech debt
 about: Record something that should be investigated or refactored in the future.
 title: ''
-labels: 'tech-debt'
+labels: 'tech-debt 💳'
 assignees: ''
 ---
 
@@ -12,7 +12,7 @@ A clear and concise description of what should be changed/researched. Ex. This p
 
 ### Links to any relevant code
 
-(optional) i.e. - <https://github.com/defenseunicorns/uds-template-capability/blob/main/README.md?plain=1#L1>
+(optional) i.e. - <https://github.com/defenseunicorns/maru-runner/blob/main/README.md?plain=1#L1>
 
 ### Additional context
 

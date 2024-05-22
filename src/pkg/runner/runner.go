@@ -1,43 +1,45 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2023-Present The UDS Authors
+// SPDX-FileCopyrightText: 2023-Present the Maru Authors
 
 // Package runner provides functions for running tasks in a tasks.yaml
 package runner
 
 import (
 	"fmt"
-	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
+	"github.com/defenseunicorns/maru-runner/src/config/lang"
+	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
+	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
 	"github.com/defenseunicorns/maru-runner/src/types"
 	"github.com/defenseunicorns/pkg/helpers"
-	zarfConfig "github.com/defenseunicorns/zarf/src/config"
-	"github.com/defenseunicorns/zarf/src/config/lang"
-	"github.com/defenseunicorns/zarf/src/pkg/message"
-	zarfUtils "github.com/defenseunicorns/zarf/src/pkg/utils"
-	zarfTypes "github.com/defenseunicorns/zarf/src/types"
-	"github.com/mholt/archiver/v3"
 )
 
 // Runner holds the necessary data to run tasks from a tasks file
 type Runner struct {
-	TemplateMap map[string]*utils.TextTemplate
-	TasksFile   types.TasksFile
-	TaskNameMap map[string]bool
-	envFilePath string
+	TasksFile      types.TasksFile
+	TaskNameMap    map[string]bool
+	envFilePath    string
+	variableConfig *variables.VariableConfig[variables.ExtraVariableInfo]
 }
 
 // Run runs a task from tasks file
 func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]string) error {
 	runner := Runner{
-		TemplateMap: map[string]*utils.TextTemplate{},
-		TasksFile:   tasksFile,
-		TaskNameMap: map[string]bool{},
+		TasksFile:      tasksFile,
+		TaskNameMap:    map[string]bool{},
+		variableConfig: GetMaruVariableConfig(),
+	}
+
+	// Populate the variables loaded in the task file
+	err := runner.variableConfig.PopulateVariables(runner.TasksFile.Variables, setVariables)
+	if err != nil {
+		return err
 	}
 
 	// Check to see if running an included task directly
@@ -55,10 +57,6 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 		return err
 	}
 
-	// populate after getting task in case of calling included task directly
-	templateMap := utils.PopulateTemplateMap(runner.TasksFile.Variables, setVariables)
-	runner.TemplateMap = templateMap
-
 	// can't call a task directly from the CLI if it has inputs
 	if task.Inputs != nil {
 		return fmt.Errorf("task '%s' contains 'inputs' and cannot be called directly by the CLI", taskName)
@@ -70,6 +68,14 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 
 	err = runner.executeTask(task)
 	return err
+}
+
+// GetMaruVariableConfig gets the variable configuration for Maru
+func GetMaruVariableConfig() *variables.VariableConfig[variables.ExtraVariableInfo] {
+	prompt := func(_ variables.InteractiveVariable[variables.ExtraVariableInfo]) (value string, err error) {
+		return "", nil
+	}
+	return variables.New[variables.ExtraVariableInfo](prompt, message.SLog)
 }
 
 func (r *Runner) processIncludes(tasksFile types.TasksFile, setVariables map[string]string, action types.Action) error {
@@ -105,27 +111,27 @@ func (r *Runner) importTasks(includes []map[string]string, dir string, setVariab
 			break
 		}
 
-		includeFilename = utils.TemplateString(r.TemplateMap, includeFilename)
+		includeFilename = utils.TemplateString(r.variableConfig.GetSetVariables(), includeFilename)
 
 		var tasksFile types.TasksFile
 		var includePath string
 		// check if included file is a url
 		if helpers.IsURL(includeFilename) {
 			// If file is a url download it to a tmp directory
-			tmpDir, err := zarfUtils.MakeTempDir(config.TempDirectory)
+			tmpDir, err := utils.MakeTempDir(config.TempDirectory)
 			defer os.RemoveAll(tmpDir)
 			if err != nil {
 				return err
 			}
 			includePath = filepath.Join(tmpDir, filepath.Base(includeFilename))
-			if err := zarfUtils.DownloadToFile(includeFilename, includePath, ""); err != nil {
-				return fmt.Errorf(lang.ErrDownloading, includeFilename, err.Error())
+			if err := utils.DownloadToFile(includeFilename, includePath); err != nil {
+				return fmt.Errorf(lang.ErrDownloading, includeFilename, err)
 			}
 		} else {
 			includePath = filepath.Join(dir, includeFilename)
 		}
 
-		if err := zarfUtils.ReadYaml(includePath, &tasksFile); err != nil {
+		if err := utils.ReadYaml(includePath, &tasksFile); err != nil {
 			return fmt.Errorf("unable to read included file %s: %w", includePath, err)
 		}
 
@@ -147,7 +153,7 @@ func (r *Runner) importTasks(includes []map[string]string, dir string, setVariab
 
 		r.TasksFile.Tasks = append(r.TasksFile.Tasks, tasksFile.Tasks...)
 
-		r.processTemplateMapVariables(setVariables, tasksFile)
+		r.processTemplateMapVariables(tasksFile)
 
 		// recursively import tasks from included files
 		if tasksFile.Includes != nil {
@@ -171,26 +177,13 @@ func (r *Runner) checkProcessedTasksForLoops(tasksFile types.TasksFile) error {
 	return nil
 }
 
-func (r *Runner) processTemplateMapVariables(setVariables map[string]string, tasksFile types.TasksFile) {
+func (r *Runner) processTemplateMapVariables(tasksFile types.TasksFile) {
 	// grab variables from included file
 	for _, v := range tasksFile.Variables {
-		r.TemplateMap["${"+v.Name+"}"] = &utils.TextTemplate{
-			Sensitive:  v.Sensitive,
-			AutoIndent: v.AutoIndent,
-			Type:       v.Type,
-			Value:      v.Default,
+		if _, ok := r.variableConfig.GetSetVariable(v.Name); !ok {
+			r.variableConfig.SetVariable(v.Name, v.Default, v.Pattern, v.Extra)
 		}
 	}
-
-	// merge variables with setVariables
-	setVariablesTemplateMap := make(map[string]*utils.TextTemplate)
-	for name, value := range setVariables {
-		setVariablesTemplateMap[fmt.Sprintf("${%s}", name)] = &utils.TextTemplate{
-			Value: value,
-		}
-	}
-
-	maps.Copy(r.TemplateMap, setVariablesTemplateMap)
 }
 
 func (r *Runner) loadIncludedTaskFile(taskName string) (string, error) {
@@ -218,21 +211,21 @@ func (r *Runner) loadIncludeTask(includeFileLocation string, includeTaskName str
 
 	// check for templated variables in includeFileLocation value
 	if re.MatchString(includeFileLocation) {
-		templateMap := utils.PopulateTemplateMap(r.TasksFile.Variables, config.SetRunnerVariables)
-		includeFileLocation = utils.TemplateString(templateMap, includeFileLocation)
+		includeFileLocation = utils.TemplateString(r.variableConfig.GetSetVariables(), includeFileLocation)
 	}
 	// check if included file is a url
 	if helpers.IsURL(includeFileLocation) {
 		// If file is a url download it to a tmp directory
-		tmpDir, err := zarfUtils.MakeTempDir(zarfConfig.CommonOptions.TempDirectory)
+		tmpDir, err := utils.MakeTempDir(config.TempDirectory)
 		if err != nil {
-			message.Fatalf(err, "error creating %s", tmpDir)
+			return "", fmt.Errorf("error creating %s: %w", tmpDir, err)
 		}
+
 		// Remove tmpDir, but not until tasks have been loaded
 		defer os.RemoveAll(tmpDir)
 		fullPath = filepath.Join(tmpDir, filepath.Base(includeFileLocation))
-		if err := zarfUtils.DownloadToFile(includeFileLocation, fullPath, ""); err != nil {
-			message.Fatalf(lang.ErrDownloading, includeFileLocation, err.Error())
+		if err := utils.DownloadToFile(includeFileLocation, fullPath); err != nil {
+			return "", fmt.Errorf(lang.ErrDownloading, includeFileLocation, err)
 		}
 	} else {
 		// set include path based on task file location
@@ -242,22 +235,27 @@ func (r *Runner) loadIncludeTask(includeFileLocation string, includeTaskName str
 	config.TaskFileLocation = fullPath
 
 	// Set TasksFile to include task file
-	r.TasksFile = loadTasksFileFromPath(fullPath)
+	var err error
+	r.TasksFile, err = loadTasksFileFromPath(fullPath)
+	if err != nil {
+		return "", err
+	}
+
 	taskName := includeTaskName
 	return taskName, nil
 }
 
-func loadTasksFileFromPath(fullPath string) types.TasksFile {
+func loadTasksFileFromPath(fullPath string) (types.TasksFile, error) {
 	var tasksFile types.TasksFile
 	// get included TasksFile
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-		message.Fatalf(err, "%s not found", config.TaskFileLocation)
+		return types.TasksFile{}, fmt.Errorf("%s not found: %w", config.TaskFileLocation, err)
 	}
-	err := zarfUtils.ReadYaml(fullPath, &tasksFile)
+	err := utils.ReadYaml(fullPath, &tasksFile)
 	if err != nil {
-		message.Fatalf(err, "Cannot unmarshal %s", config.TaskFileLocation)
+		return types.TasksFile{}, fmt.Errorf("cannot unmarshal %s: %w", config.TaskFileLocation, err)
 	}
-	return tasksFile
+	return tasksFile, nil
 }
 
 func (r *Runner) getTask(taskName string) (types.Task, error) {
@@ -270,12 +268,6 @@ func (r *Runner) getTask(taskName string) (types.Task, error) {
 }
 
 func (r *Runner) executeTask(task types.Task) error {
-	if len(task.Files) > 0 {
-		if err := r.placeFiles(task.Files); err != nil {
-			return err
-		}
-	}
-
 	defaultEnv := []string{}
 	for name, inputParam := range task.Inputs {
 		d := inputParam.Default
@@ -297,103 +289,6 @@ func (r *Runner) executeTask(task types.Task) error {
 		}
 	}
 	return nil
-}
-
-func (r *Runner) placeFiles(files []zarfTypes.ZarfFile) error {
-	for _, file := range files {
-		// template file.Source and file.Target
-		srcFile := utils.TemplateString(r.TemplateMap, file.Source)
-		targetFile := utils.TemplateString(r.TemplateMap, file.Target)
-
-		// get current directory
-		workingDir, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		dest := filepath.Join(workingDir, targetFile)
-		destDir := filepath.Dir(dest)
-
-		if helpers.IsURL(srcFile) {
-			// If file is a url download it
-			if err := zarfUtils.DownloadToFile(srcFile, dest, ""); err != nil {
-				return fmt.Errorf(lang.ErrDownloading, srcFile, err.Error())
-			}
-		} else {
-			// If file is not a url copy it
-			if err := helpers.CreatePathAndCopy(srcFile, dest); err != nil {
-				return fmt.Errorf("unable to copy file %s: %w", srcFile, err)
-			}
-
-		}
-		// If file has extract path extract it
-		if file.ExtractPath != "" {
-			_ = os.RemoveAll(file.ExtractPath)
-			err = archiver.Extract(dest, file.ExtractPath, destDir)
-			if err != nil {
-				return fmt.Errorf(lang.ErrFileExtract, file.ExtractPath, srcFile, err.Error())
-			}
-		}
-
-		// if shasum is specified check it
-		if file.Shasum != "" {
-			if file.ExtractPath != "" {
-				if err := helpers.SHAsMatch(file.ExtractPath, file.Shasum); err != nil {
-					return err
-				}
-			} else {
-				if err := helpers.SHAsMatch(dest, file.Shasum); err != nil {
-					return err
-				}
-			}
-		}
-
-		r.templateTextFilesWithVars(dest)
-
-		// if executable make file executable
-		if file.Executable || helpers.IsDir(dest) {
-			_ = os.Chmod(dest, 0700)
-		} else {
-			_ = os.Chmod(dest, 0600)
-		}
-
-		// if symlinks create them
-		for _, link := range file.Symlinks {
-			// Try to remove the filepath if it exists
-			_ = os.RemoveAll(link)
-			// Make sure the parent directory exists
-			_ = helpers.CreateParentDirectory(link)
-			// Create the symlink
-			err := os.Symlink(targetFile, link)
-			if err != nil {
-				return fmt.Errorf("unable to create symlink %s->%s: %w", link, targetFile, err)
-			}
-		}
-	}
-	return nil
-}
-
-func (r *Runner) templateTextFilesWithVars(dest string) {
-	fileList := []string{}
-	if helpers.IsDir(dest) {
-		files, _ := helpers.RecursiveFileList(dest, nil, false)
-		fileList = append(fileList, files...)
-	} else {
-		fileList = append(fileList, dest)
-	}
-	for _, subFile := range fileList {
-		// Check if the file looks like a text file
-		isText, err := helpers.IsTextFile(subFile)
-		if err != nil {
-			fmt.Printf("unable to determine if file %s is a text file: %s", subFile, err)
-		}
-
-		// If the file is a text file, template it
-		if isText {
-			if err := ReplaceTextTemplate(subFile, r.TemplateMap, nil, `\$\{[A-Z0-9_]+\}`); err != nil {
-				message.Fatalf(err, "unable to template file %s", subFile)
-			}
-		}
-	}
 }
 
 func (r *Runner) checkForTaskLoops(task types.Task, tasksFile types.TasksFile, setVariables map[string]string) error {

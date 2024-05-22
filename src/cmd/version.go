@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2021-Present The UDS Authors
+// SPDX-FileCopyrightText: 2021-Present the Maru Authors
 
 // Package cmd contains the CLI commands for maru.
 package cmd
@@ -16,7 +16,7 @@ var versionCmd = &cobra.Command{
 	Use:     "version",
 	Aliases: []string{"v"},
 	PersistentPreRun: func(_ *cobra.Command, _ []string) {
-		config.SkipLogFile = true
+		skipLogFile = true
 		cliSetup()
 	},
 	Short: lang.CmdVersionShort,

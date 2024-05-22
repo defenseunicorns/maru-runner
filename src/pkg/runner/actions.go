@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2023-Present The UDS Authors
+// SPDX-FileCopyrightText: 2023-Present the Maru Authors
 
 // Package runner provides functions for running tasks in a tasks.yaml
 package runner
@@ -9,22 +9,17 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
-	// allows us to use compile time directives
-	_ "unsafe"
-	// used for compile time directives to pull functions from Zarf
-	_ "github.com/defenseunicorns/zarf/src/pkg/packager" // import for the side effect of bringing in actions fns
-	"github.com/defenseunicorns/zarf/src/pkg/utils/exec"
+	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
+	"github.com/defenseunicorns/pkg/exec"
+	"github.com/defenseunicorns/pkg/helpers"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
+	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
 	"github.com/defenseunicorns/maru-runner/src/types"
-	"github.com/defenseunicorns/zarf/src/pkg/message"
-	zarfUtils "github.com/defenseunicorns/zarf/src/pkg/utils"
-	zarfTypes "github.com/defenseunicorns/zarf/src/types"
 )
 
 func (r *Runner) performAction(action types.Action) error {
@@ -37,7 +32,7 @@ func (r *Runner) performAction(action types.Action) error {
 
 		// template the withs with variables
 		for k, v := range action.With {
-			action.With[k] = utils.TemplateString(r.TemplateMap, v)
+			action.With[k] = utils.TemplateString(r.variableConfig.GetSetVariables(), v)
 		}
 
 		referencedTask.Actions, err = utils.TemplateTaskActionsWithInputs(referencedTask, action.With)
@@ -59,7 +54,7 @@ func (r *Runner) performAction(action types.Action) error {
 			return err
 		}
 	} else {
-		err := r.performZarfAction(action.ZarfComponentAction)
+		err := RunAction(action.BaseAction, r.envFilePath, r.variableConfig)
 		if err != nil {
 			return err
 		}
@@ -100,7 +95,7 @@ func getUniqueTaskActions(actions []types.Action) []types.Action {
 	return uniqueArray
 }
 
-func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error {
+func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableConfig *variables.VariableConfig[T]) error {
 	var (
 		ctx        context.Context
 		cancel     context.CancelFunc
@@ -136,12 +131,12 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 		d := ""
 		action.Dir = &d
 		action.Env = []string{}
-		action.SetVariables = []zarfTypes.ZarfComponentActionSetVariable{}
+		action.SetVariables = []variables.Variable[T]{}
 	}
 
 	// load the contents of the env file into the Action + the RUN_ARCH
-	if r.envFilePath != "" {
-		envFilePath := filepath.Join(filepath.Dir(config.TaskFileLocation), r.envFilePath)
+	if envFilePath != "" {
+		envFilePath := filepath.Join(filepath.Dir(config.TaskFileLocation), envFilePath)
 		envFileContents, err := os.ReadFile(envFilePath)
 		if err != nil {
 			return err
@@ -155,40 +150,35 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 	if action.Description != "" {
 		cmdEscaped = action.Description
 	} else {
-		cmdEscaped = message.Truncate(cmd, 60, false)
+		cmdEscaped = helpers.Truncate(cmd, 60, false)
 	}
 
 	spinner := message.NewProgressSpinner("Running \"%s\"", cmdEscaped)
-	// Persist the spinner output so it doesn't get overwritten by the command output.
-	spinner.EnablePreserveWrites()
 
-	cfg := actionGetCfg(zarfTypes.ZarfComponentActionDefaults{}, *action, r.TemplateMap)
+	cfg := GetBaseActionCfg(types.ActionDefaults{}, *action, variableConfig.GetSetVariables())
 
-	runCmd, err := zarfUtils.GetFinalExecutablePath()
-	if err != nil {
-		return err
-	}
-
-	if cmd, err = actionCmdMutation(cmd, runCmd); err != nil {
-		spinner.Errorf(err, "Error mutating command: %s", cmdEscaped)
+	if cmd = exec.MutateCommand(cmd, cfg.Shell); err != nil {
+		message.SLog.Debug(err.Error())
+		spinner.Failf("Error mutating command: %s", cmdEscaped)
 	}
 
 	// Template dir string
-	cfg.Dir = utils.TemplateString(r.TemplateMap, cfg.Dir)
+	cfg.Dir = utils.TemplateString(variableConfig.GetSetVariables(), cfg.Dir)
 
 	// template cmd string
-	cmd = utils.TemplateString(r.TemplateMap, cmd)
+	cmd = utils.TemplateString(variableConfig.GetSetVariables(), cmd)
 
 	duration := time.Duration(cfg.MaxTotalSeconds) * time.Second
 	timeout := time.After(duration)
 
 	// Keep trying until the max retries is reached.
+retryLoop:
 	for remaining := cfg.MaxRetries + 1; remaining > 0; remaining-- {
 
 		// Perform the action run.
 		tryCmd := func(ctx context.Context) error {
 			// Try running the command and continue the retry loop if it fails.
-			if out, err = actionRun(ctx, cfg, cmd, cfg.Shell, spinner); err != nil {
+			if out, err = ExecAction(ctx, cfg, cmd, cfg.Shell, spinner); err != nil {
 				return err
 			}
 
@@ -196,25 +186,19 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 
 			// If an output variable is defined, set it.
 			for _, v := range action.SetVariables {
-				// include ${...} syntax in template map for uniformity and to satisfy zarfUtils.ReplaceTextTemplate
-				nameInTemplatemap := "${" + v.Name + "}"
-				r.TemplateMap[nameInTemplatemap] = &utils.TextTemplate{
-					Sensitive:  v.Sensitive,
-					AutoIndent: v.AutoIndent,
-					Type:       v.Type,
-					Value:      out,
-				}
-				if regexp.MustCompile(v.Pattern).MatchString(r.TemplateMap[nameInTemplatemap].Value); err != nil {
-					message.WarnErr(err, err.Error())
+				variableConfig.SetVariable(v.Name, out, v.Pattern, v.Extra)
+				if err = variableConfig.CheckVariablePattern(v.Name); err != nil {
+					message.SLog.Debug(err.Error())
+					message.SLog.Warn(err.Error())
 					return err
 				}
 			}
 
 			// If the action has a wait, change the spinner message to reflect that on success.
 			if action.Wait != nil {
-				spinner.Successf("Wait for \"%s\" succeeded", cmdEscaped)
+				spinner.Successf("Wait for %q succeeded", cmdEscaped)
 			} else {
-				spinner.Successf("Completed \"%s\"", cmdEscaped)
+				spinner.Successf("Completed %q", cmdEscaped)
 			}
 
 			// If the command ran successfully, continue to the next action.
@@ -236,7 +220,7 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 		select {
 		// On timeout break the loop to abort.
 		case <-timeout:
-			break
+			break retryLoop
 
 		// Otherwise, try running the command.
 		default:
@@ -261,21 +245,69 @@ func (r *Runner) performZarfAction(action *zarfTypes.ZarfComponentAction) error 
 	}
 }
 
-// Perform some basic string mutations to make commands more useful.
-func actionCmdMutation(cmd string, runCmd string) (string, error) {
-
-	// Try to patch the binary path in case the name isn't exactly "./run".
-	prefix := "./run "
-	if config.CmdPrefix != "" {
-		prefix = fmt.Sprintf("./%s ", config.CmdPrefix)
+// GetBaseActionCfg merges the ActionDefaults with the BaseAction's configuration
+func GetBaseActionCfg[T any](cfg types.ActionDefaults, a types.BaseAction[T], vars variables.SetVariableMap[T]) types.ActionDefaults {
+	if a.Mute != nil {
+		cfg.Mute = *a.Mute
 	}
-	cmd = strings.ReplaceAll(cmd, prefix, runCmd+" ")
 
-	return cmd, nil
+	// Default is no timeout, but add a timeout if one is provided.
+	if a.MaxTotalSeconds != nil {
+		cfg.MaxTotalSeconds = *a.MaxTotalSeconds
+	}
+
+	if a.MaxRetries != nil {
+		cfg.MaxRetries = *a.MaxRetries
+	}
+
+	if a.Dir != nil {
+		cfg.Dir = *a.Dir
+	}
+
+	if len(a.Env) > 0 {
+		cfg.Env = append(cfg.Env, a.Env...)
+	}
+
+	if a.Shell != nil {
+		cfg.Shell = *a.Shell
+	}
+
+	// Add variables to the environment.
+	for k, v := range vars {
+		cfg.Env = append(cfg.Env, fmt.Sprintf("%s=%s", k, v.Value))
+	}
+
+	return cfg
 }
 
+// ExecAction executes the given action configuration with the provided context
+func ExecAction(ctx context.Context, cfg types.ActionDefaults, cmd string, shellPref exec.ShellPreference, spinner helpers.ProgressWriter) (string, error) {
+	shell, shellArgs := exec.GetOSShell(shellPref)
+
+	message.SLog.Debug(fmt.Sprintf("Running command in %s: %s", shell, cmd))
+
+	execCfg := exec.Config{
+		Env: cfg.Env,
+		Dir: cfg.Dir,
+	}
+
+	if !cfg.Mute {
+		execCfg.Stdout = spinner
+		execCfg.Stderr = spinner
+	}
+
+	out, errOut, err := exec.CmdWithContext(ctx, execCfg, shell, append(shellArgs, cmd)...)
+	// Dump final complete output (respect mute to prevent sensitive values from hitting the logs).
+	if !cfg.Mute {
+		message.SLog.Debug(fmt.Sprintf("%s %s %s", cmd, out, errOut))
+	}
+
+	return out, err
+}
+
+// TODO: (@WSTARR) - this is broken in Maru right now - this should not shell to Kubectl and instead should internally talk to a cluster
 // convertWaitToCmd will return the wait command if it exists, otherwise it will return the original command.
-func convertWaitToCmd(wait zarfTypes.ZarfComponentActionWait, timeout *int) (string, error) {
+func convertWaitToCmd(wait types.ActionWait, timeout *int) (string, error) {
 	// Build the timeout string.
 	timeoutString := fmt.Sprintf("--timeout %ds", *timeout)
 
@@ -350,26 +382,15 @@ func validateActionableTaskCall(inputTaskName string, inputs map[string]types.In
 		for inputKey, input := range inputs {
 			if withKey == inputKey {
 				if input.DeprecatedMessage != "" {
-					message.Warnf("This input has been marked deprecated: %s", input.DeprecatedMessage)
+					message.SLog.Warn(fmt.Sprintf("This input has been marked deprecated: %s", input.DeprecatedMessage))
 				}
 				matched = true
 				break
 			}
 		}
 		if !matched {
-			message.Warnf("Task %s does not have an input named %s", inputTaskName, withKey)
+			message.SLog.Warn(fmt.Sprintf("Task %s does not have an input named %s", inputTaskName, withKey))
 		}
 	}
 	return nil
 }
-
-//go:linkname actionGetCfg github.com/defenseunicorns/zarf/src/pkg/packager/actions.actionGetCfg
-func actionGetCfg(cfg zarfTypes.ZarfComponentActionDefaults, a zarfTypes.ZarfComponentAction, vars map[string]*utils.TextTemplate) zarfTypes.ZarfComponentActionDefaults
-
-//go:linkname actionRun github.com/defenseunicorns/zarf/src/pkg/packager/actions.actionRun
-func actionRun(ctx context.Context, cfg zarfTypes.ZarfComponentActionDefaults, cmd string, shellPref exec.Shell, spinner *message.Spinner) (string, error)
-
-// ReplaceTextTemplate todo: should be getting from Zarf but it's now private: https://github.com/defenseunicorns/zarf/issues/2395
-//
-//go:linkname ReplaceTextTemplate github.com/defenseunicorns/zarf/src/internal/packager/template.ReplaceTextTemplate
-func ReplaceTextTemplate(path string, mappings map[string]*utils.TextTemplate, deprecations map[string]string, templateRegex string) error

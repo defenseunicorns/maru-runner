@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2023-Present The UDS Authors
+// SPDX-FileCopyrightText: 2023-Present the Maru Authors
 
 // Package cmd contains the CLI commands for maru.
 package cmd
@@ -7,32 +7,27 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"runtime/debug"
-	"strings"
+	"os/signal"
+	"syscall"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/config/lang"
+	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
-	"github.com/defenseunicorns/zarf/src/cmd/common"
-	zarfCommon "github.com/defenseunicorns/zarf/src/cmd/common"
-	zarfConfig "github.com/defenseunicorns/zarf/src/config"
-	"github.com/defenseunicorns/zarf/src/pkg/message"
 	"github.com/spf13/cobra"
 )
+
+var logLevelString string
+var skipLogFile bool
 
 var rootCmd = &cobra.Command{
 	Use: "maru COMMAND",
 	PersistentPreRun: func(cmd *cobra.Command, _ []string) {
-		// Skip for vendor-only commands
-		if common.CheckVendorOnlyFromPath(cmd) {
-			return
-		}
-
-		zarfCommon.ExitOnInterrupt()
+		exitOnInterrupt()
 
 		// Don't add the logo to the help command
 		if cmd.Parent() == nil {
-			config.SkipLogFile = true
+			skipLogFile = true
 		}
 		cliSetup()
 	},
@@ -41,7 +36,7 @@ var rootCmd = &cobra.Command{
 		_, _ = fmt.Fprintln(os.Stderr)
 		err := cmd.Help()
 		if err != nil {
-			message.Fatal(err, "error calling help command")
+			message.Fatalf(err, "error calling help command")
 		}
 	},
 }
@@ -57,15 +52,6 @@ func RootCmd() *cobra.Command {
 }
 
 func init() {
-	// grab Zarf version to make Zarf library checks happy
-	if buildInfo, ok := debug.ReadBuildInfo(); ok {
-		for _, dep := range buildInfo.Deps {
-			if dep.Path == "github.com/defenseunicorns/zarf" {
-				zarfConfig.CLIVersion = strings.Split(dep.Version, "v")[1]
-			}
-		}
-	}
-
 	initViper()
 
 	v.SetDefault(V_LOG_LEVEL, "info")
@@ -74,10 +60,10 @@ func init() {
 	v.SetDefault(V_TMP_DIR, "")
 	v.SetDefault(V_ENV_PREFIX, "RUN")
 
-	rootCmd.PersistentFlags().StringVarP(&config.LogLevel, "log-level", "l", v.GetString(V_LOG_LEVEL), lang.RootCmdFlagLogLevel)
+	rootCmd.PersistentFlags().StringVarP(&logLevelString, "log-level", "l", v.GetString(V_LOG_LEVEL), lang.RootCmdFlagLogLevel)
 	rootCmd.PersistentFlags().StringVarP(&config.CLIArch, "architecture", "a", v.GetString(V_ARCHITECTURE), lang.RootCmdFlagArch)
 	rootCmd.PersistentFlags().BoolVar(&message.NoProgress, "no-progress", v.GetBool(V_NO_PROGRESS), lang.RootCmdFlagNoProgress)
-	rootCmd.PersistentFlags().BoolVar(&config.SkipLogFile, "no-log-file", v.GetBool(V_NO_LOG_FILE), lang.RootCmdFlagSkipLogFile)
+	rootCmd.PersistentFlags().BoolVar(&skipLogFile, "no-log-file", v.GetBool(V_NO_LOG_FILE), lang.RootCmdFlagSkipLogFile)
 	rootCmd.PersistentFlags().StringVar(&config.TempDirectory, "tmpdir", v.GetString(V_TMP_DIR), lang.RootCmdFlagTempDir)
 }
 
@@ -92,16 +78,28 @@ func cliSetup() {
 	printViperConfigUsed()
 
 	// No log level set, so use the default
-	if config.LogLevel != "" {
-		if lvl, ok := match[config.LogLevel]; ok {
+	if logLevelString != "" {
+		if lvl, ok := match[logLevelString]; ok {
 			message.SetLogLevel(lvl)
-			message.Debug("Log level set to " + config.LogLevel)
+			message.SLog.Debug(fmt.Sprintf("Log level set to %q", logLevelString))
 		} else {
-			message.Warn(lang.RootCmdErrInvalidLogLevel)
+			message.SLog.Warn(lang.RootCmdErrInvalidLogLevel)
 		}
 	}
 
-	if !config.SkipLogFile && !ListTasks && !ListAllTasks {
-		utils.UseLogFile()
+	if !skipLogFile && !listTasks && !listAllTasks {
+		if err := utils.UseLogFile(); err != nil {
+			message.SLog.Warn(fmt.Sprintf("Unable to setup log file: %s", err.Error()))
+		}
 	}
+}
+
+// exitOnInterrupt catches an interrupt and exits with fatal error
+func exitOnInterrupt() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		message.Fatalf(lang.ErrInterrupt, "%s", lang.ErrInterrupt.Error())
+	}()
 }

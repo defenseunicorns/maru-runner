@@ -14,7 +14,7 @@ builds:
       - linux
       - darwin
     ldflags:
-      - -s -w -X 'github.com/defenseunicorns/maru-runner/src/config.CLIVersion={{.Tag}}' -X 'github.com/defenseunicorns/zarf/src/config.ActionsCommandZarfPrefix=zarf'
+      - -s -w -X 'github.com/defenseunicorns/maru-runner/src/config.CLIVersion={{.Tag}}'
     goarch:
       - amd64
       - arm64
