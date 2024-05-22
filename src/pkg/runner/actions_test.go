@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2023-Present the Maru Authors
-// SPDX-FileCopyrightText: 2023-Present the Maru Authors
 
 package runner
 
@@ -11,7 +10,6 @@ import (
 	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/types"
 
-	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
 	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
 )
 
@@ -87,7 +85,6 @@ func Test_getUniqueTaskActions(t *testing.T) {
 func Test_convertWaitToCmd(t *testing.T) {
 	type args struct {
 		wait    types.ActionWait
-		wait    types.ActionWait
 		timeout *int
 	}
 	tests := []struct {
@@ -99,8 +96,6 @@ func Test_convertWaitToCmd(t *testing.T) {
 		{
 			name: "Cluster wait command",
 			args: args{
-				wait: types.ActionWait{
-					Cluster: &types.ActionWaitCluster{
 				wait: types.ActionWait{
 					Cluster: &types.ActionWaitCluster{
 						Kind:       "pod",
@@ -119,8 +114,6 @@ func Test_convertWaitToCmd(t *testing.T) {
 			args: args{
 				wait: types.ActionWait{
 					Network: &types.ActionWaitNetwork{
-				wait: types.ActionWait{
-					Network: &types.ActionWaitNetwork{
 						Protocol: "http",
 						Address:  "http://example.com",
 						Code:     200,
@@ -134,7 +127,6 @@ func Test_convertWaitToCmd(t *testing.T) {
 		{
 			name: "Invalid wait action",
 			args: args{
-				wait:    types.ActionWait{},
 				wait:    types.ActionWait{},
 				timeout: IntPtr(30),
 			},
@@ -230,10 +222,6 @@ func TestRunner_performAction(t *testing.T) {
 		TaskNameMap    map[string]bool
 		envFilePath    string
 		variableConfig *variables.VariableConfig[variables.ExtraVariableInfo]
-		TasksFile      types.TasksFile
-		TaskNameMap    map[string]bool
-		envFilePath    string
-		variableConfig *variables.VariableConfig[variables.ExtraVariableInfo]
 	}
 	type args struct {
 		action types.Action
@@ -245,14 +233,9 @@ func TestRunner_performAction(t *testing.T) {
 		wantErr bool
 	}{
 		// TODO: Add more test cases
-		// TODO: Add more test cases
 		{
 			name: "failed action processing due to invalid command",
 			fields: fields{
-				TasksFile:      types.TasksFile{},
-				TaskNameMap:    make(map[string]bool),
-				envFilePath:    "",
-				variableConfig: GetMaruVariableConfig(),
 				TasksFile:      types.TasksFile{},
 				TaskNameMap:    make(map[string]bool),
 				envFilePath:    "",
@@ -264,7 +247,6 @@ func TestRunner_performAction(t *testing.T) {
 					With: map[string]string{
 						"cmd": "exit 1",
 					},
-					BaseAction: &types.BaseAction[variables.ExtraVariableInfo]{
 					BaseAction: &types.BaseAction[variables.ExtraVariableInfo]{
 						Description: "Test action for failure scenario",
 						Wait:        nil,
@@ -279,10 +261,6 @@ func TestRunner_performAction(t *testing.T) {
 				TaskNameMap:    make(map[string]bool),
 				envFilePath:    "test/path",
 				variableConfig: GetMaruVariableConfig(),
-				TasksFile:      types.TasksFile{},
-				TaskNameMap:    make(map[string]bool),
-				envFilePath:    "test/path",
-				variableConfig: GetMaruVariableConfig(),
 			},
 			args: args{
 				action: types.Action{
@@ -291,10 +269,7 @@ func TestRunner_performAction(t *testing.T) {
 						"cmd": "zarf tools wait-for pod my-pod Running",
 					},
 					BaseAction: &types.BaseAction[variables.ExtraVariableInfo]{
-					BaseAction: &types.BaseAction[variables.ExtraVariableInfo]{
 						Description: "Test action for wait command",
-						Wait: &types.ActionWait{
-							Cluster: &types.ActionWaitCluster{
 						Wait: &types.ActionWait{
 							Cluster: &types.ActionWaitCluster{
 								Kind:       "pod",
@@ -315,10 +290,6 @@ func TestRunner_performAction(t *testing.T) {
 				TaskNameMap:    tt.fields.TaskNameMap,
 				envFilePath:    tt.fields.envFilePath,
 				variableConfig: tt.fields.variableConfig,
-				TasksFile:      tt.fields.TasksFile,
-				TaskNameMap:    tt.fields.TaskNameMap,
-				envFilePath:    tt.fields.envFilePath,
-				variableConfig: tt.fields.variableConfig,
 			}
 			err := r.performAction(tt.args.action)
 			if (err != nil) != tt.wantErr {
@@ -330,10 +301,6 @@ func TestRunner_performAction(t *testing.T) {
 
 func TestRunner_processAction(t *testing.T) {
 	type fields struct {
-		TasksFile      types.TasksFile
-		TaskNameMap    map[string]bool
-		envFilePath    string
-		variableConfig *variables.VariableConfig[variables.ExtraVariableInfo]
 		TasksFile      types.TasksFile
 		TaskNameMap    map[string]bool
 		envFilePath    string
@@ -356,10 +323,6 @@ func TestRunner_processAction(t *testing.T) {
 				TaskNameMap:    map[string]bool{},
 				envFilePath:    "",
 				variableConfig: GetMaruVariableConfig(),
-				TasksFile:      types.TasksFile{},
-				TaskNameMap:    map[string]bool{},
-				envFilePath:    "",
-				variableConfig: GetMaruVariableConfig(),
 			},
 			args: args{
 				task: types.Task{
@@ -374,10 +337,6 @@ func TestRunner_processAction(t *testing.T) {
 		{
 			name: "action processing with same task and action reference",
 			fields: fields{
-				TasksFile:      types.TasksFile{},
-				TaskNameMap:    map[string]bool{},
-				envFilePath:    "",
-				variableConfig: GetMaruVariableConfig(),
 				TasksFile:      types.TasksFile{},
 				TaskNameMap:    map[string]bool{},
 				envFilePath:    "",
@@ -400,10 +359,6 @@ func TestRunner_processAction(t *testing.T) {
 				TaskNameMap:    map[string]bool{},
 				envFilePath:    "",
 				variableConfig: GetMaruVariableConfig(),
-				TasksFile:      types.TasksFile{},
-				TaskNameMap:    map[string]bool{},
-				envFilePath:    "",
-				variableConfig: GetMaruVariableConfig(),
 			},
 			args: args{
 				task: types.Task{
@@ -418,10 +373,6 @@ func TestRunner_processAction(t *testing.T) {
 		{
 			name: "action processing with non-empty task reference and different task and action reference names",
 			fields: fields{
-				TasksFile:      types.TasksFile{},
-				TaskNameMap:    map[string]bool{},
-				envFilePath:    "",
-				variableConfig: GetMaruVariableConfig(),
 				TasksFile:      types.TasksFile{},
 				TaskNameMap:    map[string]bool{},
 				envFilePath:    "",
@@ -450,9 +401,6 @@ func TestRunner_processAction(t *testing.T) {
 				TaskNameMap:    map[string]bool{},
 				envFilePath:    "",
 				variableConfig: GetMaruVariableConfig(),
-				TaskNameMap:    map[string]bool{},
-				envFilePath:    "",
-				variableConfig: GetMaruVariableConfig(),
 			},
 			args: args{
 				task: types.Task{
@@ -468,10 +416,6 @@ func TestRunner_processAction(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &Runner{
-				TasksFile:      tt.fields.TasksFile,
-				TaskNameMap:    tt.fields.TaskNameMap,
-				envFilePath:    tt.fields.envFilePath,
-				variableConfig: tt.fields.variableConfig,
 				TasksFile:      tt.fields.TasksFile,
 				TaskNameMap:    tt.fields.TaskNameMap,
 				envFilePath:    tt.fields.envFilePath,

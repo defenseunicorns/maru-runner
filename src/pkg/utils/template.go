@@ -15,7 +15,6 @@ import (
 	"github.com/defenseunicorns/maru-runner/src/types"
 	goyaml "github.com/goccy/go-yaml"
 )
-)
 
 // TemplateTaskActionsWithInputs templates a task's actions with the given inputs
 func TemplateTaskActionsWithInputs(task types.Task, withs map[string]string) ([]types.Action, error) {
@@ -60,7 +59,6 @@ func TemplateTaskActionsWithInputs(task types.Task, withs map[string]string) ([]
 
 // TemplateString replaces ${...} with the value from the template map
 func TemplateString[T any](setVariableMap variables.SetVariableMap[T], s string) string {
-func TemplateString[T any](setVariableMap variables.SetVariableMap[T], s string) string {
 	// Create a regular expression to match ${...}
 	re := regexp.MustCompile(`\${(.*?)}`)
 
@@ -77,7 +75,6 @@ func TemplateString[T any](setVariableMap variables.SetVariableMap[T], s string)
 		}
 		return matched // If the key is not found, keep the original substring
 	})
-
 
 	return result
 }
