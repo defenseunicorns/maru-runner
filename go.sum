@@ -28,8 +28,10 @@ github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/defenseunicorns/pkg/exec v0.0.1 h1:mZtkZvwvOgInZOi+hvEjT0JAtjOgbeIo4RkpqMzU85g=
 github.com/defenseunicorns/pkg/exec v0.0.1/go.mod h1:F/OPhrZuoXM6e2RgeDUlaSYFFW8I3rsErJnytLSkLFo=
-github.com/defenseunicorns/pkg/helpers v1.1.4-0.20240515202339-7d8cf08f6cf7 h1:WuwzgN4EdakTnr2mXzZmVjGNA+MkiiGoo7wglkVS86g=
-github.com/defenseunicorns/pkg/helpers v1.1.4-0.20240515202339-7d8cf08f6cf7/go.mod h1:F4S5VZLDrlNWQKklzv4v9tFWjjZNhxJ1gT79j4XiLwk=
+github.com/defenseunicorns/pkg/helpers v1.1.1 h1:p3pKeK5SeFaoZUJZIX9sEsJqX1CGGMS8OpQMPgJtSqM=
+github.com/defenseunicorns/pkg/helpers v1.1.1/go.mod h1:F4S5VZLDrlNWQKklzv4v9tFWjjZNhxJ1gT79j4XiLwk=
+github.com/defenseunicorns/pkg/helpers/v2 v2.0.1-0.20240522174948-d4459bcf5a62 h1:tj0BGbNePupjK9f1AdncOGGbq3kX/FM4SwDlPN0TXpw=
+github.com/defenseunicorns/pkg/helpers/v2 v2.0.1-0.20240522174948-d4459bcf5a62/go.mod h1:u1PAqOICZyiGIVA2v28g55bQH1GiAt0Bc4U9/rnWQvQ=
 github.com/fatih/color v1.16.0 h1:zmkK9Ngbjj+K0yRhTVONQh1p/HknKYSlNT+vZCzyokM=
 github.com/fatih/color v1.16.0/go.mod h1:fL2Sau1YI5c0pdGEVCbKQbLXB6edEj1ZgiY4NijnWvE=
 github.com/frankban/quicktest v1.14.6 h1:7Xjx+VpznH+oBnejlPUj8oUpdxnVs4f8XU8WnHkI4W8=

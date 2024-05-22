@@ -5,7 +5,7 @@ go 1.21.8
 require (
 	github.com/alecthomas/jsonschema v0.0.0-20220216202328-9eeeec9d044b
 	github.com/defenseunicorns/pkg/exec v0.0.1
-	github.com/defenseunicorns/pkg/helpers v1.1.4-0.20240515202339-7d8cf08f6cf7
+	github.com/defenseunicorns/pkg/helpers/v2 v2.0.1-0.20240522174948-d4459bcf5a62
 	github.com/goccy/go-yaml v1.11.3
 	github.com/pterm/pterm v0.12.79
 	github.com/spf13/cobra v1.8.0
@@ -19,6 +19,7 @@ require (
 	atomicgo.dev/schedule v0.1.0 // indirect
 	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/defenseunicorns/pkg/helpers v1.1.1 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-playground/validator/v10 v10.18.0 // indirect

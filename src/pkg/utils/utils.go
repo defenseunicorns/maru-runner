@@ -16,7 +16,7 @@ import (
 
 	"github.com/defenseunicorns/maru-runner/src/config/lang"
 	"github.com/defenseunicorns/maru-runner/src/message"
-	"github.com/defenseunicorns/pkg/helpers"
+	"github.com/defenseunicorns/pkg/helpers/v2"
 	goyaml "github.com/goccy/go-yaml"
 	"github.com/pterm/pterm"
 )
