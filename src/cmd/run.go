@@ -64,8 +64,10 @@ var runCmd = &cobra.Command{
 			if _, ok := setRunnerVariables[variable.Name]; !ok {
 				if value := os.Getenv(fmt.Sprintf("%s_%s", strings.ToUpper(config.EnvPrefix), variable.Name)); value != "" {
 					setRunnerVariables[variable.Name] = value
-				} else if value := os.Getenv(fmt.Sprintf("%s_%s", strings.ToUpper(config.VendorPrefix), variable.Name)); value != "" {
-					setRunnerVariables[variable.Name] = value
+				} else if config.VendorPrefix != "" {
+					if value := os.Getenv(fmt.Sprintf("%s_%s", strings.ToUpper(config.VendorPrefix), variable.Name)); value != "" {
+						setRunnerVariables[variable.Name] = value
+					}
 				}
 			}
 		}
