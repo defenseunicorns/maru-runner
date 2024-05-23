@@ -33,6 +33,9 @@ var (
 	// TempDirectory is the directory to store temporary files
 	TempDirectory string
 
+	// VendorPrefix is the prefix for environment variables that an application vendoring Maru wants to use
+	VendorPrefix string
+
 	extraEnv = map[string]string{"MARU": "true", "MARU_ARCH": GetArch()}
 )
 

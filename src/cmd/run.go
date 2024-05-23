@@ -59,11 +59,15 @@ var runCmd = &cobra.Command{
 		// ensure vars are uppercase
 		setRunnerVariables = helpers.TransformMapKeys(setRunnerVariables, strings.ToUpper)
 
-		// set any env vars that come from the environment
+		// set any env vars that come from the environment (taking MARU_ over VENDOR_)
 		for _, variable := range tasksFile.Variables {
 			if _, ok := setRunnerVariables[variable.Name]; !ok {
 				if value := os.Getenv(fmt.Sprintf("%s_%s", strings.ToUpper(config.EnvPrefix), variable.Name)); value != "" {
 					setRunnerVariables[variable.Name] = value
+				} else if config.VendorPrefix != "" {
+					if value := os.Getenv(fmt.Sprintf("%s_%s", strings.ToUpper(config.VendorPrefix), variable.Name)); value != "" {
+						setRunnerVariables[variable.Name] = value
+					}
 				}
 			}
 		}
