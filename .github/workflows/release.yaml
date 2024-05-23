@@ -11,7 +11,7 @@ jobs:
     steps:
       # Checkout the repo and setup the tooling for this job
       - name: Checkout
-        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
         with:
           fetch-depth: 0
 
@@ -38,7 +38,7 @@ jobs:
     steps:
       # Checkout the repo and setup the tooling for this job
       - name: Checkout
-        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
         with:
           fetch-depth: 0
 
@@ -58,6 +58,10 @@ jobs:
         run: |
           chmod +x build/maru
 
+      - name: Run unit tests
+        run: |
+          make test-unit
+
       - name: Run e2e tests
         run: |
           make test-e2e
@@ -74,7 +78,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
         with:
           fetch-depth: 0
 
@@ -90,16 +94,25 @@ jobs:
           name: build-artifacts
           path: build/
 
+      - name: Skip brew latest for pre-release tags
+        run: |
+          if [[ $GITHUB_REF_NAME == *"rc"* ]]; then
+            echo "BREW_NAME=maru@latest-rc" >> $GITHUB_ENV
+          else
+            echo "BREW_NAME=maru" >> $GITHUB_ENV
+          fi
+
       - name: Get Brew tap repo token
         id: brew-tap-token
-        uses: peter-murray/workflow-application-token-action@dc0413987a085fa17d19df9e47d4677cf81ffef3 # v3.0.0
+        uses: actions/create-github-app-token@a0de6af83968303c8c955486bf9739a57d23c7f1 # v1.10.0
         with:
-          application_id: ${{ secrets.HOMEBREW_TAP_WORKFLOW_GITHUB_APP_ID }}
-          application_private_key: ${{ secrets.HOMEBREW_TAP_WORKFLOW_GITHUB_APP_SECRET }}
-          organization: defenseunicorns
+          app-id: ${{ secrets.HOMEBREW_TAP_WORKFLOW_GITHUB_APP_ID }}
+          private-key: ${{ secrets.HOMEBREW_TAP_WORKFLOW_GITHUB_APP_SECRET }}
+          owner: defenseunicorns
+          repositories: homebrew-tap
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@7ec5c2b0c6cdda6e8bbb49444bc797dd33d74dd8 # v5.0.0
+        uses: goreleaser/goreleaser-action@5742e2a039330cbb23ebf35f046f814d4c6ff811 # v5.1.0
         with:
           distribution: goreleaser
           version: latest

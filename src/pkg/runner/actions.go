@@ -95,6 +95,7 @@ func getUniqueTaskActions(actions []types.Action) []types.Action {
 	return uniqueArray
 }
 
+// RunAction executes a specific action command, either wait or cmd. It handles variable loading environment variables and manages retries and timeouts
 func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableConfig *variables.VariableConfig[T]) error {
 	var (
 		ctx        context.Context
@@ -134,7 +135,7 @@ func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableC
 		action.SetVariables = []variables.Variable[T]{}
 	}
 
-	// load the contents of the env file into the Action + the RUN_ARCH
+	// load the contents of the env file into the Action + the MARU_ARCH
 	if envFilePath != "" {
 		envFilePath := filepath.Join(filepath.Dir(config.TaskFileLocation), envFilePath)
 		envFileContents, err := os.ReadFile(envFilePath)
@@ -143,9 +144,6 @@ func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableC
 		}
 		action.Env = append(action.Env, strings.Split(string(envFileContents), "\n")...)
 	}
-
-	// load an env var for the architecture
-	action.Env = append(action.Env, fmt.Sprintf("%s_ARCH=%s", strings.ToUpper(config.EnvPrefix), config.GetArch()))
 
 	if action.Description != "" {
 		cmdEscaped = action.Description
@@ -164,9 +162,6 @@ func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableC
 
 	// Template dir string
 	cfg.Dir = utils.TemplateString(variableConfig.GetSetVariables(), cfg.Dir)
-
-	// template cmd string
-	cmd = utils.TemplateString(variableConfig.GetSetVariables(), cmd)
 
 	duration := time.Duration(cfg.MaxTotalSeconds) * time.Second
 	timeout := time.After(duration)
@@ -275,6 +270,10 @@ func GetBaseActionCfg[T any](cfg types.ActionDefaults, a types.BaseAction[T], va
 	// Add variables to the environment.
 	for k, v := range vars {
 		cfg.Env = append(cfg.Env, fmt.Sprintf("%s=%s", k, v.Value))
+	}
+
+	for k, v := range config.GetExtraEnv() {
+		cfg.Env = append(cfg.Env, fmt.Sprintf("%s=%s", k, v))
 	}
 
 	return cfg

@@ -58,7 +58,6 @@ func init() {
 	v.SetDefault(V_ARCHITECTURE, "")
 	v.SetDefault(V_NO_LOG_FILE, false)
 	v.SetDefault(V_TMP_DIR, "")
-	v.SetDefault(V_ENV_PREFIX, "RUN")
 
 	rootCmd.PersistentFlags().StringVarP(&logLevelString, "log-level", "l", v.GetString(V_LOG_LEVEL), lang.RootCmdFlagLogLevel)
 	rootCmd.PersistentFlags().StringVarP(&config.CLIArch, "architecture", "a", v.GetString(V_ARCHITECTURE), lang.RootCmdFlagArch)

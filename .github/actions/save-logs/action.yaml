@@ -4,12 +4,7 @@ description: "Save debug logs"
 runs:
   using: composite
   steps:
-    - name: Fix log permissions
-      run: |
-        sudo chown $USER /tmp/runner-*.log || echo ""
-      shell: bash
-
     - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
       with:
         name: debug-log
-        path: /tmp/runner-*.log
+        path: /tmp/maru-*.log
