@@ -19,7 +19,7 @@ import (
 	"github.com/defenseunicorns/maru-runner/src/pkg/runner"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
 	"github.com/defenseunicorns/maru-runner/src/types"
-	"github.com/defenseunicorns/pkg/helpers"
+	"github.com/defenseunicorns/pkg/helpers/v2"
 	goyaml "github.com/goccy/go-yaml"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
