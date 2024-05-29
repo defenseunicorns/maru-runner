@@ -137,6 +137,14 @@ func TestTaskRunner(t *testing.T) {
 		require.Contains(t, stdErr, "task loop detected")
 	})
 
+	t.Run("run interactive (with --no-progress)", func(t *testing.T) {
+		t.Parallel()
+		stdOut, stdErr, err := e2e.Maru("run", "interactive", "--file", "src/test/tasks/tasks.yaml", "--no-progress")
+		require.NoError(t, err, stdOut, stdErr)
+		// Ensure there are no extra chars that will interrupt interactive programs (i.e. a spinner) when --no-progress is set
+		require.Contains(t, stdErr, "\033[G ⬒ Spinning...\033[G ⬔ Spinning...\033[G ◨ Spinning...")
+	})
+
 	t.Run("test includes paths", func(t *testing.T) {
 		t.Parallel()
 		stdOut, stdErr, err := e2e.Maru("run", "foobar", "--file", "src/test/tasks/tasks.yaml")
