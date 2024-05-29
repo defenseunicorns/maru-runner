@@ -31,6 +31,26 @@ tasks:
   - name: action
     actions:
       - cmd: echo "specific test string"
+  - name: interactive
+    description: Run an interactive task
+    actions:
+      - description: Create a spinner that spins
+        cmd: |
+          printf '\033[G ⬒ Spinning...'
+          sleep 0.1
+          printf '\033[G ⬔ Spinning...'
+          sleep 0.1
+          printf '\033[G ◨ Spinning...'
+          sleep 0.1
+          printf '\033[G ◪ Spinning...'
+          sleep 0.1
+          printf '\033[G ⬓ Spinning...'
+          sleep 0.1
+          printf '\033[G ⬕ Spinning...'
+          sleep 0.1
+          printf '\033[G ◧ Spinning...'
+          sleep 0.1
+          printf '\033[G ◩ Spinning...'
   - name: cmd-set-variable
     actions:
       - cmd: echo unique-value
