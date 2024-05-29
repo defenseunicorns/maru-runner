@@ -8,6 +8,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/defenseunicorns/pkg/helpers/v2"
@@ -56,7 +57,7 @@ var NewProgressSpinner = func(format string, a ...any) helpers.ProgressWriter {
 func (p *Spinner) Write(raw []byte) (int, error) {
 	size := len(raw)
 	if NoProgress {
-		pterm.Printfln("     %s", string(raw))
+		os.Stderr.Write(raw)
 
 		return size, nil
 	}
@@ -66,7 +67,8 @@ func (p *Spinner) Write(raw []byte) (int, error) {
 	scanner.Split(bufio.ScanLines)
 	for scanner.Scan() {
 		text := pterm.Sprintf("     %s", scanner.Text())
-		pterm.Fprinto(p.spinner.Writer, strings.Repeat(" ", pterm.GetTerminalWidth()))
+		// Clear the current line with the ANSI escape code
+		pterm.Fprinto(p.spinner.Writer, "\033[K")
 		pterm.Fprintln(p.spinner.Writer, text)
 	}
 
