@@ -51,6 +51,10 @@ var runCmd = &cobra.Command{
 	Run: func(_ *cobra.Command, args []string) {
 		var tasksFile types.TasksFile
 
+		if _, err := os.Stat(config.TaskFileLocation); os.IsNotExist(err) {
+			message.Fatalf(err, "file does not exist: %s", config.TaskFileLocation)
+		}
+
 		err := utils.ReadYaml(config.TaskFileLocation, &tasksFile)
 		if err != nil {
 			message.Fatalf(err, "Cannot unmarshal %s", config.TaskFileLocation)
