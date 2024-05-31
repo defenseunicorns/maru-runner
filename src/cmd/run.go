@@ -51,13 +51,9 @@ var runCmd = &cobra.Command{
 	Run: func(_ *cobra.Command, args []string) {
 		var tasksFile types.TasksFile
 
-		if _, err := os.Stat(config.TaskFileLocation); os.IsNotExist(err) {
-			message.Fatalf(err, "file does not exist: %s", config.TaskFileLocation)
-		}
-
 		err := utils.ReadYaml(config.TaskFileLocation, &tasksFile)
 		if err != nil {
-			message.Fatalf(err, "Cannot unmarshal %s", config.TaskFileLocation)
+			message.Fatalf(err, "Failed to open file: %s", err.Error())
 		}
 
 		// ensure vars are uppercase
@@ -194,7 +190,7 @@ func loadTasksFromLocalIncludes(includeFileLocation string) types.TasksFile {
 	}
 	err := utils.ReadYaml(fullPath, &includedTasksFile)
 	if err != nil {
-		message.Fatalf(err, "Cannot unmarshal %s", fullPath)
+		message.Fatalf(err, "Failed to load file: %s", err.Error())
 	}
 	return includedTasksFile
 }

@@ -82,10 +82,15 @@ func FormatEnvVar(name, value string) string {
 func ReadYaml(path string, destConfig any) error {
 	file, err := os.ReadFile(path)
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot %s", err.Error())
 	}
-
-	return goyaml.Unmarshal(file, destConfig)
+	err = goyaml.Unmarshal(file, destConfig)
+	if err != nil {
+		errStr := err.Error()
+		lines := strings.SplitN(errStr, "\n", 2)
+		return fmt.Errorf("cannot unmarshal %s: %s", path, lines[0])
+	}
+	return nil
 }
 
 // MakeTempDir creates a temp directory with the maru- prefix.
