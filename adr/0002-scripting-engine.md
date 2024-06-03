@@ -44,9 +44,37 @@ tasks:
 
 ### Native Scripting Engine
 
-[Risor](https://risor.io/) aims to be _fast and flexible scripting for
-Go developers and DevOps_, making it an ideal candidate for scripting
-within `maru`.
+For the purposes of this proposal, we will scope the evaluation to libraries
+that can be embedded natively.
+
+Tools like [`zx`](https://google.github.io/zx/getting-started)
+(which provides a JS API on top of shell scripting) are interesting, but
+anything that is not written in Go would be difficult to integrate in a way
+that actually improves portability of user-defined scripts.
+
+[github.com/avelino/awesome-go](https://github.com/avelino/awesome-go#embeddable-scripting-languages)
+provides a fairly comprehensive list of embeddable scripting languages.
+There are some good options here, including:
+
+- [`starlark-go`](https://github.com/google/starlark-go), Go implementation
+  of Starlark: Python-like language with deterministic evaluation and hermetic
+  execution
+- [`starlet`](https://github.com/1set/starlet), which
+  enhances the `starlark` runtime with useful extensions like `http`
+- expression languages like [`expr`](https://github.com/expr-lang/expr),
+  [`cel`](https://github.com/google/cel-go) (which is used by Kubernetes[^4]),
+  and [`cue`](https://github.com/cue-lang/cue)
+- [`otto`](https://github.com/robertkrimen/otto), a JS parser/interpreter
+  written in Go
+
+These are all great, portable and secure options. However, with the exception
+of `starlet`, they are just language runtimes and lack rich APIs that we could
+expose directly to users. We would have to build these APIs ourselves from
+scratch.
+
+Not mentioned in the list above is [Risor](https://risor.io/), which aims to
+be _"fast and flexible scripting for Go developers and DevOps"_, making it an
+ideal candidate for scripting within `maru`.
 
 Here is the example above rewritten using [Risor syntax](https://risor.io/docs/syntax):
 
@@ -66,6 +94,11 @@ to mind as potentially useful for delivery:
 - [`vault`](https://risor.io/docs/modules/vault)
 - [`kubernetes`](https://risor.io/docs/modules/kubernetes)
 - [`pgx`](https://risor.io/docs/modules/pgx)
+
+**Note:** `starlet` provides [a number of builtins](https://github.com/1set/starlet/tree/master/lib)
+like `http` and `csv`, which is comparable to those provided by `risor`. The
+big difference is that `starlet` does not aim to support DevOps use cases
+directly, so it would likely never include things like `vault` or `aws` integrations.
 
 Risor can be embedded into `maru` as a library, which means that all
 script execution would happen natively in the Go runtime. This has
@@ -134,3 +167,4 @@ rewrites for anything to be reliable. In the above example:
 [^1]: `wait` actions are [implemented in `zarf`](https://github.com/defenseunicorns/zarf/blob/main/src/pkg/utils/wait.go#L32) currently
 [^2]: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/start-sleep
 [^3]: https://stackoverflow.com/a/73956607
+[^4]: ["The Common Expression Language (CEL) is used in the Kubernetes API to declare validation rules, policy rules, and other constraints or conditions."](https://kubernetes.io/docs/reference/using-api/cel/)
