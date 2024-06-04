@@ -154,7 +154,7 @@ tasks:
     actions:
       - cmd: echo overwritten env var - $PORT
   - name: file-and-dir
-    description: Tests variables of type file and setting dir from variable
+    description: Tests setting dir from variable
     actions:
       - cmd: cat ${COOL_FILE}
         dir: ${COOL_DIR}
