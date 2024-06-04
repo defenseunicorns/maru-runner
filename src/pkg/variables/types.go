@@ -17,7 +17,7 @@ const (
 type Variable[T any] struct {
 	Name    string `json:"name" jsonschema:"description=The name to be used for the variable,pattern=^[A-Z0-9_]+$"`
 	Pattern string `json:"pattern,omitempty" jsonschema:"description=An optional regex pattern that a variable value must match before a package deployment can continue."`
-	Extra   T      `json:",inline"`
+	Extra   T      `json:",omitempty,inline"`
 }
 
 // InteractiveVariable is a variable that can be used to prompt a user for more information

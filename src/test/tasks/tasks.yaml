@@ -13,7 +13,6 @@ variables:
   - name: COOL_DIR
     default: src/test/tasks
   - name: COOL_FILE
-    type: file
     default: my-env
 
 tasks:
@@ -57,7 +56,6 @@ tasks:
         mute: true
         setVariables:
           - name: ACTION_VAR
-            sensitive: true
       - cmd: echo "I'm set from setVariables - ${ACTION_VAR}"
       - cmd: echo "I'm set from a runner var - ${REPLACE_ME}"
       - cmd: echo "I'm set from a --set var - ${REPLACE_ME}"
