@@ -1,25 +1,63 @@
 {
-  "$schema": "http://json-schema.org/draft-04/schema#",
-  "$ref": "#/definitions/TasksFile",
-  "definitions": {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/defenseunicorns/maru-runner/src/types/tasks-file",
+  "$ref": "#/$defs/TasksFile",
+  "$defs": {
     "Action": {
-      "required": [
-        "BaseAction"
-      ],
       "properties": {
-        "BaseAction": {
-          "$schema": "http://json-schema.org/draft-04/schema#",
-          "$ref": "#/definitions/BaseAction[github.com/defenseunicorns/maru-runner/src/pkg/variables.ExtraVariableInfo]"
+        "description": {
+          "type": "string",
+          "description": "Description of the action to be displayed during package execution instead of the command"
+        },
+        "cmd": {
+          "type": "string",
+          "description": "The command to run. Must specify either cmd or wait for the action to do anything."
+        },
+        "wait": {
+          "$ref": "#/$defs/ActionWait",
+          "description": "Wait for a condition to be met before continuing. Must specify either cmd or wait for the action."
+        },
+        "env": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Additional environment variables to set for the command"
+        },
+        "mute": {
+          "type": "boolean",
+          "description": "Hide the output of the command during package deployment (default false)"
+        },
+        "maxTotalSeconds": {
+          "type": "integer",
+          "description": "Timeout in seconds for the command (default to 0"
+        },
+        "maxRetries": {
+          "type": "integer",
+          "description": "Retry the command if it fails up to given number of times (default 0)"
+        },
+        "dir": {
+          "type": "string",
+          "description": "The working directory to run the command in (default is CWD)"
+        },
+        "shell": {
+          "$ref": "#/$defs/ShellPreference",
+          "description": "(cmd only) Indicates a preference for a shell for the provided cmd to be executed in on supported operating systems"
+        },
+        "setVariables": {
+          "items": {
+            "$ref": "#/$defs/Variable"
+          },
+          "type": "array",
+          "description": "(onDeploy/cmd only) An array of variables to update with the output of the command. These variables will be available to all remaining actions and components in the package."
         },
         "task": {
           "type": "string",
           "description": "The task to run"
         },
         "with": {
-          "patternProperties": {
-            "^[_a-zA-Z][a-zA-Z0-9_-]*$": {
-              "additionalProperties": true
-            }
+          "additionalProperties": {
+            "type": "string"
           },
           "type": "object",
           "description": "Input parameters to pass to the task"
@@ -34,13 +72,11 @@
     "ActionWait": {
       "properties": {
         "cluster": {
-          "$schema": "http://json-schema.org/draft-04/schema#",
-          "$ref": "#/definitions/ActionWaitCluster",
+          "$ref": "#/$defs/ActionWaitCluster",
           "description": "Wait for a condition to be met in the cluster before continuing. Only one of cluster or network can be specified."
         },
         "network": {
-          "$schema": "http://json-schema.org/draft-04/schema#",
-          "$ref": "#/definitions/ActionWaitNetwork",
+          "$ref": "#/$defs/ActionWaitNetwork",
           "description": "Wait for a condition to be met on the network before continuing. Only one of cluster or network can be specified."
         }
       },
@@ -51,10 +87,6 @@
       }
     },
     "ActionWaitCluster": {
-      "required": [
-        "kind",
-        "name"
-      ],
       "properties": {
         "kind": {
           "type": "string",
@@ -87,23 +119,23 @@
       },
       "additionalProperties": false,
       "type": "object",
+      "required": [
+        "kind",
+        "name"
+      ],
       "patternProperties": {
         "^x-": {}
       }
     },
     "ActionWaitNetwork": {
-      "required": [
-        "protocol",
-        "address"
-      ],
       "properties": {
         "protocol": {
+          "type": "string",
           "enum": [
             "tcp",
             "http",
             "https"
           ],
-          "type": "string",
           "description": "The protocol to wait for"
         },
         "address": {
@@ -125,63 +157,10 @@
       },
       "additionalProperties": false,
       "type": "object",
-      "patternProperties": {
-        "^x-": {}
-      }
-    },
-    "BaseAction[github.com/defenseunicorns/maru-runner/src/pkg/variables.ExtraVariableInfo]": {
-      "properties": {
-        "description": {
-          "type": "string",
-          "description": "Description of the action to be displayed during package execution instead of the command"
-        },
-        "cmd": {
-          "type": "string",
-          "description": "The command to run. Must specify either cmd or wait for the action to do anything."
-        },
-        "wait": {
-          "$schema": "http://json-schema.org/draft-04/schema#",
-          "$ref": "#/definitions/ActionWait",
-          "description": "Wait for a condition to be met before continuing. Must specify either cmd or wait for the action."
-        },
-        "env": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "description": "Additional environment variables to set for the command"
-        },
-        "mute": {
-          "type": "boolean",
-          "description": "Hide the output of the command during package deployment (default false)"
-        },
-        "maxTotalSeconds": {
-          "type": "integer",
-          "description": "Timeout in seconds for the command (default to 0"
-        },
-        "maxRetries": {
-          "type": "integer",
-          "description": "Retry the command if it fails up to given number of times (default 0)"
-        },
-        "dir": {
-          "type": "string",
-          "description": "The working directory to run the command in (default is CWD)"
-        },
-        "shell": {
-          "$schema": "http://json-schema.org/draft-04/schema#",
-          "$ref": "#/definitions/ShellPreference",
-          "description": "(cmd only) Indicates a preference for a shell for the provided cmd to be executed in on supported operating systems"
-        },
-        "setVariables": {
-          "items": {
-            "$ref": "#/definitions/Variable[github.com/defenseunicorns/maru-runner/src/pkg/variables.ExtraVariableInfo]"
-          },
-          "type": "array",
-          "description": "(onDeploy/cmd only) An array of variables to update with the output of the command. These variables will be available to all remaining actions and components in the package."
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
+      "required": [
+        "protocol",
+        "address"
+      ],
       "patternProperties": {
         "^x-": {}
       }
@@ -195,9 +174,6 @@
       }
     },
     "InputParameter": {
-      "required": [
-        "description"
-      ],
       "properties": {
         "description": {
           "type": "string",
@@ -209,7 +185,8 @@
         },
         "required": {
           "type": "boolean",
-          "description": "Whether the parameter is required"
+          "description": "Whether the parameter is required",
+          "default": true
         },
         "default": {
           "type": "string",
@@ -218,18 +195,26 @@
       },
       "additionalProperties": false,
       "type": "object",
+      "required": [
+        "description"
+      ],
       "patternProperties": {
         "^x-": {}
       }
     },
-    "InteractiveVariable[github.com/defenseunicorns/maru-runner/src/pkg/variables.ExtraVariableInfo]": {
-      "required": [
-        "Variable"
-      ],
+    "InteractiveVariable": {
       "properties": {
-        "Variable": {
-          "$schema": "http://json-schema.org/draft-04/schema#",
-          "$ref": "#/definitions/Variable[github.com/defenseunicorns/maru-runner/src/pkg/variables.ExtraVariableInfo]"
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_]+$",
+          "description": "The name to be used for the variable"
+        },
+        "pattern": {
+          "type": "string",
+          "description": "An optional regex pattern that a variable value must match before a package deployment can continue."
+        },
+        "Extra": {
+          "$ref": "#/$defs/ExtraVariableInfo"
         },
         "description": {
           "type": "string",
@@ -246,6 +231,9 @@
       },
       "additionalProperties": false,
       "type": "object",
+      "required": [
+        "name"
+      ],
       "patternProperties": {
         "^x-": {}
       }
@@ -294,9 +282,6 @@
       }
     },
     "Task": {
-      "required": [
-        "name"
-      ],
       "properties": {
         "name": {
           "type": "string",
@@ -308,18 +293,14 @@
         },
         "actions": {
           "items": {
-            "$schema": "http://json-schema.org/draft-04/schema#",
-            "$ref": "#/definitions/Action"
+            "$ref": "#/$defs/Action"
           },
           "type": "array",
           "description": "Actions to take when running the task"
         },
         "inputs": {
-          "patternProperties": {
-            "^[_a-zA-Z][a-zA-Z0-9_-]*$": {
-              "$schema": "http://json-schema.org/draft-04/schema#",
-              "$ref": "#/definitions/InputParameter"
-            }
+          "additionalProperties": {
+            "$ref": "#/$defs/InputParameter"
           },
           "type": "object",
           "description": "Input parameters for the task"
@@ -331,21 +312,19 @@
       },
       "additionalProperties": false,
       "type": "object",
+      "required": [
+        "name"
+      ],
       "patternProperties": {
         "^x-": {}
       }
     },
     "TasksFile": {
-      "required": [
-        "tasks"
-      ],
       "properties": {
         "includes": {
           "items": {
-            "patternProperties": {
-              ".*": {
-                "type": "string"
-              }
+            "additionalProperties": {
+              "type": "string"
             },
             "type": "object"
           },
@@ -354,16 +333,14 @@
         },
         "variables": {
           "items": {
-            "$schema": "http://json-schema.org/draft-04/schema#",
-            "$ref": "#/definitions/InteractiveVariable[github.com/defenseunicorns/maru-runner/src/pkg/variables.ExtraVariableInfo]"
+            "$ref": "#/$defs/InteractiveVariable"
           },
           "type": "array",
           "description": "Definitions and default values for variables used in run.yaml"
         },
         "tasks": {
           "items": {
-            "$schema": "http://json-schema.org/draft-04/schema#",
-            "$ref": "#/definitions/Task"
+            "$ref": "#/$defs/Task"
           },
           "type": "array",
           "description": "The list of tasks that can be run"
@@ -371,19 +348,18 @@
       },
       "additionalProperties": false,
       "type": "object",
+      "required": [
+        "tasks"
+      ],
       "patternProperties": {
         "^x-": {}
       }
     },
-    "Variable[github.com/defenseunicorns/maru-runner/src/pkg/variables.ExtraVariableInfo]": {
-      "required": [
-        "name",
-        "Extra"
-      ],
+    "Variable": {
       "properties": {
         "name": {
-          "pattern": "^[A-Z0-9_]+$",
           "type": "string",
+          "pattern": "^[A-Z0-9_]+$",
           "description": "The name to be used for the variable"
         },
         "pattern": {
@@ -391,12 +367,14 @@
           "description": "An optional regex pattern that a variable value must match before a package deployment can continue."
         },
         "Extra": {
-          "$schema": "http://json-schema.org/draft-04/schema#",
-          "$ref": "#/definitions/ExtraVariableInfo"
+          "$ref": "#/$defs/ExtraVariableInfo"
         }
       },
       "additionalProperties": false,
       "type": "object",
+      "required": [
+        "name"
+      ],
       "patternProperties": {
         "^x-": {}
       }

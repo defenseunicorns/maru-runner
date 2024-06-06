@@ -8,10 +8,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/alecthomas/jsonschema"
 	"github.com/defenseunicorns/maru-runner/src/config/lang"
 	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/defenseunicorns/maru-runner/src/types"
+	"github.com/invopop/jsonschema"
 	"github.com/spf13/cobra"
 )
 

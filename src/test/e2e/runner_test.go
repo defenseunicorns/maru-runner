@@ -254,7 +254,7 @@ func TestTaskRunner(t *testing.T) {
 		require.Contains(t, stdErr, "overwritten env var - 8080")
 	})
 
-	t.Run("test that variables of type file and setting dir from a variable are processed correctly", func(t *testing.T) {
+	t.Run("test that setting dir from a variable is processed correctly", func(t *testing.T) {
 		t.Parallel()
 		stdOut, stdErr, err := e2e.Maru("run", "file-and-dir", "--file", "src/test/tasks/tasks.yaml")
 		require.NoError(t, err, stdOut, stdErr)
