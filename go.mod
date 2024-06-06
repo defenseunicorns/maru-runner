@@ -1,6 +1,8 @@
 module github.com/defenseunicorns/maru-runner
 
-go 1.21.8
+go 1.22
+
+toolchain go1.22.2
 
 require (
 	github.com/defenseunicorns/pkg/exec v0.0.1
@@ -19,6 +21,7 @@ require (
 	atomicgo.dev/schedule v0.1.0 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
+	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/defenseunicorns/pkg/helpers v1.1.1 // indirect
@@ -40,7 +43,8 @@ require (
 	github.com/otiai10/copy v1.14.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/rivo/uniseg v0.4.4 // indirect
+	github.com/risor-io/risor v1.6.0 // indirect
+	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect

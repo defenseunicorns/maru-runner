@@ -14,6 +14,7 @@ import (
 	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/config/lang"
 	"github.com/defenseunicorns/maru-runner/src/message"
+	"github.com/defenseunicorns/maru-runner/src/pkg/tasks"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
 	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
 	"github.com/defenseunicorns/maru-runner/src/types"
@@ -22,14 +23,14 @@ import (
 
 // Runner holds the necessary data to run tasks from a tasks file
 type Runner struct {
-	TasksFile      types.TasksFile
+	TasksFile      *tasks.TasksFile
 	TaskNameMap    map[string]bool
 	envFilePath    string
 	variableConfig *variables.VariableConfig[variables.ExtraVariableInfo]
 }
 
 // Run runs a task from tasks file
-func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]string) error {
+func Run(tasksFile *tasks.TasksFile, taskName string, setVariables map[string]string) error {
 	runner := Runner{
 		TasksFile:      tasksFile,
 		TaskNameMap:    map[string]bool{},
@@ -78,7 +79,7 @@ func GetMaruVariableConfig() *variables.VariableConfig[variables.ExtraVariableIn
 	return variables.New[variables.ExtraVariableInfo](prompt, message.SLog)
 }
 
-func (r *Runner) processIncludes(tasksFile types.TasksFile, setVariables map[string]string, action types.Action) error {
+func (r *Runner) processIncludes(tasksFile *tasks.TasksFile, setVariables map[string]string, action types.Action) error {
 	if strings.Contains(action.TaskReference, ":") {
 		taskReferenceName := strings.Split(action.TaskReference, ":")[0]
 		for _, include := range tasksFile.Includes {
@@ -113,7 +114,7 @@ func (r *Runner) importTasks(includes []map[string]string, dir string, setVariab
 
 		includeFilename = utils.TemplateString(r.variableConfig.GetSetVariables(), includeFilename)
 
-		var tasksFile types.TasksFile
+		var tasksFile tasks.TasksFile
 		var includePath string
 		// check if included file is a url
 		if helpers.IsURL(includeFilename) {
@@ -165,7 +166,7 @@ func (r *Runner) importTasks(includes []map[string]string, dir string, setVariab
 	return nil
 }
 
-func (r *Runner) checkProcessedTasksForLoops(tasksFile types.TasksFile) error {
+func (r *Runner) checkProcessedTasksForLoops(tasksFile tasks.TasksFile) error {
 	// The following for loop protects against task loops. Makes sure the task being added hasn't already been processed
 	for _, taskToAdd := range tasksFile.Tasks {
 		for _, currentTasks := range r.TasksFile.Tasks {
@@ -177,7 +178,7 @@ func (r *Runner) checkProcessedTasksForLoops(tasksFile types.TasksFile) error {
 	return nil
 }
 
-func (r *Runner) processTemplateMapVariables(tasksFile types.TasksFile) {
+func (r *Runner) processTemplateMapVariables(tasksFile tasks.TasksFile) {
 	// grab variables from included file
 	for _, v := range tasksFile.Variables {
 		if _, ok := r.variableConfig.GetSetVariable(v.Name); !ok {
@@ -245,29 +246,29 @@ func (r *Runner) loadIncludeTask(includeFileLocation string, includeTaskName str
 	return taskName, nil
 }
 
-func loadTasksFileFromPath(fullPath string) (types.TasksFile, error) {
-	var tasksFile types.TasksFile
+func loadTasksFileFromPath(fullPath string) (*tasks.TasksFile, error) {
+	var tasksFile tasks.TasksFile
 	// get included TasksFile
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-		return types.TasksFile{}, fmt.Errorf("%s not found: %w", config.TaskFileLocation, err)
+		return nil, fmt.Errorf("%s not found: %w", config.TaskFileLocation, err)
 	}
 	err := utils.ReadYaml(fullPath, &tasksFile)
 	if err != nil {
-		return types.TasksFile{}, fmt.Errorf("cannot unmarshal %s: %w", config.TaskFileLocation, err)
+		return nil, fmt.Errorf("cannot unmarshal %s: %w", config.TaskFileLocation, err)
 	}
-	return tasksFile, nil
+	return &tasksFile, nil
 }
 
-func (r *Runner) getTask(taskName string) (types.Task, error) {
+func (r *Runner) getTask(taskName string) (*tasks.Task, error) {
 	for _, task := range r.TasksFile.Tasks {
 		if task.Name == taskName {
 			return task, nil
 		}
 	}
-	return types.Task{}, fmt.Errorf("task name %s not found", taskName)
+	return nil, fmt.Errorf("task name %s not found", taskName)
 }
 
-func (r *Runner) executeTask(task types.Task) error {
+func (r *Runner) executeTask(task *tasks.Task) error {
 	defaultEnv := []string{}
 	for name, inputParam := range task.Inputs {
 		d := inputParam.Default
@@ -277,10 +278,10 @@ func (r *Runner) executeTask(task types.Task) error {
 		defaultEnv = append(defaultEnv, utils.FormatEnvVar(name, d))
 	}
 
-	// load the tasks env file into the runner, can override previous task's env files
-	if task.EnvPath != "" {
-		r.envFilePath = task.EnvPath
-	}
+	// // load the tasks env file into the runner, can override previous task's env files
+	// if task.EnvPath != "" {
+	// 	r.envFilePath = task.EnvPath
+	// }
 
 	for _, action := range task.Actions {
 		action.Env = utils.MergeEnv(action.Env, defaultEnv)
@@ -291,7 +292,7 @@ func (r *Runner) executeTask(task types.Task) error {
 	return nil
 }
 
-func (r *Runner) checkForTaskLoops(task types.Task, tasksFile types.TasksFile, setVariables map[string]string) error {
+func (r *Runner) checkForTaskLoops(task *tasks.Task, tasksFile *tasks.TasksFile, setVariables map[string]string) error {
 	// Filtering unique task actions allows for rerunning tasks in the same execution
 	uniqueTaskActions := getUniqueTaskActions(task.Actions)
 	for _, action := range uniqueTaskActions {

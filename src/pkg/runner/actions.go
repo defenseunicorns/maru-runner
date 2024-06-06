@@ -12,13 +12,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
+	"github.com/cenkalti/backoff/v4"
+	"github.com/risor-io/risor"
+	ros "github.com/risor-io/risor/os"
+	"github.com/risor-io/risor/os/localfs"
+
 	"github.com/defenseunicorns/pkg/exec"
 	"github.com/defenseunicorns/pkg/helpers/v2"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/message"
+	"github.com/defenseunicorns/maru-runner/src/pkg/tasks"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
+	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
 	"github.com/defenseunicorns/maru-runner/src/types"
 )
 
@@ -63,7 +69,7 @@ func (r *Runner) performAction(action types.Action) error {
 }
 
 // processAction checks if action needs to be processed for a given task
-func (r *Runner) processAction(task types.Task, action types.Action) bool {
+func (r *Runner) processAction(task *tasks.Task, action types.Action) bool {
 
 	taskReferenceName := strings.Split(task.Name, ":")[0]
 	actionReferenceName := strings.Split(action.TaskReference, ":")[0]
@@ -98,21 +104,19 @@ func getUniqueTaskActions(actions []types.Action) []types.Action {
 // RunAction executes a specific action command, either wait or cmd. It handles variable loading environment variables and manages retries and timeouts
 func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableConfig *variables.VariableConfig[T]) error {
 	var (
-		ctx        context.Context
-		cancel     context.CancelFunc
 		cmdEscaped string
 		out        string
 		err        error
 
-		cmd = action.Cmd
+		cmd    = action.Cmd
+		tryCmd func() error
 	)
 
 	// If the action is a wait, convert it to a command.
 	if action.Wait != nil {
 		// If the wait has no timeout, set a default of 5 minutes.
-		if action.MaxTotalSeconds == nil {
-			fiveMin := 300
-			action.MaxTotalSeconds = &fiveMin
+		if action.MaxTotalSeconds == 0 {
+			action.MaxTotalSeconds = 300
 		}
 
 		// Convert the wait to a command.
@@ -121,16 +125,13 @@ func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableC
 		}
 
 		// Mute the output because it will be noisy.
-		t := true
-		action.Mute = &t
+		action.Mute = true
 
 		// Set the max retries to 0.
-		z := 0
-		action.MaxRetries = &z
+		action.MaxRetries = 0
 
 		// Not used for wait actions.
-		d := ""
-		action.Dir = &d
+		action.Dir = ""
 		action.Env = []string{}
 		action.SetVariables = []variables.Variable[T]{}
 	}
@@ -168,17 +169,33 @@ func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableC
 		cfg.Env[idx] = utils.TemplateString(variableConfig.GetSetVariables(), cfg.Env[idx])
 	}
 
-	duration := time.Duration(cfg.MaxTotalSeconds) * time.Second
-	timeout := time.After(duration)
+	// Template env strings
+	for idx := range cfg.Env {
+		cfg.Env[idx] = utils.TemplateString(variableConfig.GetSetVariables(), cfg.Env[idx])
+	}
 
-	// Keep trying until the max retries is reached.
-retryLoop:
-	for remaining := cfg.MaxRetries + 1; remaining > 0; remaining-- {
+	retry := backoff.WithContext(
+		backoff.WithMaxRetries(
+			backoff.NewConstantBackOff(time.Duration(cfg.MaxTotalSeconds)*time.Second),
+			uint64(cfg.MaxRetries),
+		),
+		context.Background(),
+	)
 
-		// Perform the action run.
-		tryCmd := func(ctx context.Context) error {
+	if action.Script != "" {
+		tryCmd = func() error {
+			if out, err = ExecScriptAction(retry.Context(), cfg, action.Script); err != nil {
+				return err
+			}
+
+			spinner.Write([]byte(out))
+
+			return nil
+		}
+	} else {
+		tryCmd = func() error {
 			// Try running the command and continue the retry loop if it fails.
-			if out, err = ExecAction(ctx, cfg, cmd, cfg.Shell, spinner); err != nil {
+			if out, err = ExecAction(retry.Context(), cfg, cmd, cfg.Shell, spinner); err != nil {
 				return err
 			}
 
@@ -204,64 +221,29 @@ retryLoop:
 			// If the command ran successfully, continue to the next action.
 			return nil
 		}
-
-		// If no timeout is set, run the command and return or continue retrying.
-		if cfg.MaxTotalSeconds < 1 {
-			spinner.Updatef("Waiting for \"%s\" (no timeout)", cmdEscaped)
-			if err := tryCmd(context.TODO()); err != nil {
-				continue
-			}
-
-			return nil
-		}
-
-		// Run the command on repeat until success or timeout.
-		spinner.Updatef("Waiting for \"%s\" (timeout: %ds)", cmdEscaped, cfg.MaxTotalSeconds)
-		select {
-		// On timeout break the loop to abort.
-		case <-timeout:
-			break retryLoop
-
-		// Otherwise, try running the command.
-		default:
-			ctx, cancel = context.WithTimeout(context.Background(), duration)
-			if err := tryCmd(ctx); err != nil {
-				cancel() // Directly cancel the context after an unsuccessful command attempt.
-				continue
-			}
-			cancel() // Also cancel the context after a successful command attempt.
-			return nil
-		}
 	}
 
-	select {
-	case <-timeout:
-		// If we reached this point, the timeout was reached.
-		return fmt.Errorf("command \"%s\" timed out after %d seconds", cmdEscaped, cfg.MaxTotalSeconds)
-
-	default:
-		// If we reached this point, the retry limit was reached.
-		return fmt.Errorf("command \"%s\" failed after %d retries", cmdEscaped, cfg.MaxRetries)
-	}
+	// Keep trying until the max retries is reached.
+	return backoff.Retry(tryCmd, retry)
 }
 
 // GetBaseActionCfg merges the ActionDefaults with the BaseAction's configuration
 func GetBaseActionCfg[T any](cfg types.ActionDefaults, a types.BaseAction[T], vars variables.SetVariableMap[T]) types.ActionDefaults {
-	if a.Mute != nil {
-		cfg.Mute = *a.Mute
+	if a.Mute != false {
+		cfg.Mute = a.Mute
 	}
 
 	// Default is no timeout, but add a timeout if one is provided.
-	if a.MaxTotalSeconds != nil {
-		cfg.MaxTotalSeconds = *a.MaxTotalSeconds
+	if a.MaxTotalSeconds != 0 {
+		cfg.MaxTotalSeconds = a.MaxTotalSeconds
 	}
 
-	if a.MaxRetries != nil {
-		cfg.MaxRetries = *a.MaxRetries
+	if a.MaxRetries != 0 {
+		cfg.MaxRetries = a.MaxRetries
 	}
 
-	if a.Dir != nil {
-		cfg.Dir = *a.Dir
+	if a.Dir != "" {
+		cfg.Dir = a.Dir
 	}
 
 	if len(a.Env) > 0 {
@@ -309,11 +291,39 @@ func ExecAction(ctx context.Context, cfg types.ActionDefaults, cmd string, shell
 	return out, err
 }
 
+func ExecScriptAction(ctx context.Context, cfg types.ActionDefaults, script string) (string, error) {
+	workdir, err := localfs.New(ctx, localfs.WithBase(cfg.Dir))
+
+	if err != nil {
+		return "", err
+	}
+
+	vm := ros.NewVirtualOS(ctx,
+		ros.WithMounts(map[string]*ros.Mount{
+			"/workdir": {
+				Source: workdir,
+				Target: "/workdir",
+			},
+		}),
+		ros.WithCwd("/workdir"),
+		ros.WithStdout(os.Stdout),
+	)
+
+	result, err := risor.Eval(
+		ros.WithOS(ctx, vm), script,
+		risor.WithGlobal("input", nil),
+	)
+
+	fmt.Println("RESULT:", result)
+
+	return fmt.Sprintf("%v", result), err
+}
+
 // TODO: (@WSTARR) - this is broken in Maru right now - this should not shell to Kubectl and instead should internally talk to a cluster
 // convertWaitToCmd will return the wait command if it exists, otherwise it will return the original command.
-func convertWaitToCmd(wait types.ActionWait, timeout *int) (string, error) {
+func convertWaitToCmd(wait types.ActionWait, timeout int) (string, error) {
 	// Build the timeout string.
-	timeoutString := fmt.Sprintf("--timeout %ds", *timeout)
+	timeoutString := fmt.Sprintf("--timeout %ds", timeout)
 
 	// If the action has a wait, build a cmd from that instead.
 	cluster := wait.Cluster
@@ -359,7 +369,7 @@ func convertWaitToCmd(wait types.ActionWait, timeout *int) (string, error) {
 }
 
 // validateActionableTaskCall validates a tasks "withs" and inputs
-func validateActionableTaskCall(inputTaskName string, inputs map[string]types.InputParameter, withs map[string]string) error {
+func validateActionableTaskCall(inputTaskName string, inputs map[string]tasks.InputParameter, withs map[string]string) error {
 	missing := []string{}
 	for inputKey, input := range inputs {
 		// skip inputs that are not required or have a default value

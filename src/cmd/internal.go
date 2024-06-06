@@ -10,7 +10,7 @@ import (
 
 	"github.com/defenseunicorns/maru-runner/src/config/lang"
 	"github.com/defenseunicorns/maru-runner/src/message"
-	"github.com/defenseunicorns/maru-runner/src/types"
+	"github.com/defenseunicorns/maru-runner/src/pkg/tasks"
 	"github.com/invopop/jsonschema"
 	"github.com/spf13/cobra"
 )
@@ -30,7 +30,7 @@ var configTasksSchemaCmd = &cobra.Command{
 		skipLogFile = true
 	},
 	Run: func(_ *cobra.Command, _ []string) {
-		schema := jsonschema.Reflect(&types.TasksFile{})
+		schema := jsonschema.Reflect(&tasks.TasksFile{})
 		output, err := json.MarshalIndent(schema, "", "  ")
 		if err != nil {
 			message.Fatalf(err, "%s", lang.CmdInternalConfigSchemaErr)

@@ -5,23 +5,22 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
-	"strings"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/config/lang"
 	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/defenseunicorns/maru-runner/src/pkg/runner"
+	"github.com/defenseunicorns/maru-runner/src/pkg/tasks"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
-	"github.com/defenseunicorns/maru-runner/src/types"
 	"github.com/defenseunicorns/pkg/helpers/v2"
 	goyaml "github.com/goccy/go-yaml"
-	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -48,8 +47,8 @@ var runCmd = &cobra.Command{
 		}
 		return nil
 	},
-	Run: func(_ *cobra.Command, args []string) {
-		var tasksFile types.TasksFile
+	RunE: func(_ *cobra.Command, args []string) error {
+		taskName := ""
 
 		err := utils.ReadYaml(config.TaskFileLocation, &tasksFile)
 		if err != nil {
@@ -99,15 +98,80 @@ var runCmd = &cobra.Command{
 		if len(args) > 0 {
 			taskName = args[0]
 		}
-		if err := runner.Run(tasksFile, taskName, setRunnerVariables); err != nil {
-			message.Fatalf(err, "Failed to run action: %s", err.Error())
+
+		tasks, err := tasks.Parse(config.TaskFileLocation)
+		if err != nil {
+			return err
 		}
+
+		runner, err := tasks.Resolve(taskName)
+		if err != nil {
+			return err
+		}
+
+		ctx := context.Background()
+		return runner.Run(ctx)
 	},
+	// Run: func(_ *cobra.Command, args []string) {
+	// 	var tasksFile types.TasksFile
+
+	// 	err := utils.ReadYaml(config.TaskFileLocation, &tasksFile)
+	// 	if err != nil {
+	// 		message.Fatalf(err, "Cannot unmarshal %s", config.TaskFileLocation)
+	// 	}
+
+	// 	// ensure vars are uppercase
+	// 	setRunnerVariables = helpers.TransformMapKeys(setRunnerVariables, strings.ToUpper)
+
+	// 	// set any env vars that come from the environment (taking MARU_ over VENDOR_)
+	// 	for _, variable := range tasksFile.Variables {
+	// 		if _, ok := setRunnerVariables[variable.Name]; !ok {
+	// 			if value := os.Getenv(fmt.Sprintf("%s_%s", strings.ToUpper(config.EnvPrefix), variable.Name)); value != "" {
+	// 				setRunnerVariables[variable.Name] = value
+	// 			} else if config.VendorPrefix != "" {
+	// 				if value := os.Getenv(fmt.Sprintf("%s_%s", strings.ToUpper(config.VendorPrefix), variable.Name)); value != "" {
+	// 					setRunnerVariables[variable.Name] = value
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+
+	// 	if listTasks || listAllTasks {
+	// 		rows := [][]string{
+	// 			{"Name", "Description"},
+	// 		}
+	// 		for _, task := range tasksFile.Tasks {
+	// 			rows = append(rows, []string{task.Name, task.Description})
+	// 		}
+	// 		// If ListAllTasks, add tasks from included files
+	// 		if listAllTasks {
+	// 			err = listTasksFromIncludes(&rows, tasksFile)
+	// 			if err != nil {
+	// 				message.Fatalf(err, "Cannot list tasks: %s", err.Error())
+	// 			}
+	// 		}
+
+	// 		err := pterm.DefaultTable.WithHasHeader().WithData(rows).Render()
+	// 		if err != nil {
+	// 			message.Fatalf(err, "Error listing tasks: %s", err.Error())
+	// 		}
+
+	// 		return
+	// 	}
+
+	// 	taskName := "default"
+	// 	if len(args) > 0 {
+	// 		taskName = args[0]
+	// 	}
+	// 	if err := runner.Run(tasksFile, taskName, setRunnerVariables); err != nil {
+	// 		message.Fatalf(err, "Failed to run action: %s", err.Error())
+	// 	}
+	// },
 }
 
 // ListAutoCompleteTasks returns a list of all of the available tasks that can be run
 func ListAutoCompleteTasks(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
-	var tasksFile types.TasksFile
+	var tasksFile tasks.TasksFile
 
 	if _, err := os.Stat(config.TaskFileLocation); os.IsNotExist(err) {
 		return []string{}, cobra.ShellCompDirectiveNoFileComp
@@ -125,8 +189,8 @@ func ListAutoCompleteTasks(_ *cobra.Command, _ []string, _ string) ([]string, co
 	return taskNames, cobra.ShellCompDirectiveNoFileComp
 }
 
-func listTasksFromIncludes(rows *[][]string, tasksFile types.TasksFile) error {
-	var includedTasksFile types.TasksFile
+func listTasksFromIncludes(rows *[][]string, tasksFile tasks.TasksFile) error {
+	var includedTasksFile tasks.TasksFile
 
 	variableConfig := runner.GetMaruVariableConfig()
 	err := variableConfig.PopulateVariables(tasksFile.Variables, setRunnerVariables)
@@ -158,8 +222,8 @@ func listTasksFromIncludes(rows *[][]string, tasksFile types.TasksFile) error {
 	return nil
 }
 
-func loadTasksFromRemoteIncludes(includeFileLocation string) types.TasksFile {
-	var includedTasksFile types.TasksFile
+func loadTasksFromRemoteIncludes(includeFileLocation string) tasks.TasksFile {
+	var includedTasksFile tasks.TasksFile
 
 	// Send an HTTP GET request to fetch the content of the remote file
 	resp, err := http.Get(includeFileLocation)
@@ -182,8 +246,8 @@ func loadTasksFromRemoteIncludes(includeFileLocation string) types.TasksFile {
 	return includedTasksFile
 }
 
-func loadTasksFromLocalIncludes(includeFileLocation string) types.TasksFile {
-	var includedTasksFile types.TasksFile
+func loadTasksFromLocalIncludes(includeFileLocation string) tasks.TasksFile {
+	var includedTasksFile tasks.TasksFile
 	fullPath := filepath.Join(filepath.Dir(config.TaskFileLocation), includeFileLocation)
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 		message.Fatalf(err, "%s not found", fullPath)

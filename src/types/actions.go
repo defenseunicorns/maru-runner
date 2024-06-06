@@ -22,15 +22,23 @@ type ActionDefaults struct {
 // BaseAction represents a single action to run and represents an interface shared with Zarf
 type BaseAction[T any] struct {
 	Description     string                  `json:"description,omitempty" jsonschema:"description=Description of the action to be displayed during package execution instead of the command"`
-	Cmd             string                  `json:"cmd,omitempty" jsonschema:"description=The command to run. Must specify either cmd or wait for the action to do anything."`
-	Wait            *ActionWait             `json:"wait,omitempty" jsonschema:"description=Wait for a condition to be met before continuing. Must specify either cmd or wait for the action."`
+	Cmd             string                  `json:"cmd,omitempty" jsonschema:"description=The command to run. Must specify cmd, script, or wait for the action to do anything."`
+	Script          string                  `json:"script,omitempty" jsonschema:"description=The script to run. Must specify cmd, script, or wait for the action to do anything."`
+	Wait            *ActionWait             `json:"wait,omitempty" jsonschema:"description=Wait for a condition to be met before continuing. Must specify cmd, script, or wait for the action."`
 	Env             []string                `json:"env,omitempty" jsonschema:"description=Additional environment variables to set for the command"`
-	Mute            *bool                   `json:"mute,omitempty" jsonschema:"description=Hide the output of the command during package deployment (default false)"`
-	MaxTotalSeconds *int                    `json:"maxTotalSeconds,omitempty" jsonschema:"description=Timeout in seconds for the command (default to 0, no timeout for cmd actions and 300, 5 minutes for wait actions)"`
-	MaxRetries      *int                    `json:"maxRetries,omitempty" jsonschema:"description=Retry the command if it fails up to given number of times (default 0)"`
-	Dir             *string                 `json:"dir,omitempty" jsonschema:"description=The working directory to run the command in (default is CWD)"`
+	Mute            bool                    `json:"mute,omitempty" jsonschema:"description=Hide the output of the command during package deployment (default false)"`
+	MaxTotalSeconds int                     `json:"maxTotalSeconds,omitempty" jsonschema:"description=Timeout in seconds for the command (default to 0, no timeout for cmd actions and 300, 5 minutes for wait actions)"`
+	MaxRetries      int                     `json:"maxRetries,omitempty" jsonschema:"description=Retry the command if it fails up to given number of times (default 0)"`
+	Dir             string                  `json:"dir,omitempty" jsonschema:"description=The working directory to run the command in (default is CWD)"`
 	Shell           *exec.ShellPreference   `json:"shell,omitempty" jsonschema:"description=(cmd only) Indicates a preference for a shell for the provided cmd to be executed in on supported operating systems"`
 	SetVariables    []variables.Variable[T] `json:"setVariables,omitempty" jsonschema:"description=(onDeploy/cmd only) An array of variables to update with the output of the command. These variables will be available to all remaining actions and components in the package."`
+}
+
+// Action is a wrapped BaseAction action inside a Task to provide additional functionality
+type Action struct {
+	*BaseAction[variables.ExtraVariableInfo] `json:",inline"`
+	TaskReference                            string            `json:"task,omitempty" jsonschema:"description=The task to run, mutually exclusive with cmd and wait"`
+	With                                     map[string]string `json:"with,omitempty" jsonschema:"description=Input parameters to pass to the task,type=object"`
 }
 
 // ActionWait specifies a condition to wait for before continuing

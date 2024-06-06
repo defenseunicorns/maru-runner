@@ -11,13 +11,14 @@ import (
 	"text/template"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
+	"github.com/defenseunicorns/maru-runner/src/pkg/tasks"
 	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
 	"github.com/defenseunicorns/maru-runner/src/types"
 	goyaml "github.com/goccy/go-yaml"
 )
 
 // TemplateTaskActionsWithInputs templates a task's actions with the given inputs
-func TemplateTaskActionsWithInputs(task types.Task, withs map[string]string) ([]types.Action, error) {
+func TemplateTaskActionsWithInputs(task *tasks.Task, withs map[string]string) ([]types.Action, error) {
 	data := map[string]map[string]string{
 		"inputs": {},
 	}
