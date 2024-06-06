@@ -261,6 +261,13 @@ func TestTaskRunner(t *testing.T) {
 		require.Contains(t, stdErr, "SECRET_KEY=not-a-secret")
 	})
 
+	t.Run("test that setting an env var from a variable is processed correctly", func(t *testing.T) {
+		t.Parallel()
+		stdOut, stdErr, err := e2e.Maru("run", "env-templating", "--file", "src/test/tasks/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "hello-replaced")
+	})
+
 	t.Run("test that env vars get used for variables that do not have a default set", func(t *testing.T) {
 		t.Parallel()
 		os.Setenv("MARU_LOG_LEVEL", "debug")

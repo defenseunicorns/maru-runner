@@ -158,3 +158,9 @@ tasks:
     actions:
       - cmd: cat ${COOL_FILE}
         dir: ${COOL_DIR}
+  - name: env-templating
+    description: Tests setting an env var from variable
+    actions:
+      - cmd: echo ${HELLO_KITTEH}
+        env:
+          - HELLO_KITTEH=hello-${REPLACE_ME}

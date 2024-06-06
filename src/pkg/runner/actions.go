@@ -163,6 +163,11 @@ func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableC
 	// Template dir string
 	cfg.Dir = utils.TemplateString(variableConfig.GetSetVariables(), cfg.Dir)
 
+	// Template env strings
+	for idx := range cfg.Env {
+		cfg.Env[idx] = utils.TemplateString(variableConfig.GetSetVariables(), cfg.Env[idx])
+	}
+
 	duration := time.Duration(cfg.MaxTotalSeconds) * time.Second
 	timeout := time.After(duration)
 
