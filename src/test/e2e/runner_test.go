@@ -137,6 +137,14 @@ func TestTaskRunner(t *testing.T) {
 		require.Contains(t, stdErr, "task loop detected")
 	})
 
+	t.Run("run interactive (with --no-progress)", func(t *testing.T) {
+		t.Parallel()
+		stdOut, stdErr, err := e2e.Maru("run", "interactive", "--file", "src/test/tasks/tasks.yaml", "--no-progress")
+		require.NoError(t, err, stdOut, stdErr)
+		// Ensure there are no extra chars that will interrupt interactive programs (i.e. a spinner) when --no-progress is set
+		require.Contains(t, stdErr, "\033[G ⬒ Spinning...\033[G ⬔ Spinning...\033[G ◨ Spinning...")
+	})
+
 	t.Run("test includes paths", func(t *testing.T) {
 		t.Parallel()
 		stdOut, stdErr, err := e2e.Maru("run", "foobar", "--file", "src/test/tasks/tasks.yaml")
@@ -246,11 +254,18 @@ func TestTaskRunner(t *testing.T) {
 		require.Contains(t, stdErr, "overwritten env var - 8080")
 	})
 
-	t.Run("test that variables of type file and setting dir from a variable are processed correctly", func(t *testing.T) {
+	t.Run("test that setting dir from a variable is processed correctly", func(t *testing.T) {
 		t.Parallel()
 		stdOut, stdErr, err := e2e.Maru("run", "file-and-dir", "--file", "src/test/tasks/tasks.yaml")
 		require.NoError(t, err, stdOut, stdErr)
 		require.Contains(t, stdErr, "SECRET_KEY=not-a-secret")
+	})
+
+	t.Run("test that setting an env var from a variable is processed correctly", func(t *testing.T) {
+		t.Parallel()
+		stdOut, stdErr, err := e2e.Maru("run", "env-templating", "--file", "src/test/tasks/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "hello-replaced")
 	})
 
 	t.Run("test that env vars get used for variables that do not have a default set", func(t *testing.T) {

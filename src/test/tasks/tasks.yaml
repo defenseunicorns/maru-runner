@@ -13,7 +13,6 @@ variables:
   - name: COOL_DIR
     default: src/test/tasks
   - name: COOL_FILE
-    type: file
     default: my-env
 
 tasks:
@@ -31,13 +30,32 @@ tasks:
   - name: action
     actions:
       - cmd: echo "specific test string"
+  - name: interactive
+    description: Run an interactive task
+    actions:
+      - description: Create a spinner that spins
+        cmd: |
+          printf '\033[G ⬒ Spinning...'
+          sleep 0.1
+          printf '\033[G ⬔ Spinning...'
+          sleep 0.1
+          printf '\033[G ◨ Spinning...'
+          sleep 0.1
+          printf '\033[G ◪ Spinning...'
+          sleep 0.1
+          printf '\033[G ⬓ Spinning...'
+          sleep 0.1
+          printf '\033[G ⬕ Spinning...'
+          sleep 0.1
+          printf '\033[G ◧ Spinning...'
+          sleep 0.1
+          printf '\033[G ◩ Spinning...'
   - name: cmd-set-variable
     actions:
       - cmd: echo unique-value
         mute: true
         setVariables:
           - name: ACTION_VAR
-            sensitive: true
       - cmd: echo "I'm set from setVariables - ${ACTION_VAR}"
       - cmd: echo "I'm set from a runner var - ${REPLACE_ME}"
       - cmd: echo "I'm set from a --set var - ${REPLACE_ME}"
@@ -136,7 +154,13 @@ tasks:
     actions:
       - cmd: echo overwritten env var - $PORT
   - name: file-and-dir
-    description: Tests variables of type file and setting dir from variable
+    description: Tests setting dir from variable
     actions:
       - cmd: cat ${COOL_FILE}
         dir: ${COOL_DIR}
+  - name: env-templating
+    description: Tests setting an env var from variable
+    actions:
+      - cmd: echo ${HELLO_KITTEH}
+        env:
+          - HELLO_KITTEH=hello-${REPLACE_ME}
