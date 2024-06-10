@@ -132,7 +132,7 @@ func (r *Runner) importTasks(includes []map[string]string, dir string, setVariab
 		}
 
 		if err := utils.ReadYaml(includePath, &tasksFile); err != nil {
-			return fmt.Errorf("unable to read included file %s: %w", includePath, err)
+			return fmt.Errorf("unable to read included file: %w", err)
 		}
 
 		// prefix task names and actions with the includes key
