@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -17,7 +18,7 @@ type TaskRunner struct {
 	tasksFile *TasksFile
 
 	inputs      map[string]string
-	stepOutputs map[string]object.Object
+	stepOutputs map[string]interface{}
 }
 
 func NewRunner(task *Task, tasksFile *TasksFile) *TaskRunner {
@@ -25,7 +26,7 @@ func NewRunner(task *Task, tasksFile *TasksFile) *TaskRunner {
 		task:        task,
 		tasksFile:   tasksFile,
 		inputs:      make(map[string]string),
-		stepOutputs: make(map[string]object.Object),
+		stepOutputs: make(map[string]interface{}),
 	}
 
 	for k, input := range task.Inputs {
@@ -129,12 +130,12 @@ m["%s"] = %s
 
 func (r *TaskRunner) setStepOutput(stepID string, obj object.Object) error {
 	if stepID != "" {
-		// value, err := fromRisor(obj)
-		// if err != nil {
-		// 	return err
-		// }
+		value, err := fromRisor(obj)
+		if err != nil {
+			return err
+		}
 
-		r.stepOutputs[stepID] = obj
+		r.stepOutputs[stepID] = value
 	}
 
 	return nil
@@ -174,25 +175,40 @@ func (r *TaskRunner) getContext(ctx context.Context) (context.Context, error) {
 	)), nil
 }
 
-// func fromRisor(value object.Object) (interface{}, error) {
-// 	switch obj := value.(type) {
-// 	case *object.Int:
-// 	case *object.Float:
-// 	case *object.String:
-// 		return obj, nil
-// 	case *object.Map:
-// 	case *object.List:
-// 		return obj, nil
-// 		// json, err := obj.MarshalJSON()
+func fromRisor(value object.Object) (interface{}, error) {
+	switch obj := value.(type) {
+	case *object.Int:
+	case *object.Float:
+	case *object.String:
+		return obj.Interface(), nil
+	case *object.Map:
+		out := make(map[string]interface{})
+		str, err := obj.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
 
-// 		// if err != nil {
-// 		// 	return "", fmt.Errorf("could not serialize output")
-// 		// }
+		json.Unmarshal([]byte(str), &out)
+		return out, nil
+	case *object.List:
+		out := make([]interface{}, obj.Size())
+		str, err := obj.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
 
-// 		// return string(json), nil
-// 	case *object.NilType:
-// 		return nil, nil
-// 	}
+		json.Unmarshal([]byte(str), &out)
+		return out, nil
+		// json, err := obj.MarshalJSON()
 
-// 	return "", fmt.Errorf("unsupported output type: %T", value)
-// }
+		// if err != nil {
+		// 	return "", fmt.Errorf("could not serialize output")
+		// }
+
+		// return string(json), nil
+	case *object.NilType:
+		return nil, nil
+	}
+
+	return "", fmt.Errorf("unsupported output type: %T", value)
+}
