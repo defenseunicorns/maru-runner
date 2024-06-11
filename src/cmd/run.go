@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -110,7 +111,18 @@ var runCmd = &cobra.Command{
 		}
 
 		ctx := context.Background()
-		return runner.Run(ctx)
+		if err = runner.Run(ctx); err != nil {
+			return err
+		}
+
+		out := runner.Outputs(ctx)
+		result, err := json.MarshalIndent(out, "", "  ")
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(string(result))
+		return nil
 	},
 	// Run: func(_ *cobra.Command, args []string) {
 	// 	var tasksFile types.TasksFile

@@ -79,7 +79,7 @@ func (r *TaskRunner) Run(ctx context.Context) error {
 		r.setStepOutput(step.ID, result)
 	}
 
-	fmt.Printf("finished running step '%s': %v\n", r.task.Name, r.Outputs(ctx))
+	fmt.Printf("finished running task '%s': %v\n", r.task.Name, r.Outputs(ctx))
 
 	return nil
 }
@@ -98,47 +98,43 @@ func (r *TaskRunner) SetInputs(inputs map[string]string) error {
 	return nil
 }
 
-func (r *TaskRunner) Outputs(ctx context.Context) *object.Map {
-	out := make(map[string]object.Object)
+func (r *TaskRunner) Outputs(ctx context.Context) object.Object {
+	var code strings.Builder
+
+	code.WriteString("m := {}")
 
 	for k, value := range r.task.Outputs {
 		if strings.HasPrefix(value, "${{") {
 			expr := strings.TrimPrefix(value, "${{")
 			expr = strings.TrimSuffix(expr, "}}")
 
-			result, err := r.eval(ctx, expr)
-
-			if err != nil {
-				out[k] = object.NewError(err)
-			} else {
-				out[k] = result
-			}
-		} else {
-			out[k] = object.NewString(value)
+			fmt.Fprintf(&code, `
+m["%s"] = %s
+`, k, expr)
 		}
 	}
 
-	return object.NewMap(out)
+	code.WriteString("\nm")
+
+	fmt.Println(code.String())
+
+	out, err := r.eval(ctx, code.String())
+	if err != nil {
+		fmt.Println(err)
+	}
+	// out, _ := fromRisor(result)
+
+	return out
 }
 
 func (r *TaskRunner) setStepOutput(stepID string, obj object.Object) error {
 	if stepID != "" {
-		r.stepOutputs[stepID] = obj
-		// switch obj := obj.(type) {
-		// case *object.Int:
-		// case *object.Float:
-		// case *object.String:
-		// case *object.Map:
-		// case *object.List:
-		// 	json, err := obj.MarshalJSON()
-		// 	if err != nil {
-		// 		return fmt.Errorf(`could not serialize output (step_id: "%s")`, stepID)
-		// 	}
-
-		// 	r.outputs[stepID] = string(json)
-		// default:
-		// 	return fmt.Errorf(`type error: unsupported output type: %T (step_id: "%s")`, obj, stepID)
+		// value, err := fromRisor(obj)
+		// if err != nil {
+		// 	return err
 		// }
+
+		r.stepOutputs[stepID] = obj
 	}
 
 	return nil
@@ -177,3 +173,26 @@ func (r *TaskRunner) getContext(ctx context.Context) (context.Context, error) {
 		ros.WithStdin(os.Stdin),
 	)), nil
 }
+
+// func fromRisor(value object.Object) (interface{}, error) {
+// 	switch obj := value.(type) {
+// 	case *object.Int:
+// 	case *object.Float:
+// 	case *object.String:
+// 		return obj, nil
+// 	case *object.Map:
+// 	case *object.List:
+// 		return obj, nil
+// 		// json, err := obj.MarshalJSON()
+
+// 		// if err != nil {
+// 		// 	return "", fmt.Errorf("could not serialize output")
+// 		// }
+
+// 		// return string(json), nil
+// 	case *object.NilType:
+// 		return nil, nil
+// 	}
+
+// 	return "", fmt.Errorf("unsupported output type: %T", value)
+// }

@@ -2,26 +2,23 @@ tasks:
   - name: default
     description: Run scripts in Risor
     outputs:
-      user-agent: ${{ steps.output | strings.to_upper }}
+      user-agent: ${{ steps.data["user-agent"] | strings.to_upper }}
     steps:
       - id: data
         uses: http-get
         with:
           url: https://httpbin.org/get
-      - id: output
-        script: |
-          printf("%v", steps.data)
-          steps.data["User-Agent"]
+      # - id: get-user-agent
+      #   script: |
+      #     json.unmarshal(steps.data).headers["User-Agent"]
   - name: http-get
     inputs:
       url:
         required: true
     outputs:
-      headers: ${{ steps.fetch }}
+      user-agent: ${{ steps.fetch.headers["User-Agent"] }}
       url: ${{ inputs.url }}
     steps:
       - id: fetch
         script: |
-          r := fetch(inputs.url).json()
-          printf("%v", r)
-          r.headers
+          fetch(inputs.url).json()
