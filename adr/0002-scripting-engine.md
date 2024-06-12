@@ -88,7 +88,7 @@ Here is the example above rewritten using [Risor syntax](https://risor.io/docs/s
 
 Risor has a bunch of built-in modules for DevOps use cases and is totally
 pluggable for our own implementation. These modules in particular come
-to mind as potentially useful for delivery:
+to mind as potentially useful for delivery and the software factory developer persona "Kay":
 
 - [`aws`](https://risor.io/docs/modules/aws)
 - [`vault`](https://risor.io/docs/modules/vault)
@@ -105,7 +105,7 @@ script execution would happen natively in the Go runtime. This has
 huge advantages for both portability and security. As with the
 [vendoring tools](#vendor-tools) approach, we can continue to ship a
 single binary with minimal-to-zero external dependencies, but with
-the additional advantage of not having to rely on a host-specific shell.
+the additional advantage of not having to rely on a host-specific shell (which is especially beneficial to Windows environments).
 
 ### Alternatives
 
