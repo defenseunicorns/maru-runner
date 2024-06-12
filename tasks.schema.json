@@ -281,6 +281,65 @@
         "^x-": {}
       }
     },
+    "Step": {
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "A unique identifier for the step. You can use the id to reference the step in contexts."
+        },
+        "env": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object",
+          "description": "Additional environment variables to set for the command"
+        },
+        "dir": {
+          "type": "string",
+          "description": "The working directory to run the command in (default is CWD)"
+        },
+        "cmd": {
+          "type": "string",
+          "description": "The command to run. Must specify cmd"
+        },
+        "shell": {
+          "$ref": "#/$defs/ShellPreference",
+          "description": "(cmd only) Indicates a preference for a shell for the provided cmd to be executed in on supported operating systems"
+        },
+        "script": {
+          "type": "string",
+          "description": "The script to run. Must specify cmd"
+        },
+        "wait": {
+          "$ref": "#/$defs/ActionWait",
+          "description": "Wait for a condition to be met before continuing. Must specify cmd"
+        },
+        "uses": {
+          "type": "string",
+          "description": "The task to run"
+        },
+        "with": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object",
+          "description": "Input parameters to pass to the task"
+        },
+        "timeout": {
+          "type": "integer",
+          "description": "Timeout in seconds for the command (default to 0"
+        },
+        "retry": {
+          "type": "integer",
+          "description": "Retry the command if it fails up to given number of times (default 0)"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "patternProperties": {
+        "^x-": {}
+      }
+    },
     "Task": {
       "properties": {
         "name": {
@@ -303,11 +362,7 @@
             "$ref": "#/$defs/InputParameter"
           },
           "type": "object",
-          "description": "Input parameters for the task"
-        },
-        "envPath": {
-          "type": "string",
-          "description": "Path to file containing environment variables"
+          "description": "Outputs from the task"
         }
       },
       "additionalProperties": false,
@@ -330,6 +385,13 @@
           },
           "type": "array",
           "description": "List of local task files to include"
+        },
+        "env": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object",
+          "description": "Environment variables to set for all tasks"
         },
         "variables": {
           "items": {
