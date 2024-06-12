@@ -8,55 +8,51 @@ package utils
 import (
 	"regexp"
 	"strings"
-	"text/template"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
-	"github.com/defenseunicorns/maru-runner/src/pkg/tasks"
 	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
-	"github.com/defenseunicorns/maru-runner/src/types"
-	goyaml "github.com/goccy/go-yaml"
 )
 
-// TemplateTaskActionsWithInputs templates a task's actions with the given inputs
-func TemplateTaskActionsWithInputs(task *tasks.Task, withs map[string]string) ([]types.Action, error) {
-	data := map[string]map[string]string{
-		"inputs": {},
-	}
+// // TemplateTaskActionsWithInputs templates a task's actions with the given inputs
+// func TemplateTaskActionsWithInputs(task *tasks.Task, withs map[string]string) ([]types.Action, error) {
+// 	data := map[string]map[string]string{
+// 		"inputs": {},
+// 	}
 
-	// get inputs from "with" map
-	for name := range withs {
-		data["inputs"][name] = withs[name]
-	}
+// 	// get inputs from "with" map
+// 	for name := range withs {
+// 		data["inputs"][name] = withs[name]
+// 	}
 
-	// use default if not populated in data
-	for name := range task.Inputs {
-		if current, ok := data["inputs"][name]; !ok || current == "" {
-			data["inputs"][name] = task.Inputs[name].Default
-		}
-	}
+// 	// use default if not populated in data
+// 	for name := range task.Inputs {
+// 		if current, ok := data["inputs"][name]; !ok || current == "" {
+// 			data["inputs"][name] = task.Inputs[name].Default
+// 		}
+// 	}
 
-	b, err := goyaml.Marshal(task.Actions)
-	if err != nil {
-		return nil, err
-	}
+// 	b, err := goyaml.Marshal(task.Actions)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	t, err := template.New("template task actions").Option("missingkey=error").Delims("${{", "}}").Parse(string(b))
-	if err != nil {
-		return nil, err
-	}
+// 	t, err := template.New("template task actions").Option("missingkey=error").Delims("${{", "}}").Parse(string(b))
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	var templated strings.Builder
+// 	var templated strings.Builder
 
-	if err := t.Execute(&templated, data); err != nil {
-		return nil, err
-	}
+// 	if err := t.Execute(&templated, data); err != nil {
+// 		return nil, err
+// 	}
 
-	result := templated.String()
+// 	result := templated.String()
 
-	var templatedActions []types.Action
+// 	var templatedActions []types.Action
 
-	return templatedActions, goyaml.Unmarshal([]byte(result), &templatedActions)
-}
+// 	return templatedActions, goyaml.Unmarshal([]byte(result), &templatedActions)
+// }
 
 // TemplateString replaces ${...} with the value from the template map
 func TemplateString[T any](setVariableMap variables.SetVariableMap[T], s string) string {

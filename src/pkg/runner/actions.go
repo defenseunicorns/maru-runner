@@ -41,10 +41,10 @@ func (r *Runner) performAction(action types.Action) error {
 			action.With[k] = utils.TemplateString(r.variableConfig.GetSetVariables(), v)
 		}
 
-		referencedTask.Actions, err = utils.TemplateTaskActionsWithInputs(referencedTask, action.With)
-		if err != nil {
-			return err
-		}
+		// referencedTask.Actions, err = utils.TemplateTaskActionsWithInputs(referencedTask, action.With)
+		// if err != nil {
+		// 	return err
+		// }
 
 		withEnv := []string{}
 		for name := range action.With {

@@ -8,6 +8,7 @@ import (
 
 	yaml "github.com/goccy/go-yaml"
 
+	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
 	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
 	"github.com/defenseunicorns/maru-runner/src/types"
 )
@@ -65,11 +66,11 @@ func Parse(filePath string) (*TasksFile, error) {
 
 	for _, t := range tasks.Tasks {
 		if _, ok := tasks.taskMap[t.Name]; ok {
-			return nil, fmt.Errorf(`found duplicate task definition for "%s"`, t.Name)
+			return nil, fmt.Errorf("found duplicate task definition for '%s'", t.Name)
 		}
 
 		if strings.Contains(t.Name, ":") {
-			return nil, fmt.Errorf(`invalid task name "%s" (use of ":" is reserved for included tasks)`, t.Name)
+			return nil, fmt.Errorf("invalid task name '%s' (use of ':' is reserved for included tasks)", t.Name)
 		}
 
 		tasks.taskMap[t.Name] = t
@@ -87,5 +88,19 @@ func (tf *TasksFile) Resolve(taskName string) (*TaskRunner, error) {
 		return NewRunner(t, tf), nil
 	}
 
-	return nil, fmt.Errorf(`Task "%s" not found`, taskName)
+	return nil, fmt.Errorf("task '%s' is not defined", taskName)
+}
+
+func ToStep(a types.Action) types.Step {
+	return types.Step{
+		Env:     utils.EnvMap(a.Env),
+		WorkDir: a.Dir,
+		Cmd:     a.Cmd,
+		Shell:   a.Shell,
+		// Wait:    a.Wait,
+		Uses:    a.TaskReference,
+		With:    a.With,
+		Timeout: a.MaxTotalSeconds,
+		Retry:   a.MaxRetries,
+	}
 }

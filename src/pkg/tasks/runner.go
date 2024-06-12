@@ -7,6 +7,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/defenseunicorns/maru-runner/src/types"
+
 	"github.com/risor-io/risor"
 	"github.com/risor-io/risor/object"
 	ros "github.com/risor-io/risor/os"
@@ -31,6 +33,14 @@ func NewRunner(task *Task, tasksFile *TasksFile) *TaskRunner {
 
 	for k, input := range task.Inputs {
 		runner.inputs[k] = input.Default
+	}
+
+	if task.Actions != nil {
+		task.Steps = make([]types.Step, 0)
+
+		for _, a := range task.Actions {
+			task.Steps = append(task.Steps, ToStep(a))
+		}
 	}
 
 	return runner
@@ -63,15 +73,21 @@ func (r *TaskRunner) Run(ctx context.Context) error {
 			continue
 		}
 
-		if step.Script == "" {
-			continue
-		}
-
 		// if step.WorkDir != "" {
 		// 	vm.Chdir(step.WorkDir)
 		// }
 
-		result, err := r.eval(ctx, step.Script)
+		var result object.Object
+		var err error
+
+		if step.Script != "" {
+			result, err = r.eval(ctx, step.Script)
+		} else if step.Cmd != "" {
+			// shell, shellArgs := exec.GetOSShell(*step.Shell)
+			result, err = r.exec(ctx, "sh", []string{"-e", "-c", step.Cmd})
+		} else {
+			continue
+		}
 
 		if err != nil {
 			return err
@@ -117,8 +133,6 @@ m["%s"] = %s
 
 	code.WriteString("\nm")
 
-	fmt.Println(code.String())
-
 	out, err := r.eval(ctx, code.String())
 	if err != nil {
 		fmt.Println(err)
@@ -147,6 +161,15 @@ func (r *TaskRunner) eval(ctx context.Context, expression string) (object.Object
 		expression,
 		risor.WithGlobal("inputs", r.inputs),
 		risor.WithGlobal("steps", r.stepOutputs),
+	)
+}
+
+func (r *TaskRunner) exec(ctx context.Context, shell string, args []string) (object.Object, error) {
+	return risor.Eval(
+		ctx,
+		"exec(shell, args).stdout",
+		risor.WithGlobal("shell", shell),
+		risor.WithGlobal("args", args),
 	)
 }
 
