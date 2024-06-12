@@ -51,51 +51,6 @@ var runCmd = &cobra.Command{
 	RunE: func(_ *cobra.Command, args []string) error {
 		taskName := ""
 
-		err := utils.ReadYaml(config.TaskFileLocation, &tasksFile)
-		if err != nil {
-			message.Fatalf(err, "Failed to open file: %s", err.Error())
-		}
-
-		// ensure vars are uppercase
-		setRunnerVariables = helpers.TransformMapKeys(setRunnerVariables, strings.ToUpper)
-
-		// set any env vars that come from the environment (taking MARU_ over VENDOR_)
-		for _, variable := range tasksFile.Variables {
-			if _, ok := setRunnerVariables[variable.Name]; !ok {
-				if value := os.Getenv(fmt.Sprintf("%s_%s", strings.ToUpper(config.EnvPrefix), variable.Name)); value != "" {
-					setRunnerVariables[variable.Name] = value
-				} else if config.VendorPrefix != "" {
-					if value := os.Getenv(fmt.Sprintf("%s_%s", strings.ToUpper(config.VendorPrefix), variable.Name)); value != "" {
-						setRunnerVariables[variable.Name] = value
-					}
-				}
-			}
-		}
-
-		if listTasks || listAllTasks {
-			rows := [][]string{
-				{"Name", "Description"},
-			}
-			for _, task := range tasksFile.Tasks {
-				rows = append(rows, []string{task.Name, task.Description})
-			}
-			// If ListAllTasks, add tasks from included files
-			if listAllTasks {
-				err = listTasksFromIncludes(&rows, tasksFile)
-				if err != nil {
-					message.Fatalf(err, "Cannot list tasks: %s", err.Error())
-				}
-			}
-
-			err := pterm.DefaultTable.WithHasHeader().WithData(rows).Render()
-			if err != nil {
-				message.Fatalf(err, "Error listing tasks: %s", err.Error())
-			}
-
-			return
-		}
-
-		taskName := "default"
 		if len(args) > 0 {
 			taskName = args[0]
 		}
@@ -129,7 +84,7 @@ var runCmd = &cobra.Command{
 
 	// 	err := utils.ReadYaml(config.TaskFileLocation, &tasksFile)
 	// 	if err != nil {
-	// 		message.Fatalf(err, "Cannot unmarshal %s", config.TaskFileLocation)
+	// 		message.Fatalf(err, "Failed to open file: %s", err.Error())
 	// 	}
 
 	// 	// ensure vars are uppercase

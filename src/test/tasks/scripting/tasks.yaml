@@ -21,6 +21,7 @@ tasks:
     inputs:
       url:
         required: true
+        description: the URL to fetch
     outputs:
       user-agent: ${{ steps.fetch.headers["User-Agent"] }}
       url: ${{ inputs.url }}

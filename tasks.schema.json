@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/defenseunicorns/maru-runner/src/types/tasks-file",
+  "$id": "https://github.com/defenseunicorns/maru-runner/src/pkg/tasks/tasks-file",
   "$ref": "#/$defs/TasksFile",
   "$defs": {
     "Action": {
@@ -11,11 +11,15 @@
         },
         "cmd": {
           "type": "string",
-          "description": "The command to run. Must specify either cmd or wait for the action to do anything."
+          "description": "The command to run. Must specify cmd"
+        },
+        "script": {
+          "type": "string",
+          "description": "The script to run. Must specify cmd"
         },
         "wait": {
           "$ref": "#/$defs/ActionWait",
-          "description": "Wait for a condition to be met before continuing. Must specify either cmd or wait for the action."
+          "description": "Wait for a condition to be met before continuing. Must specify cmd"
         },
         "env": {
           "items": {
@@ -310,10 +314,6 @@
           "type": "string",
           "description": "The script to run. Must specify cmd"
         },
-        "wait": {
-          "$ref": "#/$defs/ActionWait",
-          "description": "Wait for a condition to be met before continuing. Must specify cmd"
-        },
         "uses": {
           "type": "string",
           "description": "The task to run"
@@ -357,9 +357,23 @@
           "type": "array",
           "description": "Actions to take when running the task"
         },
+        "steps": {
+          "items": {
+            "$ref": "#/$defs/Step"
+          },
+          "type": "array",
+          "description": "Actions to take when running the task"
+        },
         "inputs": {
           "additionalProperties": {
             "$ref": "#/$defs/InputParameter"
+          },
+          "type": "object",
+          "description": "Input parameters for the task"
+        },
+        "outputs": {
+          "additionalProperties": {
+            "type": "string"
           },
           "type": "object",
           "description": "Outputs from the task"
