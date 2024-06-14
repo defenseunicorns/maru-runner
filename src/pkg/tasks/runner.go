@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
+	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
 	"github.com/defenseunicorns/maru-runner/src/types"
 
+	yaml "github.com/goccy/go-yaml"
 	"github.com/risor-io/risor"
 	"github.com/risor-io/risor/object"
 	ros "github.com/risor-io/risor/os"
@@ -16,60 +19,150 @@ import (
 )
 
 type TaskRunner struct {
-	task      *Task
-	tasksFile *TasksFile
+	ctx       context.Context
+	workDir   string
+	taskFiles map[string]*TasksFile
+	taskMap   map[string]*Task
+}
 
+type TaskRun struct {
+	ctx         context.Context
+	task        *Task
+	steps       []*types.Step
 	inputs      map[string]string
 	stepOutputs map[string]interface{}
 }
 
-func NewRunner(task *Task, tasksFile *TasksFile) *TaskRunner {
+func NewRunner() *TaskRunner {
 	runner := &TaskRunner{
-		task:        task,
-		tasksFile:   tasksFile,
-		inputs:      make(map[string]string),
-		stepOutputs: make(map[string]interface{}),
-	}
-
-	for k, input := range task.Inputs {
-		runner.inputs[k] = input.Default
-	}
-
-	if task.Actions != nil {
-		task.Steps = make([]types.Step, 0)
-
-		for _, a := range task.Actions {
-			task.Steps = append(task.Steps, ToStep(a))
-		}
+		ctx:       context.Background(),
+		taskFiles: make(map[string]*TasksFile),
+		taskMap:   make(map[string]*Task),
 	}
 
 	return runner
 }
 
-func (r *TaskRunner) Run(ctx context.Context) error {
-	ctx, err := r.getContext(ctx)
-	fmt.Printf("starting task '%s': %v\n", r.task.Name, r.inputs)
+func (r *TaskRunner) LoadRoot(src string) error {
+	// Get the pwd
+	pwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("error getting working directory: %s", err)
+	}
 
+	r.workDir = pwd
+
+	return r.Load("", src)
+}
+
+func (r *TaskRunner) Load(key, src string) error {
+	tasksFilePath := src
+
+	if !filepath.IsAbs(tasksFilePath) {
+		tasksFilePath = filepath.Join(r.workDir, tasksFilePath)
+	}
+
+	if _, loaded := r.taskFiles[tasksFilePath]; loaded {
+		// tasksfile already loaded
+		return nil
+	}
+
+	tasks := &TasksFile{
+		src:      tasksFilePath,
+		filePath: tasksFilePath, // will be different from `src` for remote files
+		dirPath:  filepath.Dir(tasksFilePath),
+	}
+
+	// client := &getter.Client{
+	// 	Src:  src,
+	// 	Dst:  filepath.Join(pwd, ".maru", dst, "tasks.yaml"),
+	// 	Pwd:  pwd,
+	// 	Mode: getter.ClientModeFile,
+	// }
+
+	// fmt.Printf("loading '%s' into '%s'\n", client.Src, client.Dst)
+
+	// if err := client.Get(); err != nil {
+	// 	return nil, err
+	// }
+
+	fmt.Printf("loading tasks from: %s", tasks.filePath)
+
+	file, err := os.ReadFile(tasks.filePath)
 	if err != nil {
 		return err
 	}
 
-	for _, step := range r.task.Steps {
-		fmt.Printf("starting step '%s.%s'\n", r.task.Name, step.ID)
+	err = yaml.Unmarshal(file, tasks)
+	if err != nil {
+		return err
+	}
+
+	r.taskFiles[tasks.src] = tasks
+
+	for _, t := range tasks.Tasks {
+		t.Name = getTaskName(key, t.Name)
+		if _, ok := r.taskMap[t.Name]; ok {
+			return fmt.Errorf("found duplicate task definition for '%s'", t.Name)
+		}
+
+		// if strings.Contains(taskName, ":") {
+		// 	return fmt.Errorf("invalid task name '%s' (use of ':' is reserved for included tasks)", taskName)
+		// }
+
+		r.taskMap[t.Name] = t
+	}
+
+	for _, include := range tasks.Includes {
+		for includeKey, src := range include {
+			src = filepath.Join(tasks.dirPath, src)
+			if err = r.Load(getTaskName(key, includeKey), src); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (r *TaskRunner) Resolve(taskName string) (*TaskRun, error) {
+	if taskName == "" {
+		taskName = defaultTaskName
+	}
+
+	task, ok := r.taskMap[taskName]
+
+	if !ok {
+		return nil, fmt.Errorf("task '%s' is not defined", taskName)
+	}
+
+	ctx, err := r.getContext()
+	if err != nil {
+		return nil, err
+	}
+
+	return NewRun(task, ctx), nil
+}
+
+func (r *TaskRunner) Run(run *TaskRun) error {
+	fmt.Printf("starting task '%s': %v\n", run.task.Name, run.inputs)
+
+	for _, step := range run.steps {
+		fmt.Printf("starting step '%s.%s'\n", run.task.Name, step.ID)
 
 		// child task
 		if step.Uses != "" {
-			child, err := r.tasksFile.Resolve(step.Uses)
+			child, err := r.Resolve(step.Uses)
 			if err != nil {
 				return err
 			}
 
 			child.SetInputs(step.With)
-			if err = child.Run(ctx); err != nil {
+			if err = r.Run(child); err != nil {
 				return err
 			}
 
-			r.setStepOutput(step.ID, child.Outputs(ctx))
+			run.setStepOutput(step.ID, child.Outputs())
 			continue
 		}
 
@@ -81,10 +174,10 @@ func (r *TaskRunner) Run(ctx context.Context) error {
 		var err error
 
 		if step.Script != "" {
-			result, err = r.eval(ctx, step.Script)
+			result, err = run.eval(step.Script)
 		} else if step.Cmd != "" {
 			// shell, shellArgs := exec.GetOSShell(*step.Shell)
-			result, err = r.exec(ctx, "sh", []string{"-e", "-c", step.Cmd})
+			result, err = run.exec("sh", []string{"-e", "-c", step.Cmd})
 		} else {
 			continue
 		}
@@ -93,21 +186,47 @@ func (r *TaskRunner) Run(ctx context.Context) error {
 			return err
 		}
 
-		r.setStepOutput(step.ID, result)
+		run.setStepOutput(step.ID, result)
 	}
 
-	fmt.Printf("finished running task '%s': %v\n", r.task.Name, r.Outputs(ctx))
+	fmt.Printf("finished running task '%s': %v\n", run.task.Name, run.Outputs())
 
 	return nil
 }
 
-func (r *TaskRunner) SetInputs(inputs map[string]string) error {
+func NewRun(task *Task, ctx context.Context) *TaskRun {
+	run := &TaskRun{
+		ctx:         ctx,
+		task:        task,
+		steps:       make([]*types.Step, 0),
+		inputs:      make(map[string]string),
+		stepOutputs: make(map[string]interface{}),
+	}
+
+	for k, input := range task.Inputs {
+		run.inputs[k] = input.Default
+	}
+
+	if task.Actions != nil {
+		for _, a := range task.Actions {
+			run.steps = append(run.steps, ToStep(a))
+		}
+	} else {
+		for _, s := range task.Steps {
+			run.steps = append(run.steps, &s)
+		}
+	}
+
+	return run
+}
+
+func (tr *TaskRun) SetInputs(inputs map[string]string) error {
 	for k, v := range inputs {
-		if _, ok := r.inputs[k]; !ok {
-			return fmt.Errorf("'%s' is not a valid input for task '%s'", k, r.task.Name)
+		if _, ok := tr.inputs[k]; !ok {
+			return fmt.Errorf("'%s' is not a valid input for task '%s'", k, tr.task.Name)
 		}
 
-		r.inputs[k] = v
+		tr.inputs[k] = v
 	}
 
 	// TODO: check if required fields are missing
@@ -115,12 +234,12 @@ func (r *TaskRunner) SetInputs(inputs map[string]string) error {
 	return nil
 }
 
-func (r *TaskRunner) Outputs(ctx context.Context) object.Object {
+func (tr *TaskRun) Outputs() object.Object {
 	var code strings.Builder
 
 	code.WriteString("m := {}")
 
-	for k, value := range r.task.Outputs {
+	for k, value := range tr.task.Outputs {
 		if strings.HasPrefix(value, "${{") {
 			expr := strings.TrimPrefix(value, "${{")
 			expr = strings.TrimSuffix(expr, "}}")
@@ -133,7 +252,7 @@ m["%s"] = %s
 
 	code.WriteString("\nm")
 
-	out, err := r.eval(ctx, code.String())
+	out, err := tr.eval(code.String())
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -142,50 +261,50 @@ m["%s"] = %s
 	return out
 }
 
-func (r *TaskRunner) setStepOutput(stepID string, obj object.Object) error {
+func (tr *TaskRun) setStepOutput(stepID string, obj object.Object) error {
 	if stepID != "" {
 		value, err := fromRisor(obj)
 		if err != nil {
 			return err
 		}
 
-		r.stepOutputs[stepID] = value
+		tr.stepOutputs[stepID] = value
 	}
 
 	return nil
 }
 
-func (r *TaskRunner) eval(ctx context.Context, expression string) (object.Object, error) {
+func (tr *TaskRun) eval(expression string) (object.Object, error) {
 	return risor.Eval(
-		ctx,
+		tr.ctx,
 		expression,
-		risor.WithGlobal("inputs", r.inputs),
-		risor.WithGlobal("steps", r.stepOutputs),
+		risor.WithGlobal("inputs", tr.inputs),
+		risor.WithGlobal("steps", tr.stepOutputs),
 	)
 }
 
-func (r *TaskRunner) exec(ctx context.Context, shell string, args []string) (object.Object, error) {
+func (tr *TaskRun) exec(shell string, args []string) (object.Object, error) {
 	return risor.Eval(
-		ctx,
+		tr.ctx,
 		"exec(shell, args).stdout",
 		risor.WithGlobal("shell", shell),
 		risor.WithGlobal("args", args),
 	)
 }
 
-func (r *TaskRunner) getContext(ctx context.Context) (context.Context, error) {
-	if _, ok := ros.GetOS(ctx); ok {
+func (r *TaskRunner) getContext() (context.Context, error) {
+	if _, ok := ros.GetOS(r.ctx); ok {
 		// virtual OS already set by parent runner
-		return ctx, nil
+		return r.ctx, nil
 	}
 
-	workdir, err := localfs.New(ctx, localfs.WithBase(r.tasksFile.dirPath))
+	workdir, err := localfs.New(r.ctx, localfs.WithBase(r.workDir))
 
 	if err != nil {
 		return nil, err
 	}
 
-	return ros.WithOS(ctx, ros.NewVirtualOS(ctx,
+	return ros.WithOS(r.ctx, ros.NewVirtualOS(r.ctx,
 		ros.WithMounts(map[string]*ros.Mount{
 			"/workdir": {
 				Source: workdir,
@@ -234,4 +353,26 @@ func fromRisor(value object.Object) (interface{}, error) {
 	}
 
 	return "", fmt.Errorf("unsupported output type: %T", value)
+}
+
+func getTaskName(includeKey, taskName string) string {
+	if includeKey == "" {
+		return taskName
+	}
+
+	return includeKey + ":" + taskName
+}
+
+func ToStep(a types.Action) *types.Step {
+	return &types.Step{
+		Env:     utils.EnvMap(a.Env),
+		WorkDir: a.Dir,
+		Cmd:     a.Cmd,
+		Shell:   a.Shell,
+		// Wait:    a.Wait,
+		Uses:    a.TaskReference,
+		With:    a.With,
+		Timeout: a.MaxTotalSeconds,
+		Retry:   a.MaxRetries,
+	}
 }

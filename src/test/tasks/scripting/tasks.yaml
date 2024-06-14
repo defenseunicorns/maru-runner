@@ -9,14 +9,9 @@ tasks:
         uses: http-get
         with:
           url: https://httpbin.org/get
-      # - script: |
-      #     os.exec('/bin/sh', [ '-c' 'echo ${{ steps.data["user-agent"] | strings.to_upper }}' ])
       - id: echo
         cmd: |
           echo "hello world"
-      # - id: get-user-agent
-      #   script: |
-      #     json.unmarshal(steps.data).headers["User-Agent"]
   - name: http-get
     inputs:
       url:

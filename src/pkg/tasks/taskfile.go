@@ -1,14 +1,6 @@
 package tasks
 
 import (
-	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
-
-	yaml "github.com/goccy/go-yaml"
-
-	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
 	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
 	"github.com/defenseunicorns/maru-runner/src/types"
 )
@@ -24,9 +16,9 @@ type TasksFile struct {
 	Variables []variables.InteractiveVariable[variables.ExtraVariableInfo] `json:"variables,omitempty" jsonschema:"description=Definitions and default values for variables used in run.yaml"`
 	Tasks     []*Task                                                      `json:"tasks" jsonschema:"description=The list of tasks that can be run"`
 
+	src      string
 	dirPath  string
 	filePath string
-	taskMap  map[string]*Task
 }
 
 // Task represents a single task
@@ -45,62 +37,4 @@ type InputParameter struct {
 	DeprecatedMessage string `json:"deprecatedMessage,omitempty" jsonschema:"description=Message to display when the parameter is deprecated"`
 	Required          bool   `json:"required,omitempty" jsonschema:"description=Whether the parameter is required,default=true"`
 	Default           string `json:"default,omitempty" jsonschema:"description=Default value for the parameter"`
-}
-
-func Parse(filePath string) (*TasksFile, error) {
-	file, err := os.ReadFile(filePath)
-	if err != nil {
-		return nil, err
-	}
-
-	tasks := &TasksFile{
-		filePath: filepath.Base(filePath),
-		dirPath:  filepath.Dir(filePath),
-		taskMap:  make(map[string]*Task),
-	}
-
-	err = yaml.Unmarshal(file, tasks)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, t := range tasks.Tasks {
-		if _, ok := tasks.taskMap[t.Name]; ok {
-			return nil, fmt.Errorf("found duplicate task definition for '%s'", t.Name)
-		}
-
-		if strings.Contains(t.Name, ":") {
-			return nil, fmt.Errorf("invalid task name '%s' (use of ':' is reserved for included tasks)", t.Name)
-		}
-
-		tasks.taskMap[t.Name] = t
-	}
-
-	return tasks, nil
-}
-
-func (tf *TasksFile) Resolve(taskName string) (*TaskRunner, error) {
-	if taskName == "" {
-		taskName = defaultTaskName
-	}
-
-	if t, ok := tf.taskMap[taskName]; ok {
-		return NewRunner(t, tf), nil
-	}
-
-	return nil, fmt.Errorf("task '%s' is not defined", taskName)
-}
-
-func ToStep(a types.Action) types.Step {
-	return types.Step{
-		Env:     utils.EnvMap(a.Env),
-		WorkDir: a.Dir,
-		Cmd:     a.Cmd,
-		Shell:   a.Shell,
-		// Wait:    a.Wait,
-		Uses:    a.TaskReference,
-		With:    a.With,
-		Timeout: a.MaxTotalSeconds,
-		Retry:   a.MaxRetries,
-	}
 }

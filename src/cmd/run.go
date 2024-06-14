@@ -5,7 +5,6 @@
 package cmd
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -55,22 +54,21 @@ var runCmd = &cobra.Command{
 			taskName = args[0]
 		}
 
-		tasks, err := tasks.Parse(config.TaskFileLocation)
+		runner := tasks.NewRunner()
+		if err := runner.LoadRoot(config.TaskFileLocation); err != nil {
+			return err
+		}
+
+		run, err := runner.Resolve(taskName)
 		if err != nil {
 			return err
 		}
 
-		runner, err := tasks.Resolve(taskName)
-		if err != nil {
+		if err = runner.Run(run); err != nil {
 			return err
 		}
 
-		ctx := context.Background()
-		if err = runner.Run(ctx); err != nil {
-			return err
-		}
-
-		out := runner.Outputs(ctx)
+		out := run.Outputs()
 		result, err := json.MarshalIndent(out, "", "  ")
 		if err != nil {
 			return err
