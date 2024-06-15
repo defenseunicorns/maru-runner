@@ -8,7 +8,7 @@ require (
 	github.com/goccy/go-yaml v1.11.3
 	github.com/invopop/jsonschema v0.12.0
 	github.com/pterm/pterm v0.12.79
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 )
