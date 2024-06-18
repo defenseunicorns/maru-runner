@@ -11,15 +11,14 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
+	"strings"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/config/lang"
 	"github.com/defenseunicorns/maru-runner/src/message"
-	"github.com/defenseunicorns/maru-runner/src/pkg/runner"
 	"github.com/defenseunicorns/maru-runner/src/pkg/tasks"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
-	"github.com/defenseunicorns/pkg/helpers/v2"
+
 	goyaml "github.com/goccy/go-yaml"
 	"github.com/spf13/cobra"
 )
@@ -63,6 +62,11 @@ var runCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+
+		run.SetEnv(map[string]string{
+			"MARU": "true",
+		})
+		run.SetInputs(setRunnerVariables)
 
 		if err = runner.Run(run); err != nil {
 			return err
@@ -154,38 +158,38 @@ func ListAutoCompleteTasks(_ *cobra.Command, _ []string, _ string) ([]string, co
 	return taskNames, cobra.ShellCompDirectiveNoFileComp
 }
 
-func listTasksFromIncludes(rows *[][]string, tasksFile tasks.TasksFile) error {
-	var includedTasksFile tasks.TasksFile
+// func listTasksFromIncludes(rows *[][]string, tasksFile tasks.TasksFile) error {
+// 	var includedTasksFile tasks.TasksFile
 
-	variableConfig := runner.GetMaruVariableConfig()
-	err := variableConfig.PopulateVariables(tasksFile.Variables, setRunnerVariables)
-	if err != nil {
-		return err
-	}
+// 	variableConfig := runner.GetMaruVariableConfig()
+// 	err := variableConfig.PopulateVariables(tasksFile.Variables, setRunnerVariables)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	templatePattern := `\${[^}]+}`
-	re := regexp.MustCompile(templatePattern)
-	for _, include := range tasksFile.Includes {
-		// get included TasksFile
-		for includeName, includeFileLocation := range include {
-			// check for templated variables in includeFileLocation value
-			if re.MatchString(includeFileLocation) {
-				includeFileLocation = utils.TemplateString(variableConfig.GetSetVariables(), includeFileLocation)
-			}
-			// check if included file is a url
-			if helpers.IsURL(includeFileLocation) {
-				includedTasksFile = loadTasksFromRemoteIncludes(includeFileLocation)
-			} else {
-				includedTasksFile = loadTasksFromLocalIncludes(includeFileLocation)
-			}
-			for _, task := range includedTasksFile.Tasks {
-				*rows = append(*rows, []string{fmt.Sprintf("%s:%s", includeName, task.Name), task.Description})
-			}
-		}
-	}
+// 	templatePattern := `\${[^}]+}`
+// 	re := regexp.MustCompile(templatePattern)
+// 	for _, include := range tasksFile.Includes {
+// 		// get included TasksFile
+// 		for includeName, includeFileLocation := range include {
+// 			// check for templated variables in includeFileLocation value
+// 			if re.MatchString(includeFileLocation) {
+// 				includeFileLocation = utils.TemplateString(variableConfig.GetSetVariables(), includeFileLocation)
+// 			}
+// 			// check if included file is a url
+// 			if helpers.IsURL(includeFileLocation) {
+// 				includedTasksFile = loadTasksFromRemoteIncludes(includeFileLocation)
+// 			} else {
+// 				includedTasksFile = loadTasksFromLocalIncludes(includeFileLocation)
+// 			}
+// 			for _, task := range includedTasksFile.Tasks {
+// 				*rows = append(*rows, []string{fmt.Sprintf("%s:%s", includeName, task.Name), task.Description})
+// 			}
+// 		}
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 func loadTasksFromRemoteIncludes(includeFileLocation string) tasks.TasksFile {
 	var includedTasksFile tasks.TasksFile
@@ -227,9 +231,23 @@ func loadTasksFromLocalIncludes(includeFileLocation string) tasks.TasksFile {
 func init() {
 	initViper()
 	rootCmd.AddCommand(runCmd)
+	rootCmd.AddCommand(listCmd)
 	runFlags := runCmd.Flags()
-	runFlags.StringVarP(&config.TaskFileLocation, "file", "f", config.TasksYAML, lang.CmdRunFlag)
 	runFlags.BoolVar(&listTasks, "list", false, lang.CmdRunList)
 	runFlags.BoolVar(&listAllTasks, "list-all", false, lang.CmdRunListAll)
 	runFlags.StringToStringVar(&setRunnerVariables, "set", nil, lang.CmdRunSetVarFlag)
+}
+
+var listCmd = &cobra.Command{
+	Use: "list",
+	RunE: func(_ *cobra.Command, args []string) error {
+		runner := tasks.NewRunner()
+		if err := runner.LoadRoot(config.TaskFileLocation); err != nil {
+			return err
+		}
+
+		fmt.Println(strings.Join(runner.GetTasks(), "\n"))
+
+		return nil
+	},
 }

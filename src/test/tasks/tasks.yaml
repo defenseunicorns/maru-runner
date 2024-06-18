@@ -51,15 +51,19 @@ tasks:
           sleep 0.1
           printf '\033[G ◩ Spinning...'
   - name: cmd-set-variable
+    inputs:
+      replace-me:
+        description: replace me
+        required: true
     actions:
       - cmd: echo unique-value
         mute: true
         setVariables:
           - name: ACTION_VAR
       - cmd: echo "I'm set from setVariables - ${ACTION_VAR}"
-      - cmd: echo "I'm set from a runner var - ${REPLACE_ME}"
-      - cmd: echo "I'm set from a --set var - ${REPLACE_ME}"
-      - cmd: echo "I'm set from a --set var - $REPLACE_ME"
+      - cmd: echo "I'm set from a runner var - ${INPUT_REPLACE_ME}"
+      - cmd: echo "I'm set from a --set var - ${INPUT_REPLACE_ME}"
+      - cmd: echo "I'm set from a --set var - $INPUT_REPLACE_ME"
       - cmd: echo "I'm set from a new --set var - ${UNICORNS}"
       - cmd: echo "I'm set automatically - MARU=${MARU}"
       - cmd: MARU=hello; echo "I was changed on the command line - MARU=${MARU}"

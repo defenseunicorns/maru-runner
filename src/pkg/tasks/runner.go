@@ -4,12 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
 	"github.com/defenseunicorns/maru-runner/src/types"
+	"github.com/defenseunicorns/pkg/helpers"
 
 	yaml "github.com/goccy/go-yaml"
 	"github.com/risor-io/risor"
@@ -30,7 +34,8 @@ type TaskRun struct {
 	task        *types.Task
 	steps       []*types.Step
 	inputs      map[string]string
-	stepOutputs map[string]interface{}
+	env         map[string]string
+	stepOutputs map[string]any
 }
 
 func NewRunner() *TaskRunner {
@@ -86,7 +91,7 @@ func (r *TaskRunner) Load(key, src string) error {
 	// 	return nil, err
 	// }
 
-	fmt.Printf("loading tasks from: %s", tasks.filePath)
+	fmt.Println("loading tasks from:", tasks.filePath)
 
 	file, err := os.ReadFile(tasks.filePath)
 	if err != nil {
@@ -125,6 +130,16 @@ func (r *TaskRunner) Load(key, src string) error {
 	return nil
 }
 
+func (r *TaskRunner) GetTasks() []string {
+	taskNames := make([]string, 0)
+
+	for key := range r.taskMap {
+		taskNames = append(taskNames, key)
+	}
+
+	return taskNames
+}
+
 func (r *TaskRunner) Resolve(taskName string) (*TaskRun, error) {
 	if taskName == "" {
 		taskName = defaultTaskName
@@ -147,8 +162,16 @@ func (r *TaskRunner) Resolve(taskName string) (*TaskRun, error) {
 func (r *TaskRunner) Run(run *TaskRun) error {
 	fmt.Printf("starting task '%s': %v\n", run.task.Name, run.inputs)
 
-	for _, step := range run.steps {
-		fmt.Printf("starting step '%s.%s'\n", run.task.Name, step.ID)
+	for i, step := range run.steps {
+		id := step.ID
+
+		if id == "" {
+			id = strconv.Itoa(i)
+		}
+
+		fmt.Printf("starting step '%s.%s'\n", run.task.Name, id)
+
+		run.SetEnv(step.Env)
 
 		// child task
 		if step.Uses != "" {
@@ -200,7 +223,8 @@ func NewRun(task *types.Task, ctx context.Context) *TaskRun {
 		task:        task,
 		steps:       make([]*types.Step, 0),
 		inputs:      make(map[string]string),
-		stepOutputs: make(map[string]interface{}),
+		env:         make(map[string]string),
+		stepOutputs: make(map[string]any),
 	}
 
 	for k, input := range task.Inputs {
@@ -220,9 +244,13 @@ func NewRun(task *types.Task, ctx context.Context) *TaskRun {
 	return run
 }
 
+func (tr *TaskRun) SetEnv(env map[string]string) {
+	maps.Copy(tr.env, env)
+}
+
 func (tr *TaskRun) SetInputs(inputs map[string]string) error {
 	for k, v := range inputs {
-		if _, ok := tr.inputs[k]; !ok {
+		if _, ok := tr.task.Inputs[k]; !ok {
 			return fmt.Errorf("'%s' is not a valid input for task '%s'", k, tr.task.Name)
 		}
 
@@ -247,6 +275,10 @@ func (tr *TaskRun) Outputs() object.Object {
 			fmt.Fprintf(&code, `
 m["%s"] = %s
 `, k, expr)
+		} else {
+			fmt.Fprintf(&code, `
+m["%s"] = "%s"
+`, k, value)
 		}
 	}
 
@@ -256,7 +288,6 @@ m["%s"] = %s
 	if err != nil {
 		fmt.Println(err)
 	}
-	// out, _ := fromRisor(result)
 
 	return out
 }
@@ -280,20 +311,34 @@ func (tr *TaskRun) eval(expression string) (object.Object, error) {
 		expression,
 		risor.WithGlobal("inputs", tr.inputs),
 		risor.WithGlobal("steps", tr.stepOutputs),
+		risor.WithGlobal("env", tr.Environ()),
 	)
 }
 
 func (tr *TaskRun) exec(shell string, args []string) (object.Object, error) {
 	result, err := risor.Eval(
 		tr.ctx,
-		"exec(shell, args).stdout",
+		"exec(shell, args, { env: env }).stdout",
 		risor.WithGlobal("shell", shell),
 		risor.WithGlobal("args", args),
+		risor.WithGlobal("env", tr.Environ()),
 	)
 
 	fmt.Println(result)
 
 	return result, err
+}
+
+func (tr *TaskRun) Environ() map[string]string {
+	env := maps.Clone(tr.env)
+	maps.Copy(env, helpers.TransformMapKeys(tr.inputs, func(key string) string {
+		// TODO: very close to `utils.FormatEnvVar` in src/pkg/utils/utils.go#L73
+		key = regexp.MustCompile(`[^a-zA-Z0-9]+`).ReplaceAllString(key, "_")
+		key = strings.ToUpper(key)
+
+		return strings.ToUpper("INPUT_" + key)
+	}))
+	return env
 }
 
 func (r *TaskRunner) getContext() (context.Context, error) {

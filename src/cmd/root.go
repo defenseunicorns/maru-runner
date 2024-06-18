@@ -59,6 +59,7 @@ func init() {
 	v.SetDefault(V_NO_LOG_FILE, false)
 	v.SetDefault(V_TMP_DIR, "")
 
+	rootCmd.PersistentFlags().StringVarP(&config.TaskFileLocation, "file", "f", config.TasksYAML, lang.CmdRunFlag)
 	rootCmd.PersistentFlags().StringVarP(&logLevelString, "log-level", "l", v.GetString(V_LOG_LEVEL), lang.RootCmdFlagLogLevel)
 	rootCmd.PersistentFlags().StringVarP(&config.CLIArch, "architecture", "a", v.GetString(V_ARCHITECTURE), lang.RootCmdFlagArch)
 	rootCmd.PersistentFlags().BoolVar(&message.NoProgress, "no-progress", v.GetBool(V_NO_PROGRESS), lang.RootCmdFlagNoProgress)
