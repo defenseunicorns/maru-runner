@@ -10,6 +10,7 @@ import (
 	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/types"
 
+	"github.com/defenseunicorns/maru-runner/src/pkg/tasks"
 	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
 
 	"github.com/stretchr/testify/require"
@@ -87,7 +88,7 @@ func Test_getUniqueTaskActions(t *testing.T) {
 func Test_convertWaitToCmd(t *testing.T) {
 	type args struct {
 		wait    types.ActionWait
-		timeout *int
+		timeout int
 	}
 	tests := []struct {
 		name    string
@@ -106,7 +107,7 @@ func Test_convertWaitToCmd(t *testing.T) {
 						Namespace:  "default",
 					},
 				},
-				timeout: IntPtr(300),
+				timeout: 300,
 			},
 			want:    "zarf tools wait-for pod my-pod Ready -n default --timeout 300s",
 			wantErr: false,
@@ -121,7 +122,7 @@ func Test_convertWaitToCmd(t *testing.T) {
 						Code:     200,
 					},
 				},
-				timeout: IntPtr(60),
+				timeout: 60,
 			},
 			want:    "zarf tools wait-for http http://example.com 200 --timeout 60s",
 			wantErr: false,
@@ -130,7 +131,7 @@ func Test_convertWaitToCmd(t *testing.T) {
 			name: "Invalid wait action",
 			args: args{
 				wait:    types.ActionWait{},
-				timeout: IntPtr(30),
+				timeout: 30,
 			},
 			want:    "",
 			wantErr: true,
@@ -148,10 +149,6 @@ func Test_convertWaitToCmd(t *testing.T) {
 			}
 		})
 	}
-}
-
-func IntPtr(i int) *int {
-	return &i
 }
 
 func Test_validateActionableTaskCall(t *testing.T) {
@@ -220,7 +217,7 @@ func Test_validateActionableTaskCall(t *testing.T) {
 
 func TestRunner_performAction(t *testing.T) {
 	type fields struct {
-		TasksFile      types.TasksFile
+		TasksFile      *tasks.TasksFile
 		TaskNameMap    map[string]bool
 		envFilePath    string
 		variableConfig *variables.VariableConfig[variables.ExtraVariableInfo]
@@ -238,7 +235,7 @@ func TestRunner_performAction(t *testing.T) {
 		{
 			name: "failed action processing due to invalid command",
 			fields: fields{
-				TasksFile:      types.TasksFile{},
+				TasksFile:      &tasks.TasksFile{},
 				TaskNameMap:    make(map[string]bool),
 				envFilePath:    "",
 				variableConfig: GetMaruVariableConfig(),
@@ -259,7 +256,7 @@ func TestRunner_performAction(t *testing.T) {
 		{
 			name: "Unable to open path",
 			fields: fields{
-				TasksFile:      types.TasksFile{},
+				TasksFile:      &tasks.TasksFile{},
 				TaskNameMap:    make(map[string]bool),
 				envFilePath:    "test/path",
 				variableConfig: GetMaruVariableConfig(),
@@ -303,7 +300,7 @@ func TestRunner_performAction(t *testing.T) {
 
 func TestRunner_processAction(t *testing.T) {
 	type fields struct {
-		TasksFile      types.TasksFile
+		TasksFile      *tasks.TasksFile
 		TaskNameMap    map[string]bool
 		envFilePath    string
 		variableConfig *variables.VariableConfig[variables.ExtraVariableInfo]
@@ -321,7 +318,7 @@ func TestRunner_processAction(t *testing.T) {
 		{
 			name: "successful action processing",
 			fields: fields{
-				TasksFile:      types.TasksFile{},
+				TasksFile:      &tasks.TasksFile{},
 				TaskNameMap:    map[string]bool{},
 				envFilePath:    "",
 				variableConfig: GetMaruVariableConfig(),
@@ -339,7 +336,7 @@ func TestRunner_processAction(t *testing.T) {
 		{
 			name: "action processing with same task and action reference",
 			fields: fields{
-				TasksFile:      types.TasksFile{},
+				TasksFile:      &tasks.TasksFile{},
 				TaskNameMap:    map[string]bool{},
 				envFilePath:    "",
 				variableConfig: GetMaruVariableConfig(),
@@ -357,7 +354,7 @@ func TestRunner_processAction(t *testing.T) {
 		{
 			name: "action processing with empty task reference",
 			fields: fields{
-				TasksFile:      types.TasksFile{},
+				TasksFile:      &tasks.TasksFile{},
 				TaskNameMap:    map[string]bool{},
 				envFilePath:    "",
 				variableConfig: GetMaruVariableConfig(),
@@ -375,7 +372,7 @@ func TestRunner_processAction(t *testing.T) {
 		{
 			name: "action processing with non-empty task reference and different task and action reference names",
 			fields: fields{
-				TasksFile:      types.TasksFile{},
+				TasksFile:      &tasks.TasksFile{},
 				TaskNameMap:    map[string]bool{},
 				envFilePath:    "",
 				variableConfig: GetMaruVariableConfig(),
@@ -393,8 +390,8 @@ func TestRunner_processAction(t *testing.T) {
 		{
 			name: "action processing with task reference already processed",
 			fields: fields{
-				TasksFile: types.TasksFile{
-					Tasks: []types.Task{
+				TasksFile: &tasks.TasksFile{
+					Tasks: []*types.Task{
 						{
 							Name: "testTaskRef:subTask",
 						},

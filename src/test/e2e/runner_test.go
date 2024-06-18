@@ -298,4 +298,11 @@ func TestTaskRunner(t *testing.T) {
 		require.NoError(t, err, stdOut, stdErr)
 		require.Contains(t, stdErr, "defenseunicorns is a pretty ok company")
 	})
+
+	t.Run("calls scripting engine", func(t *testing.T) {
+		t.Parallel()
+		stdOut, stdErr, err := e2e.Maru("run", "scripting-engine", "--file", "src/test/tasks/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdOut, "The square root of 4 is 2")
+	})
 }

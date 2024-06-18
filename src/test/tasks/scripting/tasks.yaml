@@ -1,0 +1,26 @@
+tasks:
+  - name: default
+    description: Run scripts in Risor
+    outputs:
+      user-agent: ${{ steps.data["user-agent"] | strings.to_upper }}
+      echo: ${{ steps.echo }}
+    steps:
+      - id: data
+        uses: http-get
+        with:
+          url: https://httpbin.org/get
+      - id: echo
+        cmd: |
+          echo "hello world"
+  - name: http-get
+    inputs:
+      url:
+        required: true
+        description: the URL to fetch
+    outputs:
+      user-agent: ${{ steps.fetch.headers["User-Agent"] }}
+      url: ${{ inputs.url }}
+    steps:
+      - id: fetch
+        script: |
+          fetch(inputs.url).json()

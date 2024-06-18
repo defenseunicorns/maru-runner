@@ -7,6 +7,7 @@ package utils
 import (
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/url"
 	"os"
@@ -42,31 +43,33 @@ func UseLogFile() error {
 // replacing variables found in env2 with variables from env1
 // otherwise appending the variable from env1 to env2
 func MergeEnv(env1, env2 []string) []string {
-	envMap := make(map[string]string)
+	map1 := EnvMap(env1)
+	map2 := EnvMap(env2)
+
+	maps.Copy(map1, map2)
+
 	var result []string
 
-	// First, populate the map with env2's values for quick lookup.
-	for _, s := range env2 {
-		split := strings.SplitN(s, "=", 2)
-		if len(split) == 2 {
-			envMap[split[0]] = split[1]
-		}
-	}
-
-	// Then, update the map with env1's values, effectively merging them.
-	for _, s := range env1 {
-		split := strings.SplitN(s, "=", 2)
-		if len(split) == 2 {
-			envMap[split[0]] = split[1]
-		}
-	}
-
 	// Finally, reconstruct the environment array from the map.
-	for key, value := range envMap {
+	for key, value := range map1 {
 		result = append(result, key+"="+value)
 	}
 
 	return result
+}
+
+// EnvMap takes an array of environment variables and
+// converts them to a `map[string]string`.
+func EnvMap(env []string) map[string]string {
+	envMap := make(map[string]string)
+
+	for _, s := range env {
+		if key, value, ok := strings.Cut(s, "="); ok {
+			envMap[key] = value
+		}
+	}
+
+	return envMap
 }
 
 // FormatEnvVar format environment variables replacing non-alphanumeric characters with underscores and adding INPUT_ prefix
