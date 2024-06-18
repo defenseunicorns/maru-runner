@@ -22,7 +22,6 @@ import (
 
 	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/message"
-	"github.com/defenseunicorns/maru-runner/src/pkg/tasks"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
 	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
 	"github.com/defenseunicorns/maru-runner/src/types"
@@ -69,7 +68,7 @@ func (r *Runner) performAction(action types.Action) error {
 }
 
 // processAction checks if action needs to be processed for a given task
-func (r *Runner) processAction(task *tasks.Task, action types.Action) bool {
+func (r *Runner) processAction(task *types.Task, action types.Action) bool {
 
 	taskReferenceName := strings.Split(task.Name, ":")[0]
 	actionReferenceName := strings.Split(action.TaskReference, ":")[0]
@@ -369,7 +368,7 @@ func convertWaitToCmd(wait types.ActionWait, timeout int) (string, error) {
 }
 
 // validateActionableTaskCall validates a tasks "withs" and inputs
-func validateActionableTaskCall(inputTaskName string, inputs map[string]tasks.InputParameter, withs map[string]string) error {
+func validateActionableTaskCall(inputTaskName string, inputs map[string]types.InputParameter, withs map[string]string) error {
 	missing := []string{}
 	for inputKey, input := range inputs {
 		// skip inputs that are not required or have a default value

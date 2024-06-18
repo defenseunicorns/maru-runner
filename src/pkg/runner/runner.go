@@ -259,7 +259,7 @@ func loadTasksFileFromPath(fullPath string) (*tasks.TasksFile, error) {
 	return &tasksFile, nil
 }
 
-func (r *Runner) getTask(taskName string) (*tasks.Task, error) {
+func (r *Runner) getTask(taskName string) (*types.Task, error) {
 	for _, task := range r.TasksFile.Tasks {
 		if task.Name == taskName {
 			return task, nil
@@ -268,7 +268,7 @@ func (r *Runner) getTask(taskName string) (*tasks.Task, error) {
 	return nil, fmt.Errorf("task name %s not found", taskName)
 }
 
-func (r *Runner) executeTask(task *tasks.Task) error {
+func (r *Runner) executeTask(task *types.Task) error {
 	defaultEnv := []string{}
 	for name, inputParam := range task.Inputs {
 		d := inputParam.Default
@@ -292,7 +292,7 @@ func (r *Runner) executeTask(task *tasks.Task) error {
 	return nil
 }
 
-func (r *Runner) checkForTaskLoops(task *tasks.Task, tasksFile *tasks.TasksFile, setVariables map[string]string) error {
+func (r *Runner) checkForTaskLoops(task *types.Task, tasksFile *tasks.TasksFile, setVariables map[string]string) error {
 	// Filtering unique task actions allows for rerunning tasks in the same execution
 	uniqueTaskActions := getUniqueTaskActions(task.Actions)
 	for _, action := range uniqueTaskActions {

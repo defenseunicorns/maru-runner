@@ -22,12 +22,12 @@ type TaskRunner struct {
 	ctx       context.Context
 	workDir   string
 	taskFiles map[string]*TasksFile
-	taskMap   map[string]*Task
+	taskMap   map[string]*types.Task
 }
 
 type TaskRun struct {
 	ctx         context.Context
-	task        *Task
+	task        *types.Task
 	steps       []*types.Step
 	inputs      map[string]string
 	stepOutputs map[string]interface{}
@@ -37,7 +37,7 @@ func NewRunner() *TaskRunner {
 	runner := &TaskRunner{
 		ctx:       context.Background(),
 		taskFiles: make(map[string]*TasksFile),
-		taskMap:   make(map[string]*Task),
+		taskMap:   make(map[string]*types.Task),
 	}
 
 	return runner
@@ -194,7 +194,7 @@ func (r *TaskRunner) Run(run *TaskRun) error {
 	return nil
 }
 
-func NewRun(task *Task, ctx context.Context) *TaskRun {
+func NewRun(task *types.Task, ctx context.Context) *TaskRun {
 	run := &TaskRun{
 		ctx:         ctx,
 		task:        task,
@@ -284,12 +284,16 @@ func (tr *TaskRun) eval(expression string) (object.Object, error) {
 }
 
 func (tr *TaskRun) exec(shell string, args []string) (object.Object, error) {
-	return risor.Eval(
+	result, err := risor.Eval(
 		tr.ctx,
 		"exec(shell, args).stdout",
 		risor.WithGlobal("shell", shell),
 		risor.WithGlobal("args", args),
 	)
+
+	fmt.Println(result)
+
+	return result, err
 }
 
 func (r *TaskRunner) getContext() (context.Context, error) {
@@ -319,6 +323,8 @@ func (r *TaskRunner) getContext() (context.Context, error) {
 
 func fromRisor(value object.Object) (interface{}, error) {
 	switch obj := value.(type) {
+	case *object.NilType:
+	case *object.Bool:
 	case *object.Int:
 	case *object.Float:
 	case *object.String:
@@ -341,15 +347,6 @@ func fromRisor(value object.Object) (interface{}, error) {
 
 		json.Unmarshal([]byte(str), &out)
 		return out, nil
-		// json, err := obj.MarshalJSON()
-
-		// if err != nil {
-		// 	return "", fmt.Errorf("could not serialize output")
-		// }
-
-		// return string(json), nil
-	case *object.NilType:
-		return nil, nil
 	}
 
 	return "", fmt.Errorf("unsupported output type: %T", value)
