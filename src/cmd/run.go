@@ -201,7 +201,7 @@ func init() {
 	rootCmd.AddCommand(runCmd)
 	runFlags := runCmd.Flags()
 	runFlags.StringVarP(&config.TaskFileLocation, "file", "f", config.TasksYAML, lang.CmdRunFlag)
-	runFlags.BoolVarP(&listTasks, "list", "i", false, lang.CmdRunList)
-	runFlags.BoolVarP(&listAllTasks, "list-all", "I", false, lang.CmdRunListAll)
+	runFlags.BoolVarP(&listTasks, "list", "t", false, lang.CmdRunList)
+	runFlags.BoolVarP(&listAllTasks, "list-all", "T", false, lang.CmdRunListAll)
 	runFlags.StringToStringVar(&setRunnerVariables, "set", nil, lang.CmdRunSetVarFlag)
 }
