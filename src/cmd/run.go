@@ -79,6 +79,7 @@ var runCmd = &cobra.Command{
 			for _, task := range tasksFile.Tasks {
 				rows = append(rows, []string{task.Name, task.Description})
 			}
+
 			// If ListAllTasks, add tasks from included files
 			if listAllTasks {
 				err = listTasksFromIncludes(&rows, tasksFile)
@@ -200,7 +201,7 @@ func init() {
 	rootCmd.AddCommand(runCmd)
 	runFlags := runCmd.Flags()
 	runFlags.StringVarP(&config.TaskFileLocation, "file", "f", config.TasksYAML, lang.CmdRunFlag)
-	runFlags.BoolVarP(&listTasks, "list", "l", false, lang.CmdRunList)
-	runFlags.BoolVarP(&listAllTasks, "list-all", "L", false, lang.CmdRunListAll)
+	runFlags.BoolVarP(&listTasks, "list", "i", false, lang.CmdRunList)
+	runFlags.BoolVarP(&listAllTasks, "list-all", "I", false, lang.CmdRunListAll)
 	runFlags.StringToStringVar(&setRunnerVariables, "set", nil, lang.CmdRunSetVarFlag)
 }
