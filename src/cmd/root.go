@@ -91,6 +91,10 @@ func cliSetup() {
 			message.SLog.Warn(fmt.Sprintf("Unable to setup log file: %s", err.Error()))
 		}
 	}
+
+	if os.Getenv("CI") == "true" {
+		message.NoProgress = true
+	}
 }
 
 // exitOnInterrupt catches an interrupt and exits with fatal error
