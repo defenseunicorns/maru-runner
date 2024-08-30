@@ -44,7 +44,8 @@ func (r *Runner) performAction(action types.Action) error {
 		for name := range action.With {
 			withEnv = append(withEnv, utils.FormatEnvVar(name, action.With[name]))
 		}
-		if err := validateActionableTaskCall(referencedTask.Name, referencedTask.Inputs, action.With); err != nil {
+		// TODO @zachariahmiller - make execContext true/false instead of string
+		if err := validateActionableTaskCall(referencedTask.Name, referencedTask.Inputs, &action.With, "internal"); err != nil {
 			return err
 		}
 		for _, a := range referencedTask.Actions {
@@ -358,43 +359,51 @@ func convertWaitToCmd(wait types.ActionWait, timeout *int) (string, error) {
 	return "", fmt.Errorf("wait action is missing a cluster or network")
 }
 
-// validateActionableTaskCall validates a tasks "withs" and inputs
-func validateActionableTaskCall(inputTaskName string, inputs map[string]types.InputParameter, withs map[string]string) error {
+// validateActionableTaskCall validates a task's "withs" and inputs
+// TODO @zachariahmiller - make execContext true/false instead of string
+func validateActionableTaskCall(inputTaskName string, inputs map[string]types.InputParameter, withs *map[string]string, execContext string) error {
+	if withs == nil {
+		withs = &map[string]string{}
+	}
+
 	missing := []string{}
+	extra := []string{}
+
+	// Check for required inputs and optional inputs without defaults
 	for inputKey, input := range inputs {
-		// skip inputs that are not required or have a default value
-		if !input.Required || input.Default != "" {
-			continue
-		}
-		checked := false
-		for withKey, withVal := range withs {
-			// verify that the input is in the with map and the "with" has a value
-			if inputKey == withKey && withVal != "" {
-				checked = true
-				break
+		val, existsInWiths := (*withs)[inputKey]
+
+		if input.Required && input.Default == "" {
+			// Required inputs must be present in withs and have a non-empty value
+			if !existsInWiths || val == "" {
+				missing = append(missing, inputKey)
+			}
+		} else if input.Default == "" {
+			// Inputs that are not required and have no default should also be checked
+			if !existsInWiths {
+				extra = append(extra, inputKey)
 			}
 		}
-		if !checked {
-			missing = append(missing, inputKey)
-		}
 	}
+
 	if len(missing) > 0 {
 		return fmt.Errorf("task %s is missing required inputs: %s", inputTaskName, strings.Join(missing, ", "))
 	}
-	for withKey := range withs {
-		matched := false
-		for inputKey, input := range inputs {
-			if withKey == inputKey {
-				if input.DeprecatedMessage != "" {
-					message.SLog.Warn(fmt.Sprintf("This input has been marked deprecated: %s", input.DeprecatedMessage))
-				}
-				matched = true
-				break
+
+	if execContext == "external" && len(extra) > 0 {
+		return fmt.Errorf("task %s is being called directly and contains inputs that are not required and have no defaults: %s", inputTaskName, strings.Join(extra, ", "))
+	}
+
+	// Check for any extra "withs" that do not match defined inputs
+	for withKey := range *withs {
+		if input, exists := inputs[withKey]; exists {
+			if input.DeprecatedMessage != "" {
+				message.SLog.Warn(fmt.Sprintf("This input has been marked deprecated: %s", input.DeprecatedMessage))
 			}
-		}
-		if !matched {
+		} else {
 			message.SLog.Warn(fmt.Sprintf("Task %s does not have an input named %s", inputTaskName, withKey))
 		}
 	}
+
 	return nil
 }
