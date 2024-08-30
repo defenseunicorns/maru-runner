@@ -213,7 +213,7 @@ func Test_validateActionableTaskCall(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := validateActionableTaskCall(tt.args.inputTaskName, tt.args.inputs, tt.args.withs, tt.args.execContext); (err != nil) != tt.wantErr {
+			if err := validateActionableTaskCall(tt.args.inputTaskName, tt.args.inputs, &tt.args.withs, tt.args.execContext); (err != nil) != tt.wantErr {
 				t.Errorf("validateActionableTaskCall() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
