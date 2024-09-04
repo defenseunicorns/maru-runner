@@ -12,12 +12,17 @@ tasks:
   - name: conditional-task-str-comp
     actions:
       - task: included-task
+        description: "Task called as condition evaluated successfully"
         if: ${{ eq "foo" "bar" }}
-      - cmd: echo "Print .variables.BAR ${{ .variables.BAR }}, no condition"
-
+      - cmd: echo "Print .variables.BAR ${{ .variables.BAR }}"
+        description: "CMD called and inline variable templated, no condition"
       # - task: included-task
       #   if: ${{ eq .variables.BAR "default-value" }}
       - task: included-task
+        description: "Included task called with true condition (foo != bar)"
+        if: ${{ ne "default-value123" "default-value" }}
+      - task: included-task-with-conditions
+        description: "Inclided task called with false condition (foo != bar)"
         if: ${{ ne "default-value123" "default-value" }}
       # - task: included-task
       #   if: ${{ ne "default-value" "default-value" }}
@@ -43,6 +48,12 @@ tasks:
   - name: included-task
     actions:
       - cmd: echo "Task called as condition evaluated successfully"
+
+  - name: included-task-with-conditions
+    actions:
+      - cmd: echo "Task entered as parent condition evaluated successfully"
+      - cmd: echo "This shouldnt print because foo != bar"
+        if: ${{ eq "foo" "bar" }}
   - name: included-task-with
     inputs:
       val:

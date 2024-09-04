@@ -72,12 +72,12 @@ func TemplateTaskActionsWithInputs[T any](inputs map[string]types.InputParameter
 	}
 
 	// Pretty print the YAML
-	prettyPrintedYAML, err := goyaml.Marshal(templatedActions)
-	if err != nil {
-		return action, err
-	}
+	// prettyPrintedYAML, err := goyaml.Marshal(templatedActions)
+	// if err != nil {
+	// 	return action, err
+	// }
 
-	fmt.Println("Pretty Printed YAML:\n", string(prettyPrintedYAML))
+	// fmt.Println("Pretty Printed YAML:\n", string(prettyPrintedYAML))
 
 	return templatedActions, nil
 }

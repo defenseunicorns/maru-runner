@@ -20,6 +20,7 @@ import (
 	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
 	"github.com/defenseunicorns/maru-runner/src/types"
+	goyaml "github.com/goccy/go-yaml"
 )
 
 func (r *Runner) performAction(action types.Action) error {
@@ -28,24 +29,32 @@ func (r *Runner) performAction(action types.Action) error {
 	// if err != nil {
 	// 	return err
 	// }
-
+	// If this action is a task execute things
 	if action.TaskReference != "" {
-
+		// templatedAction, err := utils.TemplateTaskActionsWithInputs(nil, action, action.With, r.variableConfig.GetSetVariables())
+		// if err != nil {
+		// 	return err
+		// }
 		// todo: much of this logic is duplicated in Run, consider refactoring
 		referencedTask, err := r.getTask(action.TaskReference)
 		if err != nil {
 			return err
 		}
-
-		//not needed
-		context := buildContext(referencedTask, r.variableConfig.GetSetVariables())
-
-		// change this logic to happen about (before) if action.TaskReference != ""
-		conditionMet, err := utils.TemplateAndEvalActionConditional(action.If, context)
+		prettyPrintedYAML, err := goyaml.Marshal(referencedTask)
 		if err != nil {
-			return fmt.Errorf("failed to evaluate condition: %w", err)
+			return err
 		}
-		if conditionMet {
+
+		fmt.Println("Pretty Printed YAML in performAction:\n", string(prettyPrintedYAML))
+		//not needed
+		// context := buildContext(referencedTask, r.variableConfig.GetSetVariables())
+
+		// // change this logic to happen about (before) if action.TaskReference != ""
+		// conditionMet, err := utils.TemplateAndEvalActionConditional(action.If, context)
+		// if err != nil {
+		// 	return fmt.Errorf("failed to evaluate condition: %w", err)
+		// }
+		// if conditionMet {
 			// template the withs with variables
 			for k, v := range action.With {
 				action.With[k] = utils.TemplateString(r.variableConfig.GetSetVariables(), v)
@@ -66,6 +75,12 @@ func (r *Runner) performAction(action types.Action) error {
 			for _, a := range referencedTask.Actions {
 				a.Env = utils.MergeEnv(withEnv, a.Env)
 			}
+			prettyPrintedYAML, err := goyaml.Marshal(referencedTask)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println("Pretty Printed YAML in performAction later:\n", string(prettyPrintedYAML))
 			if err := r.executeTask(referencedTask); err != nil {
 				return err
 			}
@@ -73,13 +88,16 @@ func (r *Runner) performAction(action types.Action) error {
 			fmt.Println("Skipping action due to condition:", action.If)
 		}
 	} else {
+		//otherwise if action is an action treat it as such
 		action, err := utils.TemplateTaskActionsWithInputs(nil, action, action.With, r.variableConfig.GetSetVariables())
 		if err != nil {
 			return err
 		}
-		err = RunAction(action.BaseAction, r.envFilePath, r.variableConfig)
-		if err != nil {
-			return err
+		if action.If == "" || true {
+			err = RunAction(action.BaseAction, r.envFilePath, r.variableConfig)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
