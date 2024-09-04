@@ -159,6 +159,7 @@ func Test_validateActionableTaskCall(t *testing.T) {
 		inputTaskName string
 		inputs        map[string]types.InputParameter
 		withs         map[string]string
+		execContext  string
 	}
 	tests := []struct {
 		name    string
@@ -198,6 +199,8 @@ func Test_validateActionableTaskCall(t *testing.T) {
 			name: "Valid task call with default value for missing input",
 			args: args{
 				inputTaskName: "testTask",
+				execContext:  "internal",
+
 				inputs: map[string]types.InputParameter{
 					"input1": {Required: true, Default: "defaultValue"},
 					"input2": {Required: true, Default: ""},
@@ -211,7 +214,7 @@ func Test_validateActionableTaskCall(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := validateActionableTaskCall(tt.args.inputTaskName, tt.args.inputs, tt.args.withs); (err != nil) != tt.wantErr {
+			if err := validateActionableTaskCall(tt.args.inputTaskName,, "internal" tt.args.inputs, tt.args.withs, "internal"); (err != nil) != tt.wantErr {
 				t.Errorf("validateActionableTaskCall() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

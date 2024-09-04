@@ -1,0 +1,54 @@
+variables:
+  - name: FOO
+    default: default-value
+  - name: BAR
+    default: default-value
+  - name: VAL1
+    default: "5"
+  - name: VAL2
+    default: "10"
+
+tasks:
+  - name: conditional-task-str-comp
+    actions:
+      - task: included-task
+        if: ${{ eq "foo" "bar" }}
+      - cmd: echo "Print .variables.BAR ${{ .variables.BAR }}, no condition"
+
+      # - task: included-task
+      #   if: ${{ eq .variables.BAR "default-value" }}
+      - task: included-task
+        if: ${{ ne "default-value123" "default-value" }}
+      # - task: included-task
+      #   if: ${{ ne "default-value" "default-value" }}
+      - cmd: echo "default-value123 is not default-value"
+        if: ${{ ne "default-value123" "default-value" }}
+      - cmd: echo "If this is echoed something is wrong"
+        if: ${{ eq "default-value123" "default-value" }}
+        # if: ${{ eq .var.FOO "default-value" }}
+
+      - task: included-task-with
+        with:
+          val: "5"
+  # How to process these vars
+      # - cmd: echo "FOO is not default-value"
+      #   if: ${{ ne .var.FOO "default-value" }}
+      # - task: included-task
+      #   if: ${{ eq ${FAR} .var.BAR }}
+  #     - cmd: echo "VAL2 is greater than VAL1"
+  #       if: ${{ gt .var.VAL2 .var.VAL1 }}
+  #     #   if: ${{ gt .inputs.VAL2 .inputs.VAL1 }}
+
+
+  - name: included-task
+    actions:
+      - cmd: echo "Task called as condition evaluated successfully"
+  - name: included-task-with
+    inputs:
+      val:
+        description: has no default
+    actions:
+      - cmd: echo "val equals ${{ .inputs.val }}"
+        if: ${{ eq .inputs.val "5" }}
+      - cmd: echo "This shouldnt print because foo != bar but val equals ${{ .inputs.val }}"
+        if: ${{ eq "foo" "bar" }}

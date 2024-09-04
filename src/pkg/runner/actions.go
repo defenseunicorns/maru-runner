@@ -23,38 +23,61 @@ import (
 )
 
 func (r *Runner) performAction(action types.Action) error {
+
+	// templatedAction, err := utils.TemplateTaskActionsWithInputs(nil, action, action.With, r.variableConfig.GetSetVariables())
+	// if err != nil {
+	// 	return err
+	// }
+
 	if action.TaskReference != "" {
+
 		// todo: much of this logic is duplicated in Run, consider refactoring
 		referencedTask, err := r.getTask(action.TaskReference)
 		if err != nil {
 			return err
 		}
 
-		// template the withs with variables
-		for k, v := range action.With {
-			action.With[k] = utils.TemplateString(r.variableConfig.GetSetVariables(), v)
-		}
+		//not needed
+		context := buildContext(referencedTask, r.variableConfig.GetSetVariables())
 
-		referencedTask.Actions, err = utils.TemplateTaskActionsWithInputs(referencedTask, action.With)
+		// change this logic to happen about (before) if action.TaskReference != ""
+		conditionMet, err := utils.TemplateAndEvalActionConditional(action.If, context)
+		if err != nil {
+			return fmt.Errorf("failed to evaluate condition: %w", err)
+		}
+		if conditionMet {
+			// template the withs with variables
+			for k, v := range action.With {
+				action.With[k] = utils.TemplateString(r.variableConfig.GetSetVariables(), v)
+			}
+			for k, v := range referencedTask.Actions {
+				referencedTask.Actions[k], err = utils.TemplateTaskActionsWithInputs(referencedTask.Inputs, v, action.With, r.variableConfig.GetSetVariables())
+				if err != nil {
+					return err
+				}
+			}
+			withEnv := []string{}
+			for name := range action.With {
+				withEnv = append(withEnv, utils.FormatEnvVar(name, action.With[name]))
+			}
+			if err := validateActionableTaskCall(referencedTask.Name, referencedTask.Inputs, action.With); err != nil {
+				return err
+			}
+			for _, a := range referencedTask.Actions {
+				a.Env = utils.MergeEnv(withEnv, a.Env)
+			}
+			if err := r.executeTask(referencedTask); err != nil {
+				return err
+			}
+		} else {
+			fmt.Println("Skipping action due to condition:", action.If)
+		}
+	} else {
+		action, err := utils.TemplateTaskActionsWithInputs(nil, action, action.With, r.variableConfig.GetSetVariables())
 		if err != nil {
 			return err
 		}
-
-		withEnv := []string{}
-		for name := range action.With {
-			withEnv = append(withEnv, utils.FormatEnvVar(name, action.With[name]))
-		}
-		if err := validateActionableTaskCall(referencedTask.Name, referencedTask.Inputs, action.With); err != nil {
-			return err
-		}
-		for _, a := range referencedTask.Actions {
-			a.Env = utils.MergeEnv(withEnv, a.Env)
-		}
-		if err := r.executeTask(referencedTask); err != nil {
-			return err
-		}
-	} else {
-		err := RunAction(action.BaseAction, r.envFilePath, r.variableConfig)
+		err = RunAction(action.BaseAction, r.envFilePath, r.variableConfig)
 		if err != nil {
 			return err
 		}
@@ -397,4 +420,29 @@ func validateActionableTaskCall(inputTaskName string, inputs map[string]types.In
 		}
 	}
 	return nil
+}
+
+func buildContext[T any](task types.Task, setVariableMap variables.SetVariableMap[T]) map[string]interface{} {
+	message.SLog.Debug(fmt.Sprintf("Entering buildContext for %s", task.Name))
+	context := make(map[string]interface{})
+
+	// Add task inputs to the context
+	inputs := make(map[string]interface{})
+	for name, inputParam := range task.Inputs {
+		inputs[name] = inputParam.Default
+		//message.SLog.Debug(fmt.Sprintf("Adding inputs %s to context", name))
+	}
+	context["inputs"] = inputs
+
+	// Add set variables to the context
+	vars := make(map[string]interface{})
+	for name, value := range setVariableMap {
+		vars[name] = value
+		//message.SLog.Debug(fmt.Sprintf("Adding variable %s to context", name))
+	}
+	context["variables"] = vars
+
+	//message.SLog.Debug(fmt.Sprintf("context is %s", context))
+	return context
+
 }

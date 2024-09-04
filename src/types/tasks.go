@@ -22,6 +22,8 @@ type Task struct {
 	Actions     []Action                  `json:"actions,omitempty" jsonschema:"description=Actions to take when running the task"`
 	Inputs      map[string]InputParameter `json:"inputs,omitempty" jsonschema:"description=Input parameters for the task"`
 	EnvPath     string                    `json:"envPath,omitempty" jsonschema:"description=Path to file containing environment variables"`
+	// // should this just be in actions or in tasks as well
+	// If string `json:"if,omitempty" jsonschema:"description=Conditional to determine if the task should run"`
 }
 
 // InputParameter represents a single input parameter for a task, to be used w/ `with`
@@ -37,6 +39,8 @@ type Action struct {
 	*BaseAction[variables.ExtraVariableInfo] `json:",inline"`
 	TaskReference                            string            `json:"task,omitempty" jsonschema:"description=The task to run, mutually exclusive with cmd and wait"`
 	With                                     map[string]string `json:"with,omitempty" jsonschema:"description=Input parameters to pass to the task,type=object"`
+	// should this just be in actions or in tasks as well
+	If string `json:"if,omitempty" jsonschema:"description=Conditional to determine if the action should run"`
 }
 
 // TaskReference references the name of a task
