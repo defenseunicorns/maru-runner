@@ -12,7 +12,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const EnvE2E = "TEST_E2E"
+
 func TestTaskRunner(t *testing.T) {
+	skipIfNotE2E(t)
 	t.Log("E2E: Task Maru")
 
 	t.Run("run action", func(t *testing.T) {
@@ -298,4 +301,12 @@ func TestTaskRunner(t *testing.T) {
 		require.NoError(t, err, stdOut, stdErr)
 		require.Contains(t, stdErr, "defenseunicorns is a pretty ok company")
 	})
+}
+
+func skipIfNotE2E(t *testing.T) {
+	t.Helper()
+	if os.Getenv(EnvE2E) == "" {
+		t.Skipf("End to End tests skipped unless env '%s' set", EnvE2E)
+		return
+	}
 }

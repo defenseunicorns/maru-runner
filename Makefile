@@ -49,11 +49,11 @@ build-cli-mac-apple: ## Build the CLI for Mac Apple
 
 .PHONY: test-unit
 test-unit: ## Run unit tests
-	cd src/pkg && go test ./... -failfast -v -timeout 30m
+	go test ./... -failfast -v -timeout 30m
 
 .PHONY: test-e2e
 test-e2e: ## Run End to End (e2e) tests
-	cd src/test/e2e && go test -failfast -v -timeout 30m
+	TEST_E2E=1 go test ./... -failfast -v -timeout 30m
 
 schema: ## Update JSON schema for maru tasks
 	./hack/generate-schema.sh
