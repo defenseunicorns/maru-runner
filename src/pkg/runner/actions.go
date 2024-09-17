@@ -20,80 +20,63 @@ import (
 	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
 	"github.com/defenseunicorns/maru-runner/src/types"
-	goyaml "github.com/goccy/go-yaml"
 )
 
 func (r *Runner) performAction(action types.Action) error {
 
-	// templatedAction, err := utils.TemplateTaskActionsWithInputs(nil, action, action.With, r.variableConfig.GetSetVariables())
-	// if err != nil {
-	// 	return err
-	// }
-	// If this action is a task execute things
+	message.SLog.Debug(fmt.Sprintf("Action conditional is %s", action.If))
+
+	action, _ = utils.TemplateTaskActions(nil, action, action.With, r.variableConfig.GetSetVariables())
+	if action.If == "false" && action.TaskReference != "" {
+		message.SLog.Info(fmt.Sprintf("Skipping action %s", action.TaskReference))
+		return nil
+	} else if action.If == "false" && action.Description != "" {
+		message.SLog.Info(fmt.Sprintf("Skipping action %s", action.Description))
+		return nil
+	} else if action.If == "false" && action.Cmd != "" {
+		cmdEscaped := helpers.Truncate(action.Cmd, 60, false)
+		message.SLog.Info(fmt.Sprintf("Skipping action \"%s\"", cmdEscaped))
+		return nil
+	}
+
 	if action.TaskReference != "" {
-		// templatedAction, err := utils.TemplateTaskActionsWithInputs(nil, action, action.With, r.variableConfig.GetSetVariables())
-		// if err != nil {
-		// 	return err
-		// }
 		// todo: much of this logic is duplicated in Run, consider refactoring
 		referencedTask, err := r.getTask(action.TaskReference)
 		if err != nil {
 			return err
 		}
-		prettyPrintedYAML, err := goyaml.Marshal(referencedTask)
-		if err != nil {
-			return err
+		for k, v := range action.With {
+			action.With[k] = utils.TemplateString(r.variableConfig.GetSetVariables(), v)
 		}
+		for k, v := range referencedTask.Actions {
+			referencedTask.Actions[k], err = utils.TemplateTaskActions(referencedTask.Inputs, v, action.With, r.variableConfig.GetSetVariables())
 
-		fmt.Println("Pretty Printed YAML in performAction:\n", string(prettyPrintedYAML))
-		//not needed
-		// context := buildContext(referencedTask, r.variableConfig.GetSetVariables())
-
-		// // change this logic to happen about (before) if action.TaskReference != ""
-		// conditionMet, err := utils.TemplateAndEvalActionConditional(action.If, context)
-		// if err != nil {
-		// 	return fmt.Errorf("failed to evaluate condition: %w", err)
-		// }
-		// if conditionMet {
-			// template the withs with variables
-			for k, v := range action.With {
-				action.With[k] = utils.TemplateString(r.variableConfig.GetSetVariables(), v)
-			}
-			for k, v := range referencedTask.Actions {
-				referencedTask.Actions[k], err = utils.TemplateTaskActionsWithInputs(referencedTask.Inputs, v, action.With, r.variableConfig.GetSetVariables())
-				if err != nil {
-					return err
-				}
-			}
-			withEnv := []string{}
-			for name := range action.With {
-				withEnv = append(withEnv, utils.FormatEnvVar(name, action.With[name]))
-			}
-			if err := validateActionableTaskCall(referencedTask.Name, referencedTask.Inputs, action.With); err != nil {
-				return err
-			}
-			for _, a := range referencedTask.Actions {
-				a.Env = utils.MergeEnv(withEnv, a.Env)
-			}
-			prettyPrintedYAML, err := goyaml.Marshal(referencedTask)
 			if err != nil {
 				return err
 			}
+		}
+		withEnv := []string{}
+		for name := range action.With {
+			withEnv = append(withEnv, utils.FormatEnvVar(name, action.With[name]))
+		}
+		if err := validateActionableTaskCall(referencedTask.Name, referencedTask.Inputs, action.With); err != nil {
+			return err
+		}
+		for _, a := range referencedTask.Actions {
+			a.Env = utils.MergeEnv(withEnv, a.Env)
+		}
 
-			fmt.Println("Pretty Printed YAML in performAction later:\n", string(prettyPrintedYAML))
-			if err := r.executeTask(referencedTask); err != nil {
-				return err
-			}
-		} else {
-			fmt.Println("Skipping action due to condition:", action.If)
+		if err := r.executeTask(referencedTask); err != nil {
+			return err
 		}
 	} else {
-		//otherwise if action is an action treat it as such
-		action, err := utils.TemplateTaskActionsWithInputs(nil, action, action.With, r.variableConfig.GetSetVariables())
+
+		action, err := utils.TemplateTaskActions(nil, action, action.With, r.variableConfig.GetSetVariables())
 		if err != nil {
 			return err
 		}
-		if action.If == "" || true {
+
+		if action.If == "true" || action.If == "" {
 			err = RunAction(action.BaseAction, r.envFilePath, r.variableConfig)
 			if err != nil {
 				return err
@@ -438,29 +421,4 @@ func validateActionableTaskCall(inputTaskName string, inputs map[string]types.In
 		}
 	}
 	return nil
-}
-
-func buildContext[T any](task types.Task, setVariableMap variables.SetVariableMap[T]) map[string]interface{} {
-	message.SLog.Debug(fmt.Sprintf("Entering buildContext for %s", task.Name))
-	context := make(map[string]interface{})
-
-	// Add task inputs to the context
-	inputs := make(map[string]interface{})
-	for name, inputParam := range task.Inputs {
-		inputs[name] = inputParam.Default
-		//message.SLog.Debug(fmt.Sprintf("Adding inputs %s to context", name))
-	}
-	context["inputs"] = inputs
-
-	// Add set variables to the context
-	vars := make(map[string]interface{})
-	for name, value := range setVariableMap {
-		vars[name] = value
-		//message.SLog.Debug(fmt.Sprintf("Adding variable %s to context", name))
-	}
-	context["variables"] = vars
-
-	//message.SLog.Debug(fmt.Sprintf("context is %s", context))
-	return context
-
 }

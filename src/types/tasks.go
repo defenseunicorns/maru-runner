@@ -22,7 +22,7 @@ type Task struct {
 	Actions     []Action                  `json:"actions,omitempty" jsonschema:"description=Actions to take when running the task"`
 	Inputs      map[string]InputParameter `json:"inputs,omitempty" jsonschema:"description=Input parameters for the task"`
 	EnvPath     string                    `json:"envPath,omitempty" jsonschema:"description=Path to file containing environment variables"`
-	// // should this just be in actions or in tasks as well
+	// should this just be in actions or in tasks as well
 	// If string `json:"if,omitempty" jsonschema:"description=Conditional to determine if the task should run"`
 }
 

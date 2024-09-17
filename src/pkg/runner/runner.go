@@ -284,11 +284,9 @@ func (r *Runner) executeTask(task types.Task) error {
 
 	for _, action := range task.Actions {
 		action.Env = utils.MergeEnv(action.Env, defaultEnv)
-		if action.If != "false" || action.If == "" {
-			fmt.Println("action.If= ", action.If)
-			if err := r.performAction(action); err != nil {
-				return err
-			}
+
+		if err := r.performAction(action); err != nil {
+			return err
 		}
 	}
 	return nil
