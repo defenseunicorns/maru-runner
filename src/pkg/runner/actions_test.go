@@ -5,6 +5,7 @@ package runner
 
 import (
 	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
@@ -498,7 +499,8 @@ func TestRunner_GetBaseActionCfg(t *testing.T) {
 			}
 
 			got := GetBaseActionCfg(tt.args.cfg, tt.args.a, tt.args.vars)
-
+			slices.Sort(got.Env)
+			slices.Sort(tt.want)
 			require.Equal(t, tt.want, got.Env, "The returned Env array did not match what was wanted")
 		})
 	}
