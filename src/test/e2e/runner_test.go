@@ -298,4 +298,73 @@ func TestTaskRunner(t *testing.T) {
 		require.NoError(t, err, stdOut, stdErr)
 		require.Contains(t, stdErr, "defenseunicorns is a pretty ok company")
 	})
+
+	// Conditional Tests
+	t.Run("test calling a task with false conditional cmd comparing variables", func(t *testing.T) {
+		t.Parallel()
+		stdOut, stdErr, err := e2e.Maru("run", "false-conditional-with-var-cmd", "--file", "src/test/tasks/conditionals/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "Skipping action false-conditional-with-var-cmd")
+	})
+
+	t.Run("test calling a task with true conditional cmd comparing variables", func(t *testing.T) {
+		t.Parallel()
+		stdOut, stdErr, err := e2e.Maru("run", "true-conditional-with-var-cmd", "--file", "src/test/tasks/conditionals/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "This should run because .variables.BAR = default-value")
+	})
+
+	t.Run("test calling a task with cmd no conditional", func(t *testing.T) {
+		t.Parallel()
+		stdOut, stdErr, err := e2e.Maru("run", "empty-conditional-cmd", "--file", "src/test/tasks/conditionals/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "This should run because there is no condition")
+	})
+
+	t.Run("test calling a task with false conditional comparing variables", func(t *testing.T) {
+		t.Parallel()
+		stdOut, stdErr, err := e2e.Maru("run", "false-conditional-task", "--file", "src/test/tasks/conditionals/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "Skipping action included-task")
+	})
+
+	t.Run("test calling a task with true conditional comparing variables", func(t *testing.T) {
+		t.Parallel()
+		stdOut, stdErr, err := e2e.Maru("run", "true-conditional-task", "--file", "src/test/tasks/conditionals/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "Task called successfully")
+	})
+
+	t.Run("test calling a task with no conditional comparing variables", func(t *testing.T) {
+		t.Parallel()
+		stdOut, stdErr, err := e2e.Maru("run", "true-conditional-task", "--file", "src/test/tasks/conditionals/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "Task called successfully")
+	})
+
+	t.Run("test calling a task with nested true conditional comparing variables and inputs", func(t *testing.T) {
+		t.Parallel()
+		stdOut, stdErr, err := e2e.Maru("run", "true-conditional-nested-task-comp-var-inputs", "--file", "src/test/tasks/conditionals/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "input val equals 5 and variable VAL1 equals 5")
+	})
+	t.Run("test calling a task with nested false conditional comparing variables and inputs", func(t *testing.T) {
+		t.Parallel()
+		stdOut, stdErr, err := e2e.Maru("run", "false-conditional-nested-task-comp-var-inputs", "--file", "src/test/tasks/conditionals/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "Skipping action included-task-with-inputs")
+	})
+
+	t.Run("test calling a task with nested task true conditional comparing variables and inputs", func(t *testing.T) {
+		t.Parallel()
+		stdOut, stdErr, err := e2e.Maru("run", "true-conditional-nested-nested-task-comp-var-inputs", "--file", "src/test/tasks/conditionals/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "Task called successfully")
+	})
+	t.Run("test calling a task with nested task false conditional comparing variables and inputs", func(t *testing.T) {
+		t.Parallel()
+		stdOut, stdErr, err := e2e.Maru("run", "false-conditional-nested-nested-task-comp-var-inputs", "--file", "src/test/tasks/conditionals/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "Skipping action included-task")
+	})
 }

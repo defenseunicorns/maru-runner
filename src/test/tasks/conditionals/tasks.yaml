@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=tasks.schema.json
 variables:
   - name: FOO
     default: default-value
@@ -10,72 +9,80 @@ variables:
     default: "10"
 
 tasks:
-  - name: conditional-task-str-comp
+
+  - name: false-conditional-with-var-cmd
     actions:
+      - cmd: echo "This should not run because .variables.BAR != default-value"
+        description: false-conditional-with-var-cmd
+        if: ${{ eq .variables.BAR "default-value1" }}
 
-      # # No if, just cmd, should run
-      # - cmd: echo "Print .variables.BAR ${{ .variables.BAR }}"
-      #   description: "CMD called and inline variable templated, no condition"
+  - name: true-conditional-with-var-cmd
+    actions:
+      - cmd: echo "This should run because .variables.BAR = default-value"
+        description: true-conditional-with-var-cmd
+        if: ${{ eq .variables.BAR "default-value" }}
 
-      # # TaskReference should not run foo != bar
-      # - task: included-task
-      #   if: ${{ eq "foo" "bar" }}
+  - name: empty-conditional-cmd
+    actions:
+      - cmd: echo "This should run because there is no condition"
+        description: empty-conditional-cmd
 
-      # # cmd reference should not run foo != bar
-      # - cmd: echo "This should not run because foo != bar"
-      #   if: ${{ eq "foo" "bar" }}
+  - name: empty-conditional-task
+    actions:
+      - task: included-task
 
-     # cmd reference should run because .variables.BAR == "default-value"
-      # - cmd: echo "This should run because .variables.BAR equals ${{ .variables.BAR }} (default-value)"
-      #   if: ${{ eq .variables.BAR "default-value" }}
+  - name: true-conditional-task
+    actions:
+      - task: included-task
+        if: ${{ eq .variables.BAR "default-value" }}
 
-      # task reference should run because .variables.BAR == "default-value"
+  - name: false-conditional-task
+    actions:
       - task: included-task
         if: ${{ eq .variables.BAR "default-value1" }}
-      - cmd: echo "hello"
-        if: ${{ eq .variables.BAR "default-value1" }}
-      # - task: included-task
-      #   description: "Included task called with true condition (foo != bar)"
-      #   if: ${{ eq "default-value123" "default-value" }}
 
 
-      # - task: included-task-with-conditions
-      #   description: "Included task called with false condition (foo != bar)"
-      #   if: ${{ ne "default-value123" "default-value" }}
-
-      # # Should run, no if. Inside called task, first should run, second should not, third should
-      - task: included-task-with
+  - name: true-conditional-nested-task-comp-var-inputs
+    actions:
+      - task: included-task-with-inputs
         with:
           val: "5"
 
-
-
-
-
-  - name: included-task-with-conditions
+  - name: false-conditional-nested-task-comp-var-inputs
     actions:
-      - cmd: echo "Task entered as parent condition evaluated successfully"
-      - cmd: echo "This shouldnt print because foo != bar"
-        if: ${{ eq "foo" "bar" }}
+      - task: included-task-with-inputs
+        with:
+          val: "7"
 
+  - name: true-conditional-nested-nested-task-comp-var-inputs
+    actions:
+      - task: included-task-with-inputs-and-nested-task
+        with:
+          val: "5"
 
-  - name: included-task-with
+  - name: false-conditional-nested-nested-task-comp-var-inputs
+    actions:
+      - task: included-task-with-inputs-and-nested-task
+        with:
+          val: "7"
+
+  - name: included-task
+    actions:
+      - cmd: echo "Task called successfully"
+
+  - name: included-task-with-inputs
     inputs:
       val:
         description: has no default
     actions:
-      - cmd: echo "val equals ${{ .inputs.val }}"
-        if: ${{ eq .inputs.val "5" }}
-      - cmd: echo "This shouldnt print because foo != bar but val equals ${{ .inputs.val }}"
-        description: "fail-check"
-        if: ${{ eq "foo" "bar" }}
-      - cmd: echo "This should print because .variables.BAR equals ${{ .variables.BAR }}"
-        if: ${{ eq .variables.BAR "default-value" }}
-      - task: included-task
-        if: ${{ eq .variables.BAR "default-value" }}
-      - task: included-task
-        if: ${{ eq .variables.BAR "default-value123" }}
+      - cmd: echo "input val equals ${{ .inputs.val }} and variable VAL1 equals ${{ .variables.VAL1 }}"
+        description: "included-task-with-inputs"
+        if: ${{ eq .inputs.val .variables.VAL1 }}
 
-  - name: included-task
+  - name: included-task-with-inputs-and-nested-task
+    inputs:
+      val:
+        description: has no default
     actions:
-      - cmd: echo "Task called as condition evaluated successfully"
+      - task: included-task
+        if: ${{ eq .inputs.val .variables.VAL1 }}
