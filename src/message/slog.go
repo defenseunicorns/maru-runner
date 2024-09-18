@@ -18,8 +18,9 @@ var (
 type MaruHandler struct{}
 
 // Enabled is always set to true as Maru logging functions are already aware of if they are allowed to be called
-func (z MaruHandler) Enabled(_ context.Context, _ slog.Level) bool {
-	return true
+func (z MaruHandler) Enabled(_ context.Context, level slog.Level) bool {
+	// only log if the level is greater than or equal to the log level
+	return int(level) >= int(logLevel)
 }
 
 // WithAttrs is not suppported

@@ -17,18 +17,23 @@ import (
 type LogLevel int
 
 const (
-	// WarnLevel level. Non-critical entries that deserve eyes.
-	WarnLevel LogLevel = iota
+	// Supported log levels. These are in order of increasing severity, and
+	// match the constants in the log/slog package.
+
+	// DebugLevel level. Usually only enabled when debugging. Very verbose logging.
+	DebugLevel LogLevel = -4
 	// InfoLevel level. General operational entries about what's going on inside the
 	// application.
-	InfoLevel
-	// DebugLevel level. Usually only enabled when debugging. Very verbose logging.
-	DebugLevel
+	InfoLevel LogLevel = 0
+	// WarnLevel level. Non-critical entries that deserve eyes.
+	WarnLevel LogLevel = 4
 	// TraceLevel level. Designates finer-grained informational events than the Debug.
-	TraceLevel
+	TraceLevel LogLevel = 8
 )
 
-// logLevel is the log level for the runner
+// logLevel is the log level for the runner. When set, log messages with a level
+// greater than or equal to this level will be logged. Log messages with a level
+// lower than this level will be ignored.
 var logLevel = InfoLevel
 
 // logFile acts as a buffer for logFile generation
@@ -59,7 +64,8 @@ func LogFileLocation() string {
 // SetLogLevel sets the log level.
 func SetLogLevel(lvl LogLevel) {
 	logLevel = lvl
-	if logLevel >= DebugLevel {
+	// Enable pterm debug messages if the log level is Trace or Debug
+	if logLevel == DebugLevel || logLevel == TraceLevel {
 		pterm.EnableDebugMessages()
 	}
 }
