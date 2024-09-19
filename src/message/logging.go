@@ -20,6 +20,14 @@ const (
 	// Supported log levels. These are in order of increasing severity, and
 	// match the constants in the log/slog package.
 
+	// TraceLevel level. Effectively the same as Debug but with line numbers.
+	//
+	// NOTE: There currently is no Trace() function in the log/slog package. In
+	// order to use this level, you must use message.SLog.Log() and specify the
+	// level. Maru currently uses the Trace level specifically for adding line
+	// numbers to logs from calls to message.SLog.Debug(). Because of this,
+	// Trace is effectively the same as Debug but with line numbers.
+	TraceLevel LogLevel = -8
 	// DebugLevel level. Usually only enabled when debugging. Very verbose logging.
 	DebugLevel LogLevel = -4
 	// InfoLevel level. General operational entries about what's going on inside the
@@ -27,8 +35,6 @@ const (
 	InfoLevel LogLevel = 0
 	// WarnLevel level. Non-critical entries that deserve eyes.
 	WarnLevel LogLevel = 4
-	// TraceLevel level. Designates finer-grained informational events than the Debug.
-	TraceLevel LogLevel = 8
 )
 
 // logLevel is the log level for the runner. When set, log messages with a level
@@ -65,7 +71,7 @@ func LogFileLocation() string {
 func SetLogLevel(lvl LogLevel) {
 	logLevel = lvl
 	// Enable pterm debug messages if the log level is Trace or Debug
-	if logLevel == DebugLevel || logLevel == TraceLevel {
+	if logLevel <= DebugLevel {
 		pterm.EnableDebugMessages()
 	}
 }

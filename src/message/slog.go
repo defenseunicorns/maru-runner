@@ -25,6 +25,7 @@ type MaruHandler struct{}
 //
 // Examples:
 //
+//	SetLogLevel(TraceLevel) // show everything, with file names and line numbers
 //	SetLogLevel(DebugLevel) // show everything
 //	SetLogLevel(InfoLevel)  // show info and above (does not show debug logs)
 //	SetLogLevel(WarnLevel)  // show warn and above (does not show debug/info logs)
