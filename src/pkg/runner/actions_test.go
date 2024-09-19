@@ -5,6 +5,7 @@ package runner
 
 import (
 	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
@@ -198,6 +199,7 @@ func Test_validateActionableTaskCall(t *testing.T) {
 			name: "Valid task call with default value for missing input",
 			args: args{
 				inputTaskName: "testTask",
+
 				inputs: map[string]types.InputParameter{
 					"input1": {Required: true, Default: "defaultValue"},
 					"input2": {Required: true, Default: ""},
@@ -227,6 +229,8 @@ func TestRunner_performAction(t *testing.T) {
 	}
 	type args struct {
 		action types.Action
+		inputs map[string]types.InputParameter
+		withs  map[string]string
 	}
 	tests := []struct {
 		name    string
@@ -235,6 +239,7 @@ func TestRunner_performAction(t *testing.T) {
 		wantErr bool
 	}{
 		// TODO: Add more test cases
+		// https://github.com/defenseunicorns/maru-runner/issues/143
 		{
 			name: "failed action processing due to invalid command",
 			fields: fields{
@@ -293,7 +298,7 @@ func TestRunner_performAction(t *testing.T) {
 				envFilePath:    tt.fields.envFilePath,
 				variableConfig: tt.fields.variableConfig,
 			}
-			err := r.performAction(tt.args.action)
+			err := r.performAction(tt.args.action, tt.args.withs, tt.args.inputs)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("performAction() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -498,7 +503,8 @@ func TestRunner_GetBaseActionCfg(t *testing.T) {
 			}
 
 			got := GetBaseActionCfg(tt.args.cfg, tt.args.a, tt.args.vars)
-
+			slices.Sort(got.Env)
+			slices.Sort(tt.want)
 			require.Equal(t, tt.want, got.Env, "The returned Env array did not match what was wanted")
 		})
 	}
