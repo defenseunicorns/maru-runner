@@ -16,7 +16,7 @@ import (
 	goyaml "github.com/goccy/go-yaml"
 )
 
-// TemplateTaskActions templates a task's actions with the given inputs and variables
+// TemplateTaskAction templates a task's actions with the given inputs and variables
 func TemplateTaskAction[T any](action types.Action, withs map[string]string, inputs map[string]types.InputParameter, setVarMap variables.SetVariableMap[T]) (types.Action, error) {
 	data := map[string]map[string]string{
 		"inputs":    {},
