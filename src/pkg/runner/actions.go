@@ -26,7 +26,7 @@ func (r *Runner) performAction(action types.Action, withs map[string]string, inp
 
 	message.SLog.Debug(fmt.Sprintf("Evaluating action conditional %s", action.If))
 
-	action, _ = utils.TemplateTaskActions(action, withs, inputs, r.variableConfig.GetSetVariables())
+	action, _ = utils.TemplateTaskAction(action, withs, inputs, r.variableConfig.GetSetVariables())
 	if action.If == "false" && action.TaskReference != "" {
 		message.SLog.Info(fmt.Sprintf("Skipping action %s", action.TaskReference))
 		return nil
