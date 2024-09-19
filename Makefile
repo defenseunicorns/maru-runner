@@ -53,7 +53,7 @@ test-unit: ## Run unit tests
 
 .PHONY: test-e2e
 test-e2e: ## Run End to End (e2e) tests
-	cd src/test/e2e && go test -failfast -v -timeout 30m
+	cd src/test/e2e && go test -failfast -v -timeout 30m -count=1
 
 schema: ## Update JSON schema for maru tasks
 	./hack/generate-schema.sh
