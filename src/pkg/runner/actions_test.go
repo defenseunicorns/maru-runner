@@ -198,7 +198,6 @@ func Test_validateActionableTaskCall(t *testing.T) {
 			name: "Valid task call with default value for missing input",
 			args: args{
 				inputTaskName: "testTask",
-				execContext:   "internal",
 
 				inputs: map[string]types.InputParameter{
 					"input1": {Required: true, Default: "defaultValue"},
