@@ -59,7 +59,6 @@ func doAllTheThings(m *testing.M) (int, error) {
 	// Validate that the Maru binary exists. If it doesn't that means the dev hasn't built it, usually by running
 	// `make build-cli`
 	_, err = os.Stat(e2e.MaruBinPath)
-	// only care about missing the maru binary if we're explicitly running the e2e tests
 	if err != nil {
 		return 1, fmt.Errorf("maru binary %s not found", e2e.MaruBinPath)
 	}
