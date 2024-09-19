@@ -51,13 +51,7 @@ func (r *Runner) performAction(action types.Action) error {
 		for k, v := range action.With {
 			action.With[k] = utils.TemplateString(r.variableConfig.GetSetVariables(), v)
 		}
-		for k, v := range referencedTask.Actions {
-			referencedTask.Actions[k], err = utils.TemplateTaskActions(referencedTask.Inputs, v, action.With, r.variableConfig.GetSetVariables())
 
-			if err != nil {
-				return err
-			}
-		}
 		withEnv := []string{}
 		for name := range action.With {
 			withEnv = append(withEnv, utils.FormatEnvVar(name, action.With[name]))

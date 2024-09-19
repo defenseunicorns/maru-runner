@@ -77,6 +77,18 @@ tasks:
         with:
           val: "7"
 
+  - name: true-condition-var-as-input-original-syntax-nested-nested-with-comp
+    actions:
+      - task: included-task-with-inputs-and-nested-nested-task
+        with:
+          val: ${VAL1}
+
+  - name: true-condition-var-as-input-new-syntax-nested-nested-with-comp
+    actions:
+      - task: included-task-with-inputs-and-nested-nested-task
+        with:
+          val: ${{ .variables.VAL1 }}
+
   - name: included-task
     actions:
       - cmd: echo "Task called successfully"
