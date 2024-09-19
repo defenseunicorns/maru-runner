@@ -16,10 +16,11 @@ import (
 	goyaml "github.com/goccy/go-yaml"
 )
 
-// TemplateTaskActionsWithInputs templates a task's actions with the given inputs
-func TemplateTaskActionsWithInputs(task types.Task, withs map[string]string) ([]types.Action, error) {
+// TemplateTaskAction templates a task's actions with the given inputs and variables
+func TemplateTaskAction[T any](action types.Action, withs map[string]string, inputs map[string]types.InputParameter, setVarMap variables.SetVariableMap[T]) (types.Action, error) {
 	data := map[string]map[string]string{
-		"inputs": {},
+		"inputs":    {},
+		"variables": {},
 	}
 
 	// get inputs from "with" map
@@ -27,34 +28,42 @@ func TemplateTaskActionsWithInputs(task types.Task, withs map[string]string) ([]
 		data["inputs"][name] = withs[name]
 	}
 
+	// get vars from "vms" map
+	for name := range setVarMap {
+		data["variables"][name] = setVarMap[name].Value
+	}
+
 	// use default if not populated in data
-	for name := range task.Inputs {
+	for name := range inputs {
 		if current, ok := data["inputs"][name]; !ok || current == "" {
-			data["inputs"][name] = task.Inputs[name].Default
+			data["inputs"][name] = inputs[name].Default
 		}
 	}
 
-	b, err := goyaml.Marshal(task.Actions)
+	b, err := goyaml.Marshal(action)
 	if err != nil {
-		return nil, err
+		return action, err
 	}
 
 	t, err := template.New("template task actions").Option("missingkey=error").Delims("${{", "}}").Parse(string(b))
 	if err != nil {
-		return nil, err
+		return action, err
 	}
 
 	var templated strings.Builder
 
 	if err := t.Execute(&templated, data); err != nil {
-		return nil, err
+		return action, err
 	}
 
 	result := templated.String()
 
-	var templatedActions []types.Action
+	var templatedAction types.Action
+	if err := goyaml.Unmarshal([]byte(result), &templatedAction); err != nil {
+		return action, err
+	}
 
-	return templatedActions, goyaml.Unmarshal([]byte(result), &templatedActions)
+	return templatedAction, nil
 }
 
 // TemplateString replaces ${...} with the value from the template map
