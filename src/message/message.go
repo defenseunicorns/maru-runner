@@ -86,5 +86,5 @@ func debugPrinter(offset int, a ...any) {
 }
 
 func errorPrinter(offset int) *pterm.PrefixPrinter {
-	return pterm.Error.WithShowLineNumber(logLevel > 2).WithLineNumberOffset(offset)
+	return pterm.Error.WithShowLineNumber(logLevel <= TraceLevel).WithLineNumberOffset(offset)
 }
