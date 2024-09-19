@@ -67,7 +67,7 @@ func paragraph(format string, a ...any) string {
 }
 
 func debugPrinter(offset int, a ...any) {
-	printer := pterm.Debug.WithShowLineNumber(logLevel > 2).WithLineNumberOffset(offset)
+	printer := pterm.Debug.WithShowLineNumber(logLevel <= TraceLevel).WithLineNumberOffset(offset)
 	now := time.Now().Format(time.RFC3339)
 	// prepend to a
 	a = append([]any{now, " - "}, a...)
@@ -86,5 +86,5 @@ func debugPrinter(offset int, a ...any) {
 }
 
 func errorPrinter(offset int) *pterm.PrefixPrinter {
-	return pterm.Error.WithShowLineNumber(logLevel > 2).WithLineNumberOffset(offset)
+	return pterm.Error.WithShowLineNumber(logLevel <= TraceLevel).WithLineNumberOffset(offset)
 }
