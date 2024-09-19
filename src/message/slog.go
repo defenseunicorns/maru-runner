@@ -29,6 +29,7 @@ type MaruHandler struct{}
 //	SetLogLevel(DebugLevel) // show everything
 //	SetLogLevel(InfoLevel)  // show info and above (does not show debug logs)
 //	SetLogLevel(WarnLevel)  // show warn and above (does not show debug/info logs)
+//	SetLogLevel(ErrorLevel)  // show only errors (does not show debug/info/warn logs)
 func (z MaruHandler) Enabled(_ context.Context, level slog.Level) bool {
 	// only log if the log level is greater than or equal to the set log level
 	return int(level) >= int(logLevel)

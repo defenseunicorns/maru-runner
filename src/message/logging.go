@@ -35,6 +35,8 @@ const (
 	InfoLevel LogLevel = 0
 	// WarnLevel level. Non-critical entries that deserve eyes.
 	WarnLevel LogLevel = 4
+	// ErrorLevel level. Errors only.
+	ErrorLevel LogLevel = 8
 )
 
 // logLevel is the log level for the runner. When set, log messages with a level
