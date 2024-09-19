@@ -113,5 +113,5 @@ tasks:
       val2:
         description: has no default
     actions:
-      - cmd: echo "input val2 equals ${{ .inputs.val2 }} and variable VAL1 equals ${{ .variables.VAL1 }}"        
+      - cmd: echo "input val2 equals ${{ .inputs.val2 }} and variable VAL1 equals ${{ .variables.VAL1 }}"
         if: ${{ eq .inputs.val2 .variables.VAL1 }}
