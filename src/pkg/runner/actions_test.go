@@ -238,6 +238,7 @@ func TestRunner_performAction(t *testing.T) {
 		wantErr bool
 	}{
 		// TODO: Add more test cases
+		// https://github.com/defenseunicorns/maru-runner/issues/143
 		{
 			name: "failed action processing due to invalid command",
 			fields: fields{
