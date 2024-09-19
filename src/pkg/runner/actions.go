@@ -24,18 +24,21 @@ import (
 
 func (r *Runner) performAction(action types.Action) error {
 
-	message.SLog.Debug(fmt.Sprintf("Action conditional is %s", action.If))
+	message.SLog.Debug(fmt.Sprintf("Evaluating action conditional %s", action.If))
 
-	action, _ = utils.TemplateTaskActions(nil, action, action.With, r.variableConfig.GetSetVariables())
+	action, err := utils.TemplateTaskActions(nil, action, action.With, r.variableConfig.GetSetVariables())
+	if err != nil {
+		return err
+	}
 	if action.If == "false" && action.TaskReference != "" {
-		message.SLog.Info(fmt.Sprintf("Skipping action %s", action.TaskReference))
+		message.SLog.Info(fmt.Sprintf("Skipping action %q", action.TaskReference))
 		return nil
 	} else if action.If == "false" && action.Description != "" {
-		message.SLog.Info(fmt.Sprintf("Skipping action %s", action.Description))
+		message.SLog.Info(fmt.Sprintf("Skipping action %q", action.Description))
 		return nil
 	} else if action.If == "false" && action.Cmd != "" {
 		cmdEscaped := helpers.Truncate(action.Cmd, 60, false)
-		message.SLog.Info(fmt.Sprintf("Skipping action \"%s\"", cmdEscaped))
+		message.SLog.Info(fmt.Sprintf("Skipping action %q", cmdEscaped))
 		return nil
 	}
 

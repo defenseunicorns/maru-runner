@@ -367,4 +367,17 @@ func TestTaskRunner(t *testing.T) {
 		require.NoError(t, err, stdOut, stdErr)
 		require.Contains(t, stdErr, "Skipping action included-task")
 	})
+
+	t.Run("test calling a task with nested task calling a task with true conditional comparing variables and inputs", func(t *testing.T) {
+		t.Parallel()
+		stdOut, stdErr, err := e2e.Maru("run", "true-conditional-nested-nested-nested-task-comp-var-inputs", "--file", "src/test/tasks/conditionals/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "Task called successfully")
+	})
+	t.Run("test calling a task with nested task calling a task with false conditional comparing variables and inputs", func(t *testing.T) {
+		t.Parallel()
+		stdOut, stdErr, err := e2e.Maru("run", "false-conditional-nested-nested-nested-task-comp-var-inputs", "--file", "src/test/tasks/conditionals/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "Skipping action \"echo \"Task called successfully\"\"")
+	})
 }
