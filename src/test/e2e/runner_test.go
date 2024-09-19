@@ -337,7 +337,7 @@ func TestTaskRunner(t *testing.T) {
 
 	t.Run("test calling a task with no conditional comparing variables", func(t *testing.T) {
 		t.Parallel()
-		stdOut, stdErr, err := e2e.Maru("run", "true-conditional-task", "--file", "src/test/tasks/conditionals/tasks.yaml")
+		stdOut, stdErr, err := e2e.Maru("run", "empty-conditional-task", "--file", "src/test/tasks/conditionals/tasks.yaml")
 		require.NoError(t, err, stdOut, stdErr)
 		require.Contains(t, stdErr, "Task called successfully")
 	})
