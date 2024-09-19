@@ -12,7 +12,6 @@ import (
 )
 
 func TestRunnerInputs(t *testing.T) {
-	skipIfNotE2E(t)
 	t.Run("test that default values for inputs work when not required", func(t *testing.T) {
 		t.Parallel()
 

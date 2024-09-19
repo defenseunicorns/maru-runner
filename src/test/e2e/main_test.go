@@ -22,8 +22,6 @@ const (
 	applianceModeEnvVar     = "APPLIANCE_MODE"
 	applianceModeKeepEnvVar = "APPLIANCE_MODE_KEEP"
 	skipK8sEnvVar           = "SKIP_K8S"
-	// environment variable to enable e2e tests
-	EnvE2E = "TEST_E2E"
 )
 
 // TestMain lets us customize the test run. See https://medium.com/goingogo/why-use-testmain-for-testing-in-go-dafb52b406bc.
@@ -62,7 +60,7 @@ func doAllTheThings(m *testing.M) (int, error) {
 	// `make build-cli`
 	_, err = os.Stat(e2e.MaruBinPath)
 	// only care about missing the maru binary if we're explicitly running the e2e tests
-	if err != nil && os.Getenv("EnvE2E") != "" {
+	if err != nil {
 		return 1, fmt.Errorf("maru binary %s not found", e2e.MaruBinPath)
 	}
 
@@ -70,12 +68,4 @@ func doAllTheThings(m *testing.M) (int, error) {
 	returnCode := m.Run()
 
 	return returnCode, nil
-}
-
-func skipIfNotE2E(t *testing.T) {
-	t.Helper()
-	if os.Getenv(EnvE2E) == "" {
-		t.Skipf("End to End tests skipped unless env '%s' set", EnvE2E)
-		return
-	}
 }
