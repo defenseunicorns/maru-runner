@@ -232,7 +232,7 @@ func TestTaskRunner(t *testing.T) {
 		t.Parallel()
 		_, stdErr, err := e2e.Maru("run", "wait-fail", "--file", "src/test/tasks/tasks.yaml")
 		require.Error(t, err)
-		require.Contains(t, stdErr, "Waiting for")
+		require.Contains(t, stdErr, "timed out after 1 seconds")
 	})
 
 	t.Run("test successful call to zarf tools wait-for (requires Zarf on path)", func(t *testing.T) {
