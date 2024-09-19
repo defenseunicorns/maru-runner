@@ -378,7 +378,7 @@ func TestTaskRunner(t *testing.T) {
 		t.Parallel()
 		stdOut, stdErr, err := e2e.Maru("run", "false-conditional-nested-nested-nested-task-comp-var-inputs", "--file", "src/test/tasks/conditionals/tasks.yaml")
 		require.NoError(t, err, stdOut, stdErr)
-		require.Contains(t, stdErr, "Skipping action \"echo \"input val2 equals 7 and variable VAL1 equals 5\"\"")
+		require.Contains(t, stdErr, "Skipping action \"echo \\\"input val2 equals 7 and variable VAL1 equals 5\\\"\"")
 	})
 
 	t.Run("test calling a task with nested task calling a task with old style var as input true conditional comparing variables and inputs", func(t *testing.T) {

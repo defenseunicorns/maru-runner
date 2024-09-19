@@ -24,7 +24,7 @@ import (
 
 func (r *Runner) performAction(action types.Action) error {
 
-	message.SLog.Debug(fmt.Sprintf("Action conditional is %s", action.If))
+	message.SLog.Debug(fmt.Sprintf("Evaluating action conditional %s", action.If))
 
 	action, _ = utils.TemplateTaskActions(nil, action, action.With, r.variableConfig.GetSetVariables())
 	if action.If == "false" && action.TaskReference != "" {
@@ -35,7 +35,7 @@ func (r *Runner) performAction(action types.Action) error {
 		return nil
 	} else if action.If == "false" && action.Cmd != "" {
 		cmdEscaped := helpers.Truncate(action.Cmd, 60, false)
-		message.SLog.Info(fmt.Sprintf("Skipping action \"%s\"", cmdEscaped))
+		message.SLog.Info(fmt.Sprintf("Skipping action %q", cmdEscaped))
 		return nil
 	}
 
@@ -71,17 +71,11 @@ func (r *Runner) performAction(action types.Action) error {
 		}
 	} else {
 
-		action, err := utils.TemplateTaskActions(nil, action, action.With, r.variableConfig.GetSetVariables())
+		err := RunAction(action.BaseAction, r.envFilePath, r.variableConfig)
 		if err != nil {
 			return err
 		}
 
-		if action.If == "true" || action.If == "" {
-			err = RunAction(action.BaseAction, r.envFilePath, r.variableConfig)
-			if err != nil {
-				return err
-			}
-		}
 	}
 	return nil
 }
