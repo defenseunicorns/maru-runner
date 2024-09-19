@@ -17,7 +17,7 @@ import (
 )
 
 // TemplateTaskActions templates a task's actions with the given inputs and variables
-func TemplateTaskActions[T any](inputs map[string]types.InputParameter, action types.Action, withs map[string]string, setVarMap variables.SetVariableMap[T]) (types.Action, error) {
+func TemplateTaskActions[T any](action types.Action, withs map[string]string, inputs map[string]types.InputParameter, setVarMap variables.SetVariableMap[T]) (types.Action, error) {
 	data := map[string]map[string]string{
 		"inputs":    {},
 		"variables": {},

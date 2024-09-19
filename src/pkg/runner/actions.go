@@ -22,11 +22,11 @@ import (
 	"github.com/defenseunicorns/maru-runner/src/types"
 )
 
-func (r *Runner) performAction(action types.Action) error {
+func (r *Runner) performAction(action types.Action, withs map[string]string, inputs map[string]types.InputParameter) error {
 
 	message.SLog.Debug(fmt.Sprintf("Evaluating action conditional %s", action.If))
 
-	action, _ = utils.TemplateTaskActions(nil, action, action.With, r.variableConfig.GetSetVariables())
+	action, _ = utils.TemplateTaskActions(action, withs, inputs, r.variableConfig.GetSetVariables())
 	if action.If == "false" && action.TaskReference != "" {
 		message.SLog.Info(fmt.Sprintf("Skipping action %s", action.TaskReference))
 		return nil
@@ -48,13 +48,6 @@ func (r *Runner) performAction(action types.Action) error {
 		for k, v := range action.With {
 			action.With[k] = utils.TemplateString(r.variableConfig.GetSetVariables(), v)
 		}
-		for k, v := range referencedTask.Actions {
-			referencedTask.Actions[k], err = utils.TemplateTaskActions(referencedTask.Inputs, v, action.With, r.variableConfig.GetSetVariables())
-
-			if err != nil {
-				return err
-			}
-		}
 		withEnv := []string{}
 		for name := range action.With {
 			withEnv = append(withEnv, utils.FormatEnvVar(name, action.With[name]))
@@ -66,11 +59,10 @@ func (r *Runner) performAction(action types.Action) error {
 			a.Env = utils.MergeEnv(withEnv, a.Env)
 		}
 
-		if err := r.executeTask(referencedTask); err != nil {
+		if err := r.executeTask(referencedTask, action.With); err != nil {
 			return err
 		}
 	} else {
-
 		err := RunAction(action.BaseAction, r.envFilePath, r.variableConfig)
 		if err != nil {
 			return err

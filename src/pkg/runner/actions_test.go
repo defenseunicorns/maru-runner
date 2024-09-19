@@ -294,7 +294,8 @@ func TestRunner_performAction(t *testing.T) {
 				envFilePath:    tt.fields.envFilePath,
 				variableConfig: tt.fields.variableConfig,
 			}
-			err := r.performAction(tt.args.action)
+			// TODO: (@ZMILLER) - fix the nils here
+			err := r.performAction(tt.args.action, nil, nil)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("performAction() error = %v, wantErr %v", err, tt.wantErr)
 			}
