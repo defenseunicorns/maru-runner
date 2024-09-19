@@ -74,16 +74,9 @@ func (r *Runner) performAction(action types.Action) error {
 		}
 	} else {
 
-		action, err := utils.TemplateTaskActions(nil, action, action.With, r.variableConfig.GetSetVariables())
+		err = RunAction(action.BaseAction, r.envFilePath, r.variableConfig)
 		if err != nil {
 			return err
-		}
-
-		if action.If == "true" || action.If == "" {
-			err = RunAction(action.BaseAction, r.envFilePath, r.variableConfig)
-			if err != nil {
-				return err
-			}
 		}
 	}
 	return nil

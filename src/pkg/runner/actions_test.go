@@ -159,7 +159,6 @@ func Test_validateActionableTaskCall(t *testing.T) {
 		inputTaskName string
 		inputs        map[string]types.InputParameter
 		withs         map[string]string
-		execContext   string
 	}
 	tests := []struct {
 		name    string
