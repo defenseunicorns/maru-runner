@@ -24,21 +24,18 @@ import (
 
 func (r *Runner) performAction(action types.Action) error {
 
-	message.SLog.Debug(fmt.Sprintf("Evaluating action conditional %s", action.If))
+	message.SLog.Debug(fmt.Sprintf("Action conditional is %s", action.If))
 
-	action, err := utils.TemplateTaskActions(nil, action, action.With, r.variableConfig.GetSetVariables())
-	if err != nil {
-		return err
-	}
+	action, _ = utils.TemplateTaskActions(nil, action, action.With, r.variableConfig.GetSetVariables())
 	if action.If == "false" && action.TaskReference != "" {
-		message.SLog.Info(fmt.Sprintf("Skipping action %q", action.TaskReference))
+		message.SLog.Info(fmt.Sprintf("Skipping action %s", action.TaskReference))
 		return nil
 	} else if action.If == "false" && action.Description != "" {
-		message.SLog.Info(fmt.Sprintf("Skipping action %q", action.Description))
+		message.SLog.Info(fmt.Sprintf("Skipping action %s", action.Description))
 		return nil
 	} else if action.If == "false" && action.Cmd != "" {
 		cmdEscaped := helpers.Truncate(action.Cmd, 60, false)
-		message.SLog.Info(fmt.Sprintf("Skipping action %q", cmdEscaped))
+		message.SLog.Info(fmt.Sprintf("Skipping action \"%s\"", cmdEscaped))
 		return nil
 	}
 
@@ -51,7 +48,13 @@ func (r *Runner) performAction(action types.Action) error {
 		for k, v := range action.With {
 			action.With[k] = utils.TemplateString(r.variableConfig.GetSetVariables(), v)
 		}
+		for k, v := range referencedTask.Actions {
+			referencedTask.Actions[k], err = utils.TemplateTaskActions(referencedTask.Inputs, v, action.With, r.variableConfig.GetSetVariables())
 
+			if err != nil {
+				return err
+			}
+		}
 		withEnv := []string{}
 		for name := range action.With {
 			withEnv = append(withEnv, utils.FormatEnvVar(name, action.With[name]))
@@ -68,9 +71,16 @@ func (r *Runner) performAction(action types.Action) error {
 		}
 	} else {
 
-		err = RunAction(action.BaseAction, r.envFilePath, r.variableConfig)
+		action, err := utils.TemplateTaskActions(nil, action, action.With, r.variableConfig.GetSetVariables())
 		if err != nil {
 			return err
+		}
+
+		if action.If == "true" || action.If == "" {
+			err = RunAction(action.BaseAction, r.envFilePath, r.variableConfig)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
