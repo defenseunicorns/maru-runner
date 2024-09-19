@@ -228,6 +228,8 @@ func TestRunner_performAction(t *testing.T) {
 	}
 	type args struct {
 		action types.Action
+		inputs map[string]types.InputParameter
+		withs  map[string]string
 	}
 	tests := []struct {
 		name    string
@@ -294,8 +296,7 @@ func TestRunner_performAction(t *testing.T) {
 				envFilePath:    tt.fields.envFilePath,
 				variableConfig: tt.fields.variableConfig,
 			}
-			// TODO: (@ZMILLER) - fix the nils here
-			err := r.performAction(tt.args.action, nil, nil)
+			err := r.performAction(tt.args.action, tt.args.withs, tt.args.inputs)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("performAction() error = %v, wantErr %v", err, tt.wantErr)
 			}
