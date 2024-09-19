@@ -41,7 +41,6 @@ tasks:
       - task: included-task
         if: ${{ eq .variables.BAR "default-value1" }}
 
-
   - name: true-conditional-nested-task-comp-var-inputs
     actions:
       - task: included-task-with-inputs
@@ -77,7 +76,6 @@ tasks:
       - task: included-task-with-inputs-and-nested-nested-task
         with:
           val: "7"
-
 
   - name: included-task
     actions:
@@ -115,5 +113,5 @@ tasks:
       val2:
         description: has no default
     actions:
-      - cmd: echo "Task called successfully"        
+      - cmd: echo "input val2 equals ${{ .inputs.val2 }} and variable VAL1 equals ${{ .variables.VAL1 }}"        
         if: ${{ eq .inputs.val2 .variables.VAL1 }}

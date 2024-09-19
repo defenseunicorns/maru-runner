@@ -37,8 +37,7 @@ type Action struct {
 	*BaseAction[variables.ExtraVariableInfo] `json:",inline"`
 	TaskReference                            string            `json:"task,omitempty" jsonschema:"description=The task to run, mutually exclusive with cmd and wait"`
 	With                                     map[string]string `json:"with,omitempty" jsonschema:"description=Input parameters to pass to the task,type=object"`
-	// should this just be in actions or in tasks as well
-	If string `json:"if,omitempty" jsonschema:"description=Conditional to determine if the action should run"`
+	If                                       string            `json:"if,omitempty" jsonschema:"description=Conditional to determine if the action should run"`
 }
 
 // TaskReference references the name of a task
