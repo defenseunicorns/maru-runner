@@ -65,7 +65,9 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 	if err = runner.checkForTaskLoops(task, runner.TasksFile, setVariables); err != nil {
 		return err
 	}
-	err = runner.executeTask(task)
+
+	err = runner.executeTask(task, nil)
+
 	return err
 }
 
@@ -266,7 +268,7 @@ func (r *Runner) getTask(taskName string) (types.Task, error) {
 	return types.Task{}, fmt.Errorf("task name %s not found", taskName)
 }
 
-func (r *Runner) executeTask(task types.Task) error {
+func (r *Runner) executeTask(task types.Task, withs map[string]string) error {
 	defaultEnv := []string{}
 	for name, inputParam := range task.Inputs {
 		d := inputParam.Default
@@ -283,7 +285,8 @@ func (r *Runner) executeTask(task types.Task) error {
 
 	for _, action := range task.Actions {
 		action.Env = utils.MergeEnv(action.Env, defaultEnv)
-		if err := r.performAction(action); err != nil {
+
+		if err := r.performAction(action, withs, task.Inputs); err != nil {
 			return err
 		}
 	}

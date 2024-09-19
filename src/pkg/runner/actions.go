@@ -22,24 +22,32 @@ import (
 	"github.com/defenseunicorns/maru-runner/src/types"
 )
 
-func (r *Runner) performAction(action types.Action) error {
+func (r *Runner) performAction(action types.Action, withs map[string]string, inputs map[string]types.InputParameter) error {
+
+	message.SLog.Debug(fmt.Sprintf("Evaluating action conditional %s", action.If))
+
+	action, _ = utils.TemplateTaskAction(action, withs, inputs, r.variableConfig.GetSetVariables())
+	if action.If == "false" && action.TaskReference != "" {
+		message.SLog.Info(fmt.Sprintf("Skipping action %s", action.TaskReference))
+		return nil
+	} else if action.If == "false" && action.Description != "" {
+		message.SLog.Info(fmt.Sprintf("Skipping action %s", action.Description))
+		return nil
+	} else if action.If == "false" && action.Cmd != "" {
+		cmdEscaped := helpers.Truncate(action.Cmd, 60, false)
+		message.SLog.Info(fmt.Sprintf("Skipping action %q", cmdEscaped))
+		return nil
+	}
+
 	if action.TaskReference != "" {
 		// todo: much of this logic is duplicated in Run, consider refactoring
 		referencedTask, err := r.getTask(action.TaskReference)
 		if err != nil {
 			return err
 		}
-
-		// template the withs with variables
 		for k, v := range action.With {
 			action.With[k] = utils.TemplateString(r.variableConfig.GetSetVariables(), v)
 		}
-
-		referencedTask.Actions, err = utils.TemplateTaskActionsWithInputs(referencedTask, action.With)
-		if err != nil {
-			return err
-		}
-
 		withEnv := []string{}
 		for name := range action.With {
 			withEnv = append(withEnv, utils.FormatEnvVar(name, action.With[name]))
@@ -51,7 +59,8 @@ func (r *Runner) performAction(action types.Action) error {
 		for _, a := range referencedTask.Actions {
 			a.Env = utils.MergeEnv(withEnv, a.Env)
 		}
-		if err := r.executeTask(referencedTask); err != nil {
+
+		if err := r.executeTask(referencedTask, action.With); err != nil {
 			return err
 		}
 	} else {
@@ -59,6 +68,7 @@ func (r *Runner) performAction(action types.Action) error {
 		if err != nil {
 			return err
 		}
+
 	}
 	return nil
 }
