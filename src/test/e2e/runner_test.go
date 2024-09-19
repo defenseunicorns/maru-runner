@@ -13,7 +13,6 @@ import (
 )
 
 func TestTaskRunner(t *testing.T) {
-	skipIfNotE2E(t)
 	t.Log("E2E: Task Maru")
 
 	t.Run("run action", func(t *testing.T) {
