@@ -394,4 +394,20 @@ func TestTaskRunner(t *testing.T) {
 		require.NoError(t, err, stdOut, stdErr)
 		require.Contains(t, stdErr, "\"input val2 equals 5 and variable VAL1 equals 5\"")
 	})
+
+	t.Run("run successful pattern", func(t *testing.T) {
+		t.Parallel()
+
+		stdOut, stdErr, err := e2e.Maru("run", "--file", "src/test/tasks/more-tasks/pattern.yaml", "--set", "HELLO=HELLO")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "HELLO")
+	})
+
+	t.Run("run unsuccessful pattern", func(t *testing.T) {
+		t.Parallel()
+
+		stdOut, stdErr, err := e2e.Maru("run", "--file", "src/test/tasks/more-tasks/pattern.yaml", "--set", "HELLO=HI")
+		require.Error(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "\"HELLO\" does not match pattern \"^HELLO$\"")
+	})
 }
