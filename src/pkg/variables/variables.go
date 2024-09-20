@@ -34,6 +34,7 @@ func (vc *VariableConfig[T]) PopulateVariables(variables []InteractiveVariable[T
 
 		// Variable is present, no need to continue checking
 		if present {
+			vc.setVariableMap[variable.Name].Pattern = variable.Pattern
 			vc.setVariableMap[variable.Name].Extra = variable.Extra
 			if err := vc.CheckVariablePattern(variable.Name); err != nil {
 				return err

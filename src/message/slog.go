@@ -17,9 +17,22 @@ var (
 // MaruHandler is a simple handler that implements the slog.Handler interface
 type MaruHandler struct{}
 
-// Enabled is always set to true as Maru logging functions are already aware of if they are allowed to be called
-func (z MaruHandler) Enabled(_ context.Context, _ slog.Level) bool {
-	return true
+// Enabled determines if the handler is enabled for the given level. This
+// function is called for every log message and will compare the level of the
+// message to the log level set (default is info). Log levels are defined in
+// src/message/logging.go and match the levels used in the underlying log/slog
+// package. Logs with a level below the set log level will be ignored.
+//
+// Examples:
+//
+//	SetLogLevel(TraceLevel) // show everything, with file names and line numbers
+//	SetLogLevel(DebugLevel) // show everything
+//	SetLogLevel(InfoLevel)  // show info and above (does not show debug logs)
+//	SetLogLevel(WarnLevel)  // show warn and above (does not show debug/info logs)
+//	SetLogLevel(ErrorLevel)  // show only errors (does not show debug/info/warn logs)
+func (z MaruHandler) Enabled(_ context.Context, level slog.Level) bool {
+	// only log if the log level is greater than or equal to the set log level
+	return int(level) >= int(logLevel)
 }
 
 // WithAttrs is not suppported
