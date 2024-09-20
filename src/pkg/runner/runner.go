@@ -57,9 +57,9 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 		return err
 	}
 
-	// can't call a task directly from the CLI if it has inputs
-	if task.Inputs != nil {
-		return fmt.Errorf("task '%s' contains 'inputs' and cannot be called directly by the CLI", taskName)
+	// can't call a task directly from the CLI if it has inputs that are required without a default
+	if err := validateActionableTaskCall(task.Name, task.Inputs, nil); err != nil {
+		return err
 	}
 
 	if err = runner.checkForTaskLoops(task, runner.TasksFile, setVariables); err != nil {

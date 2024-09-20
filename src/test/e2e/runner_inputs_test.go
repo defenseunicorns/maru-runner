@@ -40,6 +40,22 @@ func TestRunnerInputs(t *testing.T) {
 		require.NotContains(t, stdErr, "{{")
 	})
 
+	t.Run("test that direct calling of task with default values for required inputs work", func(t *testing.T) {
+		t.Parallel()
+
+		stdOut, stdErr, err := e2e.Maru("run", "has-default-and-required", "--file", "src/test/tasks/inputs/tasks-with-inputs.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "Completed \"echo $INPUT_HAS_DEFAULT_AND_REQUIRED; ; \"")
+	})
+
+	t.Run("test that direct calling of task without default values for required inputs fails", func(t *testing.T) {
+		t.Parallel()
+
+		stdOut, stdErr, err := e2e.Maru("run", "no-default-and-required", "--file", "src/test/tasks/inputs/tasks-with-inputs.yaml")
+		require.Error(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "Failed to run action: task no-default-and-required is missing required inputs:")
+	})
+
 	t.Run("test that inputs that aren't required with no default don't error", func(t *testing.T) {
 		t.Parallel()
 
