@@ -1,0 +1,8 @@
+variables:
+  - name: HELLO
+    pattern: ^HELLO$
+
+tasks:
+  - name: default
+    actions:
+      - cmd: echo ${HELLO}
