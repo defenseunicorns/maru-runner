@@ -1,0 +1,9 @@
+variables:
+  - name: FOO
+    default: default-value
+    pattern: hello-kitteh
+
+tasks:
+  - name: echo-foo
+    actions:
+      - cmd: echo ${FOO}

@@ -132,4 +132,10 @@ func TestRunnerInputs(t *testing.T) {
 		require.NoError(t, err, stdOut, stdErr)
 		require.Contains(t, stdErr, "most specific")
 	})
+
+	t.Run("test that a --set var has the greatest precedence for inputs", func(t *testing.T) {
+		stdOut, stdErr, err := e2e.Maru("run", "echo-foo", "--file", "src/test/tasks/variables/tasks.yaml", "--set", "foo=most specific")
+		require.Error(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "most specific")
+	})
 }
