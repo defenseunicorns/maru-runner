@@ -31,6 +31,9 @@ var listTasks bool
 // listAllTasks is a flag to print available tasks in a TaskFileLocation
 var listAllTasks bool
 
+// output is a flag to change the output of a task list
+var output string
+
 // setRunnerVariables provides a map of set variables from the command line
 var setRunnerVariables map[string]string
 
@@ -73,8 +76,9 @@ var runCmd = &cobra.Command{
 		}
 
 		if listTasks || listAllTasks {
-			rows := [][]string{
-				{"Name", "Description"},
+			rows := [][]string{}
+			if output != "md" {
+				rows = append(rows, []string{"Name", "Description"})
 			}
 			for _, task := range tasksFile.Tasks {
 				rows = append(rows, []string{task.Name, task.Description})
@@ -88,9 +92,20 @@ var runCmd = &cobra.Command{
 				}
 			}
 
-			err := pterm.DefaultTable.WithHasHeader().WithData(rows).Render()
-			if err != nil {
-				message.Fatalf(err, "Error listing tasks: %s", err.Error())
+			switch output {
+			case "md":
+				fmt.Println("| Name | Description |")
+				fmt.Println("|------|-------------|")
+				for _, row := range rows {
+					if len(row) == 2 {
+						fmt.Printf("| **%s** | %s |\n", row[0], row[1])
+					}
+				}
+			default:
+				err := pterm.DefaultTable.WithHasHeader().WithData(rows).Render()
+				if err != nil {
+					message.Fatalf(err, "Error listing tasks: %s", err.Error())
+				}
 			}
 
 			return
@@ -203,5 +218,6 @@ func init() {
 	runFlags.StringVarP(&config.TaskFileLocation, "file", "f", config.TasksYAML, lang.CmdRunFlag)
 	runFlags.BoolVarP(&listTasks, "list", "t", false, lang.CmdRunList)
 	runFlags.BoolVarP(&listAllTasks, "list-all", "T", false, lang.CmdRunListAll)
+	runFlags.StringVarP(&output, "output", "o", "", lang.CmdRunListAll)
 	runFlags.StringToStringVar(&setRunnerVariables, "set", nil, lang.CmdRunSetVarFlag)
 }
