@@ -287,6 +287,8 @@ func TestTaskRunner(t *testing.T) {
 		os.Setenv("MARU_LOG_LEVEL", "debug")
 		os.Setenv("MARU_TO_BE_OVERWRITTEN", "env-var")
 		stdOut, stdErr, err := e2e.Maru("run", "echo-env-var", "--file", "src/test/tasks/tasks.yaml")
+		os.Unsetenv("MARU_LOG_LEVEL")
+		os.Unsetenv("MARU_TO_BE_OVERWRITTEN")
 		require.NoError(t, err, stdOut, stdErr)
 		require.NotContains(t, stdErr, "default")
 		require.Contains(t, stdErr, "env-var")

@@ -1,6 +1,6 @@
 variables:
   - name: FOO
-    default: include-default-value
+    default: include-value
   - name: BAR
     default: default-value
 

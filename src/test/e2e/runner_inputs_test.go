@@ -122,6 +122,7 @@ func TestRunnerInputs(t *testing.T) {
 	t.Run("test that env vars can be used as inputs and take precedence over default vals", func(t *testing.T) {
 		os.Setenv("MARU_FOO", "im an env var")
 		stdOut, stdErr, err := e2e.Maru("run", "variable-as-input", "--file", "src/test/tasks/inputs/tasks.yaml")
+		os.Unsetenv("MARU_FOO")
 		require.NoError(t, err, stdOut, stdErr)
 		require.Contains(t, stdErr, "im an env var")
 	})
@@ -129,6 +130,7 @@ func TestRunnerInputs(t *testing.T) {
 	t.Run("test that a --set var has the greatest precedence for inputs", func(t *testing.T) {
 		os.Setenv("MARU_FOO", "im an env var")
 		stdOut, stdErr, err := e2e.Maru("run", "variable-as-input", "--file", "src/test/tasks/inputs/tasks.yaml", "--set", "foo=most specific")
+		os.Unsetenv("MARU_FOO")
 		require.NoError(t, err, stdOut, stdErr)
 		require.Contains(t, stdErr, "most specific")
 	})
