@@ -95,7 +95,7 @@ func (r *Runner) processIncludes(tasksFile types.TasksFile, setVariables map[str
 		for _, include := range tasksFile.Includes {
 			if include[taskReferenceName] != "" {
 				referencedIncludes := []map[string]string{include}
-				err := r.importTasks(config.TaskFileLocation, referencedIncludes, setVariables)
+				err := r.importTasks(referencedIncludes, config.TaskFileLocation, setVariables)
 				if err != nil {
 					return err
 				}
@@ -106,7 +106,7 @@ func (r *Runner) processIncludes(tasksFile types.TasksFile, setVariables map[str
 	return nil
 }
 
-func (r *Runner) importTasks(currentFileLocation string, includes []map[string]string, setVariables map[string]string) error {
+func (r *Runner) importTasks(includes []map[string]string, currentFileLocation string, setVariables map[string]string) error {
 	// iterate through includes, open the file, and unmarshal it into a Task
 	var includeFileLocationKey string
 	var includeFileLocation string
@@ -151,7 +151,7 @@ func (r *Runner) importTasks(currentFileLocation string, includes []map[string]s
 
 		// recursively import tasks from included files
 		if tasksFile.Includes != nil {
-			if err := r.importTasks(absIncludeFileLocation, tasksFile.Includes, setVariables); err != nil {
+			if err := r.importTasks(tasksFile.Includes, absIncludeFileLocation, setVariables); err != nil {
 				return err
 			}
 		}
@@ -191,8 +191,8 @@ func loadIncludedTaskFile(taskFile types.TasksFile, taskName string, setVariable
 			if includeFileLocation, ok := includes[includeName]; ok {
 				includeFileLocation = utils.TemplateString(setVariables, includeFileLocation)
 
-				resultPath, includedTasksFile, err := loadIncludeTask(config.TaskFileLocation, includeFileLocation)
-				config.TaskFileLocation = resultPath
+				absIncludeFileLocation, includedTasksFile, err := loadIncludeTask(config.TaskFileLocation, includeFileLocation)
+				config.TaskFileLocation = absIncludeFileLocation
 				return includedTasksFile, includeTaskName, err
 			}
 		}

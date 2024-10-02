@@ -129,7 +129,7 @@ func TestTaskRunner(t *testing.T) {
 		setVar := fmt.Sprintf("GIT_REVISION=%s", gitRev)
 		stdOut, stdErr, err := e2e.Maru("run", "remote-import-to-local", "--set", setVar, "--file", "src/test/tasks/tasks.yaml")
 		require.NoError(t, err, stdOut, stdErr)
-		require.Contains(t, stdErr, "bar")
+		require.Contains(t, stdErr, "baz")
 	})
 
 	t.Run("run rerun-tasks", func(t *testing.T) {

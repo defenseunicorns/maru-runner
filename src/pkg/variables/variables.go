@@ -57,7 +57,6 @@ func (vc *VariableConfig[T]) PopulateVariables(variables []InteractiveVariable[T
 			vc.SetVariable(variable.Name, val, variable.Pattern, variable.Extra)
 		}
 
-		// Check the variables pattern was met
 		if err := vc.CheckVariablePattern(variable.Name); err != nil {
 			return err
 		}
