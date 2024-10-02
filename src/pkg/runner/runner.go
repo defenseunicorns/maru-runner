@@ -240,6 +240,7 @@ func (r *Runner) loadIncludeTask(includeFileLocation string, includeTaskName str
 	if err != nil {
 		return "", err
 	}
+	r.variableConfig.MergeVariables(r.TasksFile.Variables)
 
 	taskName := includeTaskName
 	return taskName, nil

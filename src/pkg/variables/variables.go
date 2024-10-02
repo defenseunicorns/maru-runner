@@ -6,6 +6,8 @@ package variables
 import (
 	"fmt"
 	"regexp"
+
+	"github.com/defenseunicorns/pkg/helpers/v2"
 )
 
 // SetVariableMap represents a map of variable names to their set values
@@ -42,22 +44,34 @@ func (vc *VariableConfig[T]) PopulateVariables(variables []InteractiveVariable[T
 			continue
 		}
 
-		// First set default (may be overridden by prompt)
-		vc.SetVariable(variable.Name, variable.Default, variable.Pattern, variable.Extra)
+		// Set the variable's default or prompt for a value
+		if err := vc.setDefaultOrPrompt(variable); err != nil {
+			return err
+		}
+	}
 
-		// Variable is set to prompt the user
-		if variable.Prompt {
-			// Prompt the user for the variable
-			val, err := vc.prompt(variable)
+	return nil
+}
 
-			if err != nil {
+// MergeVariables handles merging in variable information loaded later on
+func (vc *VariableConfig[T]) MergeVariables(variables []InteractiveVariable[T]) error {
+	for _, variable := range variables {
+		_, present := vc.setVariableMap[variable.Name]
+
+		// Variable is present, no need to continue checking
+		if present {
+			vc.setVariableMap[variable.Name].Variable = helpers.MergeNonZero(variable.Variable, vc.setVariableMap[variable.Name].Variable)
+			if vc.setVariableMap[variable.Name].Value == "" {
+				vc.setVariableMap[variable.Name].Value = variable.Default
+			}
+			if err := vc.CheckVariablePattern(variable.Name); err != nil {
 				return err
 			}
-
-			vc.SetVariable(variable.Name, val, variable.Pattern, variable.Extra)
+			continue
 		}
 
-		if err := vc.CheckVariablePattern(variable.Name); err != nil {
+		// Set the variable's default or prompt for a value
+		if err := vc.setDefaultOrPrompt(variable); err != nil {
 			return err
 		}
 	}
@@ -88,4 +102,24 @@ func (vc *VariableConfig[T]) CheckVariablePattern(name string) error {
 	}
 
 	return fmt.Errorf("variable %q was not found in the current variable map", name)
+}
+
+// setDefaultOrPrompt sets a variables default and if prompt is set will prompt the user for a value
+func (vc *VariableConfig[T]) setDefaultOrPrompt(variable InteractiveVariable[T]) error {
+	// First set default (may be overridden by prompt)
+	vc.SetVariable(variable.Name, variable.Default, variable.Pattern, variable.Extra)
+
+	// Variable is set to prompt the user
+	if variable.Prompt {
+		// Prompt the user for the variable
+		val, err := vc.prompt(variable)
+
+		if err != nil {
+			return err
+		}
+
+		vc.SetVariable(variable.Name, val, variable.Pattern, variable.Extra)
+	}
+
+	return vc.CheckVariablePattern(variable.Name)
 }
