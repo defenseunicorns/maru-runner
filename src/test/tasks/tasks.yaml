@@ -29,7 +29,7 @@ tasks:
       - task: remote:echo-var
   - name: remote-import-to-local
     actions:
-      - task: remote:local-bar
+      - task: remote:local-baz
   - name: action
     actions:
       - cmd: echo "specific test string"

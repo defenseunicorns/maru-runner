@@ -1,6 +1,6 @@
 includes:
   - remote: https://raw.githubusercontent.com/defenseunicorns/maru-runner/${GIT_REVISION}/src/test/tasks/even-more-tasks-to-import.yaml
-  - bar: ./more-tasks/bar.yaml
+  - baz: ./more-tasks/baz.yaml
 
 tasks:
   - name: echo-var
@@ -9,6 +9,6 @@ tasks:
       - cmd: |
           echo "${PRETTY_OK_COMPANY} is a pretty ok company"
 
-  - name: local-bar
+  - name: local-baz
     actions:
-      - task: bar:bar
+      - task: baz:baz
