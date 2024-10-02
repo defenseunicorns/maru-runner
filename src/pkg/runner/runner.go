@@ -242,8 +242,6 @@ func loadIncludeTask(currentFileLocation, includeFileLocation string) (string, t
 		localPath = absIncludeFileLocation
 	}
 
-	fmt.Println(localPath, absIncludeFileLocation)
-
 	// Set TasksFile to include task file
 	err = utils.ReadYaml(localPath, &includedTasksFile)
 	return absIncludeFileLocation, includedTasksFile, err
