@@ -1,3 +1,9 @@
+variables:
+  - name: FOO
+    default: include-default-value
+  - name: BAR
+    default: default-value
+
 tasks:
   - name: has-default
     inputs:
@@ -45,3 +51,11 @@ tasks:
     actions:
       - cmd: |
           echo ${{ index .inputs "deprecated-message" }}
+
+  - name: echo-foo
+    actions:
+      - cmd: echo $FOO
+
+  - name: echo-bar
+    actions:
+      - cmd: echo $BAR

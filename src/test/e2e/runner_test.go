@@ -118,6 +118,20 @@ func TestTaskRunner(t *testing.T) {
 		require.Contains(t, stdErr, "defenseunicorns is a pretty ok company")
 	})
 
+	t.Run("run remote-import back to local", func(t *testing.T) {
+		t.Parallel()
+
+		// get current git revision
+		gitRev, err := e2e.GetGitRevision()
+		if err != nil {
+			return
+		}
+		setVar := fmt.Sprintf("GIT_REVISION=%s", gitRev)
+		stdOut, stdErr, err := e2e.Maru("run", "remote-import-to-local", "--set", setVar, "--file", "src/test/tasks/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "This is the default task")
+	})
+
 	t.Run("run rerun-tasks", func(t *testing.T) {
 		t.Parallel()
 		stdOut, stdErr, err := e2e.Maru("run", "rerun-tasks", "--file", "src/test/tasks/tasks.yaml")

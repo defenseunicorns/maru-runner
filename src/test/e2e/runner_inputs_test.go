@@ -133,9 +133,21 @@ func TestRunnerInputs(t *testing.T) {
 		require.Contains(t, stdErr, "most specific")
 	})
 
-	t.Run("test that a --set var has the greatest precedence for inputs", func(t *testing.T) {
-		stdOut, stdErr, err := e2e.Maru("run", "echo-foo", "--file", "src/test/tasks/variables/tasks.yaml", "--set", "foo=most specific")
-		require.Error(t, err, stdOut, stdErr)
-		require.Contains(t, stdErr, "most specific")
+	t.Run("test that variables in directly called included tasks take the root default", func(t *testing.T) {
+		stdOut, stdErr, err := e2e.Maru("run", "with:echo-foo", "--file", "src/test/tasks/inputs/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "default-value")
+	})
+
+	t.Run("test that variables in directly called included tasks take empty set values", func(t *testing.T) {
+		stdOut, stdErr, err := e2e.Maru("run", "with:echo-foo", "--file", "src/test/tasks/inputs/tasks.yaml", "--set", "foo=''")
+		require.NoError(t, err, stdOut, stdErr)
+		require.NotContains(t, stdErr, "default-value")
+	})
+
+	t.Run("test that variables in directly called included tasks pass through even when not in the root", func(t *testing.T) {
+		stdOut, stdErr, err := e2e.Maru("run", "with:echo-bar", "--file", "src/test/tasks/inputs/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "default-value")
 	})
 }

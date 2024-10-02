@@ -145,7 +145,7 @@ func (r *Runner) importTasks(includes []map[string]string, setVariables map[stri
 
 		r.TasksFile.Tasks = append(r.TasksFile.Tasks, tasksFile.Tasks...)
 
-		r.processTemplateMapVariables(tasksFile)
+		r.mergeVariablesFromIncludedTask(tasksFile)
 
 		// recursively import tasks from included files
 		if tasksFile.Includes != nil {
@@ -169,7 +169,7 @@ func (r *Runner) checkProcessedTasksForLoops(tasksFile types.TasksFile) error {
 	return nil
 }
 
-func (r *Runner) processTemplateMapVariables(tasksFile types.TasksFile) {
+func (r *Runner) mergeVariablesFromIncludedTask(tasksFile types.TasksFile) {
 	// grab variables from included file
 	for _, v := range tasksFile.Variables {
 		if _, ok := r.variableConfig.GetSetVariable(v.Name); !ok {
