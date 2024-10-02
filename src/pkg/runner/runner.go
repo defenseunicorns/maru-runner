@@ -93,7 +93,7 @@ func (r *Runner) processIncludes(tasksFile types.TasksFile, setVariables map[str
 		for _, include := range tasksFile.Includes {
 			if include[taskReferenceName] != "" {
 				referencedIncludes := []map[string]string{include}
-				err := r.importTasks(referencedIncludes, config.TaskFileLocation, setVariables)
+				err := r.importTasks(referencedIncludes, setVariables)
 				if err != nil {
 					return err
 				}
@@ -104,58 +104,41 @@ func (r *Runner) processIncludes(tasksFile types.TasksFile, setVariables map[str
 	return nil
 }
 
-func (r *Runner) importTasks(includes []map[string]string, dir string, setVariables map[string]string) error {
+func (r *Runner) importTasks(includes []map[string]string, setVariables map[string]string) error {
 	// iterate through includes, open the file, and unmarshal it into a Task
-	var includeFilenameKey string
-	var includeFilename string
-	dir = filepath.Dir(dir)
+	var includeFileLocationKey string
+	var includeFileLocation string
 	for _, include := range includes {
 		if len(include) > 1 {
 			return fmt.Errorf("included item %s must have only one key", include)
 		}
 		// grab first and only value from include map
 		for k, v := range include {
-			includeFilenameKey = k
-			includeFilename = v
+			includeFileLocationKey = k
+			includeFileLocation = v
 			break
 		}
 
-		includeFilename = utils.TemplateString(r.variableConfig.GetSetVariables(), includeFilename)
+		includeFileLocation = utils.TemplateString(r.variableConfig.GetSetVariables(), includeFileLocation)
 
-		var tasksFile types.TasksFile
-		var includePath string
-		// check if included file is a url
-		if helpers.IsURL(includeFilename) {
-			// If file is a url download it to a tmp directory
-			tmpDir, err := utils.MakeTempDir(config.TempDirectory)
-			defer os.RemoveAll(tmpDir)
-			if err != nil {
-				return err
-			}
-			includePath = filepath.Join(tmpDir, filepath.Base(includeFilename))
-			if err := utils.DownloadToFile(includeFilename, includePath); err != nil {
-				return fmt.Errorf(lang.ErrDownloading, includeFilename, err)
-			}
-		} else {
-			includePath = filepath.Join(dir, includeFilename)
-		}
-
-		if err := utils.ReadYaml(includePath, &tasksFile); err != nil {
+		tasksFile, err := loadIncludeTask(includeFileLocation)
+		if err != nil {
 			return fmt.Errorf("unable to read included file: %w", err)
 		}
 
 		// prefix task names and actions with the includes key
 		for i, t := range tasksFile.Tasks {
-			tasksFile.Tasks[i].Name = includeFilenameKey + ":" + t.Name
+			tasksFile.Tasks[i].Name = includeFileLocationKey + ":" + t.Name
 			if len(tasksFile.Tasks[i].Actions) > 0 {
 				for j, a := range tasksFile.Tasks[i].Actions {
 					if a.TaskReference != "" && !strings.Contains(a.TaskReference, ":") {
-						tasksFile.Tasks[i].Actions[j].TaskReference = includeFilenameKey + ":" + a.TaskReference
+						tasksFile.Tasks[i].Actions[j].TaskReference = includeFileLocationKey + ":" + a.TaskReference
 					}
 				}
 			}
 		}
-		err := r.checkProcessedTasksForLoops(tasksFile)
+
+		err = r.checkProcessedTasksForLoops(tasksFile)
 		if err != nil {
 			return err
 		}
@@ -166,7 +149,7 @@ func (r *Runner) importTasks(includes []map[string]string, dir string, setVariab
 
 		// recursively import tasks from included files
 		if tasksFile.Includes != nil {
-			if err := r.importTasks(tasksFile.Includes, includePath, setVariables); err != nil {
+			if err := r.importTasks(tasksFile.Includes, setVariables); err != nil {
 				return err
 			}
 		}
@@ -205,7 +188,9 @@ func loadIncludedTaskFile(taskFile types.TasksFile, taskName string, setVariable
 		for _, includes := range taskFile.Includes {
 			if includeFileLocation, ok := includes[includeName]; ok {
 				includeFileLocation = utils.TemplateString(setVariables, includeFileLocation)
-				return loadIncludeTask(includeFileLocation, includeTaskName)
+
+				includedTasksFile, err := loadIncludeTask(includeFileLocation)
+				return includedTasksFile, includeTaskName, err
 			}
 		}
 	} else if len(includedTask) > 2 {
@@ -214,38 +199,38 @@ func loadIncludedTaskFile(taskFile types.TasksFile, taskName string, setVariable
 	return taskFile, taskName, nil
 }
 
-func loadIncludeTask(includeFileLocation string, includeTaskName string) (types.TasksFile, string, error) {
+func loadIncludeTask(includeFileLocation string) (types.TasksFile, error) {
 	var fullPath string
 	var includedTasksFile types.TasksFile
 	var err error
 
-	// check if included file is a url
+	// Calculate the full path for local (and most remote) references
+	fullPath = filepath.Join(filepath.Dir(config.TaskFileLocation), includeFileLocation)
+	// Update config.TaskFileLocation which gets used globally
+	config.TaskFileLocation = fullPath
+
+	// If the file is in fact a URL we need to download and load the YAML
 	if helpers.IsURL(includeFileLocation) {
 		// If file is a url download it to a tmp directory
 		tmpDir, err := utils.MakeTempDir(config.TempDirectory)
 		if err != nil {
-			return includedTasksFile, "", fmt.Errorf("error creating %s: %w", tmpDir, err)
+			return includedTasksFile, fmt.Errorf("error creating %s: %w", tmpDir, err)
 		}
 
 		// Remove tmpDir, but not until tasks have been loaded
 		defer os.RemoveAll(tmpDir)
 		fullPath = filepath.Join(tmpDir, filepath.Base(includeFileLocation))
 		if err := utils.DownloadToFile(includeFileLocation, fullPath); err != nil {
-			return includedTasksFile, "", fmt.Errorf(lang.ErrDownloading, includeFileLocation, err)
+			return includedTasksFile, fmt.Errorf(lang.ErrDownloading, includeFileLocation, err)
 		}
-	} else {
-		// set include path based on task file location
-		fullPath = filepath.Join(filepath.Dir(config.TaskFileLocation), includeFileLocation)
 	}
-	// update config.TaskFileLocation which gets used globally
-	config.TaskFileLocation = fullPath
 
 	// Set TasksFile to include task file
 	err = utils.ReadYaml(fullPath, &includedTasksFile)
 	if err != nil {
-		return includedTasksFile, "", err
+		return includedTasksFile, err
 	}
-	return includedTasksFile, includeTaskName, nil
+	return includedTasksFile, nil
 }
 
 func (r *Runner) getTask(taskName string) (types.Task, error) {
