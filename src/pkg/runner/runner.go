@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
@@ -31,9 +30,9 @@ type Runner struct {
 // Run runs a task from tasks file
 func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]string) error {
 
+	// Populate the variables loaded in the root task file
 	rootVariables := tasksFile.Variables
 	rootVariableConfig := GetMaruVariableConfig()
-	// Populate the variables loaded in the task file
 	err := rootVariableConfig.PopulateVariables(rootVariables, setVariables)
 	if err != nil {
 		return err
@@ -45,17 +44,17 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 		return err
 	}
 
+	// Populate the variables from the root and included file (if these are the same it will just use the same list)
 	combinedVariables := helpers.MergeSlices(rootVariables, tasksFile.Variables, func(a, b variables.InteractiveVariable[variables.ExtraVariableInfo]) bool {
 		return a.Name == b.Name
 	})
-
 	combinedVariableConfig := GetMaruVariableConfig()
-	// Populate the variables from the root and included files
 	err = combinedVariableConfig.PopulateVariables(combinedVariables, setVariables)
 	if err != nil {
 		return err
 	}
 
+	// Create the runner client to execute the task file
 	runner := Runner{
 		TasksFile:      tasksFile,
 		TaskNameMap:    map[string]bool{},
@@ -67,7 +66,7 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 		return err
 	}
 
-	// can't call a task directly from the CLI if it has inputs that are required without a default
+	// Check that this task is a valid task we can call (i.e. has defaults for any inputs since those cannot be set on the CLI)
 	if err := validateActionableTaskCall(task.Name, task.Inputs, nil); err != nil {
 		return err
 	}
@@ -205,7 +204,8 @@ func loadIncludedTaskFile(taskFile types.TasksFile, taskName string, setVariable
 		// Get referenced include file
 		for _, includes := range taskFile.Includes {
 			if includeFileLocation, ok := includes[includeName]; ok {
-				return loadIncludeTask(includeFileLocation, includeTaskName, setVariables)
+				includeFileLocation = utils.TemplateString(setVariables, includeFileLocation)
+				return loadIncludeTask(includeFileLocation, includeTaskName)
 			}
 		}
 	} else if len(includedTask) > 2 {
@@ -214,18 +214,11 @@ func loadIncludedTaskFile(taskFile types.TasksFile, taskName string, setVariable
 	return taskFile, taskName, nil
 }
 
-func loadIncludeTask(includeFileLocation string, includeTaskName string, setVariables variables.SetVariableMap[variables.ExtraVariableInfo]) (types.TasksFile, string, error) {
+func loadIncludeTask(includeFileLocation string, includeTaskName string) (types.TasksFile, string, error) {
 	var fullPath string
 	var includedTasksFile types.TasksFile
 	var err error
 
-	templatePattern := `\${[^}]+}`
-	re := regexp.MustCompile(templatePattern)
-
-	// check for templated variables in includeFileLocation value
-	if re.MatchString(includeFileLocation) {
-		includeFileLocation = utils.TemplateString(setVariables, includeFileLocation)
-	}
 	// check if included file is a url
 	if helpers.IsURL(includeFileLocation) {
 		// If file is a url download it to a tmp directory
@@ -248,24 +241,11 @@ func loadIncludeTask(includeFileLocation string, includeTaskName string, setVari
 	config.TaskFileLocation = fullPath
 
 	// Set TasksFile to include task file
-	includedTasksFile, err = loadTasksFileFromPath(fullPath)
+	err = utils.ReadYaml(fullPath, &includedTasksFile)
 	if err != nil {
 		return includedTasksFile, "", err
 	}
 	return includedTasksFile, includeTaskName, nil
-}
-
-func loadTasksFileFromPath(fullPath string) (types.TasksFile, error) {
-	var tasksFile types.TasksFile
-	// get included TasksFile
-	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-		return types.TasksFile{}, fmt.Errorf("%s not found: %w", config.TaskFileLocation, err)
-	}
-	err := utils.ReadYaml(fullPath, &tasksFile)
-	if err != nil {
-		return types.TasksFile{}, fmt.Errorf("cannot unmarshal %s: %w", config.TaskFileLocation, err)
-	}
-	return tasksFile, nil
 }
 
 func (r *Runner) getTask(taskName string) (types.Task, error) {
