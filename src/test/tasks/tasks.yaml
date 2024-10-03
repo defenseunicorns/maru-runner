@@ -27,6 +27,9 @@ tasks:
   - name: remote-import
     actions:
       - task: remote:echo-var
+  - name: remote-import-to-local
+    actions:
+      - task: remote:local-baz
   - name: action
     actions:
       - cmd: echo "specific test string"

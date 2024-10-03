@@ -1,0 +1,4 @@
+tasks:
+  - name: baz
+    actions:
+      - cmd: "echo baz"
