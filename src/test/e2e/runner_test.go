@@ -118,6 +118,20 @@ func TestTaskRunner(t *testing.T) {
 		require.Contains(t, stdErr, "defenseunicorns is a pretty ok company")
 	})
 
+	t.Run("run remote-import back to local", func(t *testing.T) {
+		t.Parallel()
+
+		// get current git revision
+		gitRev, err := e2e.GetGitRevision()
+		if err != nil {
+			return
+		}
+		setVar := fmt.Sprintf("GIT_REVISION=%s", gitRev)
+		stdOut, stdErr, err := e2e.Maru("run", "remote-import-to-local", "--set", setVar, "--file", "src/test/tasks/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "baz")
+	})
+
 	t.Run("run rerun-tasks", func(t *testing.T) {
 		t.Parallel()
 		stdOut, stdErr, err := e2e.Maru("run", "rerun-tasks", "--file", "src/test/tasks/tasks.yaml")
@@ -273,6 +287,8 @@ func TestTaskRunner(t *testing.T) {
 		os.Setenv("MARU_LOG_LEVEL", "debug")
 		os.Setenv("MARU_TO_BE_OVERWRITTEN", "env-var")
 		stdOut, stdErr, err := e2e.Maru("run", "echo-env-var", "--file", "src/test/tasks/tasks.yaml")
+		os.Unsetenv("MARU_LOG_LEVEL")
+		os.Unsetenv("MARU_TO_BE_OVERWRITTEN")
 		require.NoError(t, err, stdOut, stdErr)
 		require.NotContains(t, stdErr, "default")
 		require.Contains(t, stdErr, "env-var")
@@ -393,5 +409,21 @@ func TestTaskRunner(t *testing.T) {
 		stdOut, stdErr, err := e2e.Maru("run", "true-condition-var-as-input-new-syntax-nested-nested-with-comp", "--file", "src/test/tasks/conditionals/tasks.yaml")
 		require.NoError(t, err, stdOut, stdErr)
 		require.Contains(t, stdErr, "\"input val2 equals 5 and variable VAL1 equals 5\"")
+	})
+
+	t.Run("run successful pattern", func(t *testing.T) {
+		t.Parallel()
+
+		stdOut, stdErr, err := e2e.Maru("run", "--file", "src/test/tasks/more-tasks/pattern.yaml", "--set", "HELLO=HELLO")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "HELLO")
+	})
+
+	t.Run("run unsuccessful pattern", func(t *testing.T) {
+		t.Parallel()
+
+		stdOut, stdErr, err := e2e.Maru("run", "--file", "src/test/tasks/more-tasks/pattern.yaml", "--set", "HELLO=HI")
+		require.Error(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "\"HELLO\" does not match pattern \"^HELLO$\"")
 	})
 }

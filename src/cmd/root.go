@@ -72,6 +72,7 @@ func cliSetup() {
 		"info":  message.InfoLevel,
 		"debug": message.DebugLevel,
 		"trace": message.TraceLevel,
+		"error": message.ErrorLevel,
 	}
 
 	printViperConfigUsed()

@@ -113,7 +113,7 @@ func MakeTempDir(basePath string) (string, error) {
 
 // DownloadToFile downloads a given URL to the target filepath
 func DownloadToFile(src string, dst string) (err error) {
-	message.SLog.Debug("Downloading %s to %s", src, dst)
+	message.SLog.Debug(fmt.Sprintf("Downloading %s to %s", src, dst))
 	// check if the parsed URL has a checksum
 	// if so, remove it and use the checksum to validate the file
 	src, checksum, err := parseChecksum(src)
