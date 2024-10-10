@@ -63,11 +63,15 @@ func (r *Runner) performAction(action types.Action, withs map[string]string, inp
 			return err
 		}
 	} else {
-		err := RunAction(action.BaseAction, r.envFilePath, r.variableConfig)
-		if err != nil {
-			return err
+		if r.dryRun {
+			cmdEscaped := helpers.Truncate(action.Cmd, 60, false)
+			message.SLog.Info(cmdEscaped)
+		} else {
+			err := RunAction(action.BaseAction, r.envFilePath, r.variableConfig)
+			if err != nil {
+				return err
+			}
 		}
-
 	}
 	return nil
 }
