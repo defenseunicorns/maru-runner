@@ -27,10 +27,14 @@ type Runner struct {
 	TaskNameMap    map[string]bool
 	envFilePath    string
 	variableConfig *variables.VariableConfig[variables.ExtraVariableInfo]
+	dryRun         bool
 }
 
 // Run runs a task from tasks file
-func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]string) error {
+func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]string, dryRun bool) error {
+	if dryRun {
+		message.SLog.Info("Dry-run has been set - printing the commands that would run:")
+	}
 
 	// Populate the variables loaded in the root task file
 	rootVariables := tasksFile.Variables
@@ -61,6 +65,7 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 		TasksFile:      tasksFile,
 		TaskNameMap:    map[string]bool{},
 		variableConfig: combinedVariableConfig,
+		dryRun:         dryRun,
 	}
 
 	task, err := runner.getTask(taskName)
