@@ -56,7 +56,7 @@ func init() {
 
 	v.SetDefault(V_LOG_LEVEL, "info")
 	v.SetDefault(V_ARCHITECTURE, "")
-	v.SetDefault(V_NO_LOG_FILE, true)
+	v.SetDefault(V_NO_LOG_FILE, false)
 	v.SetDefault(V_TMP_DIR, "")
 
 	rootCmd.PersistentFlags().StringVarP(&logLevelString, "log-level", "l", v.GetString(V_LOG_LEVEL), lang.RootCmdFlagLogLevel)
