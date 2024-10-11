@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
 
       - name: Setup golang
         uses: ./.github/actions/golang
@@ -21,12 +21,12 @@ jobs:
         run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
 
       - name: Run pre-commit
-        uses: pre-commit/action@f7acafac0271bdd064cdfa1b13f17b4350e565ed #
+        uses: pre-commit/action@576ff52938d158a24ac7e009dfa94b1455e7df99 #
         with:
           extra_args: --all-files --verbose # pre-commit run --all-files --verbose
 
       - name: Run Revive Action by pulling pre-built image
-        uses: docker://morphy/revive-action:v2@sha256:2e13c242d68654085351d56a75b1145b4e804cbd465b0f36fbeb7d9760ae49c1
+        uses: docker://morphy/revive-action:v2@sha256:d6f045593cf654035d239c3b64595bcc09a6271fc974a97b9f7a4e678cfcfa72
         with:
           config: revive.toml
           # Exclude patterns, separated by semicolons (optional)
