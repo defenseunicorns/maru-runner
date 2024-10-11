@@ -33,7 +33,7 @@ type Runner struct {
 // Run runs a task from tasks file
 func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]string, dryRun bool) error {
 	if dryRun {
-		message.SLog.Info("Dry-run has been set - printing the commands that would run:")
+		message.SLog.Info("Dry-run has been set - only printing the commands that would run:")
 	}
 
 	// Populate the variables loaded in the root task file

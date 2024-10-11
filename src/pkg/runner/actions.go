@@ -144,10 +144,9 @@ func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableC
 		action.SetVariables = []variables.Variable[T]{}
 	}
 
-	// if this is a dry run, print the command that would run (with vars templated) and return
+	// if this is a dry run, print the command that would run and return
 	if dryRun {
-		processedCmd := utils.TemplateString(variableConfig.GetSetVariables(), cmd)
-		fmt.Println(processedCmd)
+		fmt.Println(cmd)
 		return nil
 	}
 
