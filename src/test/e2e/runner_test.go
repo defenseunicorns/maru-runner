@@ -209,7 +209,7 @@ func TestTaskRunner(t *testing.T) {
 		require.NotContains(t, stdErr, "default")
 	})
 
-	t.Run("run list tasks", func(t *testing.T) {
+	t.Run("run --list tasks", func(t *testing.T) {
 		t.Parallel()
 		gitRev, err := e2e.GetGitRevision()
 		if err != nil {
@@ -236,6 +236,41 @@ func TestTaskRunner(t *testing.T) {
 
 		stdOut, stdErr, err := e2e.Maru("run", "--list-all", "--set", setVar, "--file", "src/test/tasks/tasks.yaml")
 		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdOut, "echo-env-var")
+		require.Contains(t, stdOut, "Test that env vars take precedence")
+		require.Contains(t, stdOut, "foo:foobar")
+		require.Contains(t, stdOut, "remote:echo-var")
+	})
+
+	t.Run("run --list=md tasks", func(t *testing.T) {
+		t.Parallel()
+		gitRev, err := e2e.GetGitRevision()
+		if err != nil {
+			return
+		}
+		setVar := fmt.Sprintf("GIT_REVISION=%s", gitRev)
+
+		stdOut, stdErr, err := e2e.Maru("run", "--list=md", setVar, "--file", "src/test/tasks/tasks.yaml")
+
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdOut, "|------|-------------|")
+		require.Contains(t, stdOut, "echo-env-var")
+		require.Contains(t, stdOut, "Test that env vars take precedence")
+		require.Contains(t, stdOut, "remote-import")
+		require.Contains(t, stdOut, "action")
+	})
+
+	t.Run("run --list-all=md tasks", func(t *testing.T) {
+		t.Parallel()
+		gitRev, err := e2e.GetGitRevision()
+		if err != nil {
+			return
+		}
+		setVar := fmt.Sprintf("GIT_REVISION=%s", gitRev)
+
+		stdOut, stdErr, err := e2e.Maru("run", "--list-all=md", "--set", setVar, "--file", "src/test/tasks/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdOut, "|------|-------------|")
 		require.Contains(t, stdOut, "echo-env-var")
 		require.Contains(t, stdOut, "Test that env vars take precedence")
 		require.Contains(t, stdOut, "foo:foobar")
