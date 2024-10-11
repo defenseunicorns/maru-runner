@@ -63,14 +63,9 @@ func (r *Runner) performAction(action types.Action, withs map[string]string, inp
 			return err
 		}
 	} else {
-		if r.dryRun {
-			cmdEscaped := helpers.Truncate(action.Cmd, 60, false)
-			message.SLog.Info(cmdEscaped)
-		} else {
-			err := RunAction(action.BaseAction, r.envFilePath, r.variableConfig)
-			if err != nil {
-				return err
-			}
+		err := RunAction(action.BaseAction, r.envFilePath, r.variableConfig, r.dryRun)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
@@ -110,7 +105,7 @@ func getUniqueTaskActions(actions []types.Action) []types.Action {
 }
 
 // RunAction executes a specific action command, either wait or cmd. It handles variable loading environment variables and manages retries and timeouts
-func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableConfig *variables.VariableConfig[T]) error {
+func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableConfig *variables.VariableConfig[T], dryRun bool) error {
 	var (
 		ctx        context.Context
 		cancel     context.CancelFunc
@@ -147,6 +142,13 @@ func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableC
 		action.Dir = &d
 		action.Env = []string{}
 		action.SetVariables = []variables.Variable[T]{}
+	}
+
+	// if this is a dry run, print the command that would run (with vars templated) and return
+	if dryRun {
+		processedCmd := utils.TemplateString(variableConfig.GetSetVariables(), cmd)
+		fmt.Println(processedCmd)
+		return nil
 	}
 
 	// load the contents of the env file into the Action + the MARU_ARCH
