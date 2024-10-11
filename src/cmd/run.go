@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"net/http"
@@ -23,13 +24,37 @@ import (
 	goyaml "github.com/goccy/go-yaml"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 // listTasks is a flag to print available tasks in a TaskFileLocation (no includes)
-var listTasks bool
+var listTasks listFlag
 
 // listAllTasks is a flag to print available tasks in a TaskFileLocation
-var listAllTasks bool
+var listAllTasks listFlag
+
+// listFlag defines the flag behavior for task list flags
+type listFlag string
+
+const (
+	listOff listFlag = ""
+	listOn  listFlag = "true" // value set by flag package on bool flag
+	listMd  listFlag = "md"
+)
+
+// IsBoolFlag causes a bare list flag to be set as the string 'true'.  This
+// allows the use of a bare list flag or setting a string ala '--list=md'.
+func (i *listFlag) IsBoolFlag() bool { return true }
+func (i *listFlag) String() string   { return string(*i) }
+
+func (i *listFlag) Set(value string) error {
+	v := listFlag(value)
+	if v != listOn && v != listMd {
+		return fmt.Errorf("error: list flags expect '%v' or '%v'", listOn, listMd)
+	}
+	*i = v
+	return nil
+}
 
 // setRunnerVariables provides a map of set variables from the command line
 var setRunnerVariables map[string]string
@@ -72,25 +97,40 @@ var runCmd = &cobra.Command{
 			}
 		}
 
-		if listTasks || listAllTasks {
-			rows := [][]string{
-				{"Name", "Description"},
-			}
+		listFormat := listTasks
+		if listAllTasks != listOff {
+			listFormat = listAllTasks
+		}
+
+		if listFormat != listOff {
+			rows := [][]string{}
 			for _, task := range tasksFile.Tasks {
 				rows = append(rows, []string{task.Name, task.Description})
 			}
 
 			// If ListAllTasks, add tasks from included files
-			if listAllTasks {
+			if listAllTasks != listOff {
 				err = listTasksFromIncludes(&rows, tasksFile)
 				if err != nil {
 					message.Fatalf(err, "Cannot list tasks: %s", err.Error())
 				}
 			}
 
-			err := pterm.DefaultTable.WithHasHeader().WithData(rows).Render()
-			if err != nil {
-				message.Fatalf(err, "Error listing tasks: %s", err.Error())
+			switch listFormat {
+			case listMd:
+				fmt.Println("| Name | Description |")
+				fmt.Println("|------|-------------|")
+				for _, row := range rows {
+					if len(row) == 2 {
+						fmt.Printf("| **%s** | %s |\n", row[0], row[1])
+					}
+				}
+			default:
+				rows = append([][]string{{"Name", "Description"}}, rows...)
+				err := pterm.DefaultTable.WithHasHeader().WithData(rows).Render()
+				if err != nil {
+					message.Fatalf(err, "Error listing tasks: %s", err.Error())
+				}
 			}
 
 			return
@@ -201,7 +241,18 @@ func init() {
 	rootCmd.AddCommand(runCmd)
 	runFlags := runCmd.Flags()
 	runFlags.StringVarP(&config.TaskFileLocation, "file", "f", config.TasksYAML, lang.CmdRunFlag)
-	runFlags.BoolVarP(&listTasks, "list", "t", false, lang.CmdRunList)
-	runFlags.BoolVarP(&listAllTasks, "list-all", "T", false, lang.CmdRunListAll)
+
+	// Setup the --list flag
+	flag.Var(&listTasks, "list", lang.CmdRunList)
+	listPFlag := pflag.PFlagFromGoFlag(flag.Lookup("list"))
+	listPFlag.Shorthand = "t"
+	runFlags.AddFlag(listPFlag)
+
+	// Setup the --list-all flag
+	flag.Var(&listAllTasks, "list-all", lang.CmdRunList)
+	listAllPFlag := pflag.PFlagFromGoFlag(flag.Lookup("list-all"))
+	listAllPFlag.Shorthand = "T"
+	runFlags.AddFlag(listAllPFlag)
+
 	runFlags.StringToStringVar(&setRunnerVariables, "set", nil, lang.CmdRunSetVarFlag)
 }

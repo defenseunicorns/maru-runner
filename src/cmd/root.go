@@ -87,7 +87,7 @@ func cliSetup() {
 		}
 	}
 
-	if !skipLogFile && !listTasks && !listAllTasks {
+	if !skipLogFile && listTasks == listOff && listAllTasks == listOff {
 		if err := utils.UseLogFile(); err != nil {
 			message.SLog.Warn(fmt.Sprintf("Unable to setup log file: %s", err.Error()))
 		}
