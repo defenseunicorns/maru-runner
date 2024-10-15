@@ -144,8 +144,15 @@ func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableC
 		action.SetVariables = []variables.Variable[T]{}
 	}
 
+	if action.Description != "" {
+		cmdEscaped = action.Description
+	} else {
+		cmdEscaped = helpers.Truncate(cmd, 60, false)
+	}
+
 	// if this is a dry run, print the command that would run and return
 	if dryRun {
+		message.SLog.Info(fmt.Sprintf("Dry-running %q", cmdEscaped))
 		fmt.Println(cmd)
 		return nil
 	}
@@ -160,19 +167,13 @@ func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableC
 		action.Env = append(action.Env, strings.Split(string(envFileContents), "\n")...)
 	}
 
-	if action.Description != "" {
-		cmdEscaped = action.Description
-	} else {
-		cmdEscaped = helpers.Truncate(cmd, 60, false)
-	}
-
-	spinner := message.NewProgressSpinner("Running \"%s\"", cmdEscaped)
+	spinner := message.NewProgressSpinner("Running %q", cmdEscaped)
 
 	cfg := GetBaseActionCfg(types.ActionDefaults{}, *action, variableConfig.GetSetVariables())
 
 	if cmd = exec.MutateCommand(cmd, cfg.Shell); err != nil {
 		message.SLog.Debug(err.Error())
-		spinner.Failf("Error mutating command: %s", cmdEscaped)
+		spinner.Failf("Error mutating command: %q", cmdEscaped)
 	}
 
 	// Template dir string
