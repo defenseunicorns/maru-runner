@@ -56,6 +56,9 @@ func (i *listFlag) Set(value string) error {
 	return nil
 }
 
+// dryRun is a flag to only load / validate tasks without running commands
+var dryRun bool
+
 // setRunnerVariables provides a map of set variables from the command line
 var setRunnerVariables map[string]string
 
@@ -140,7 +143,7 @@ var runCmd = &cobra.Command{
 		if len(args) > 0 {
 			taskName = args[0]
 		}
-		if err := runner.Run(tasksFile, taskName, setRunnerVariables); err != nil {
+		if err := runner.Run(tasksFile, taskName, setRunnerVariables, dryRun); err != nil {
 			message.Fatalf(err, "Failed to run action: %s", err.Error())
 		}
 	},
@@ -241,6 +244,7 @@ func init() {
 	rootCmd.AddCommand(runCmd)
 	runFlags := runCmd.Flags()
 	runFlags.StringVarP(&config.TaskFileLocation, "file", "f", config.TasksYAML, lang.CmdRunFlag)
+	runFlags.BoolVar(&dryRun, "dry-run", false, lang.CmdRunDryRun)
 
 	// Setup the --list flag
 	flag.Var(&listTasks, "list", lang.CmdRunList)

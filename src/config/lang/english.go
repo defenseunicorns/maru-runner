@@ -51,6 +51,7 @@ const (
 	CmdRunWithVarFlag = "Set the inputs for a task from the command line (KEY=value)"
 	CmdRunList        = "List available tasks in a task file"
 	CmdRunListAll     = "List all available tasks in a task file, including tasks from included files"
+	CmdRunDryRun      = "Validate the task without actually running any commands"
 )
 
 // Common Errors

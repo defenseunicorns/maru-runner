@@ -63,11 +63,10 @@ func (r *Runner) performAction(action types.Action, withs map[string]string, inp
 			return err
 		}
 	} else {
-		err := RunAction(action.BaseAction, r.envFilePath, r.variableConfig)
+		err := RunAction(action.BaseAction, r.envFilePath, r.variableConfig, r.dryRun)
 		if err != nil {
 			return err
 		}
-
 	}
 	return nil
 }
@@ -106,7 +105,7 @@ func getUniqueTaskActions(actions []types.Action) []types.Action {
 }
 
 // RunAction executes a specific action command, either wait or cmd. It handles variable loading environment variables and manages retries and timeouts
-func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableConfig *variables.VariableConfig[T]) error {
+func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableConfig *variables.VariableConfig[T], dryRun bool) error {
 	var (
 		ctx        context.Context
 		cancel     context.CancelFunc
@@ -145,6 +144,19 @@ func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableC
 		action.SetVariables = []variables.Variable[T]{}
 	}
 
+	if action.Description != "" {
+		cmdEscaped = action.Description
+	} else {
+		cmdEscaped = helpers.Truncate(cmd, 60, false)
+	}
+
+	// if this is a dry run, print the command that would run and return
+	if dryRun {
+		message.SLog.Info(fmt.Sprintf("Dry-running %q", cmdEscaped))
+		fmt.Println(cmd)
+		return nil
+	}
+
 	// load the contents of the env file into the Action + the MARU_ARCH
 	if envFilePath != "" {
 		envFilePath := filepath.Join(filepath.Dir(config.TaskFileLocation), envFilePath)
@@ -155,19 +167,13 @@ func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableC
 		action.Env = append(action.Env, strings.Split(string(envFileContents), "\n")...)
 	}
 
-	if action.Description != "" {
-		cmdEscaped = action.Description
-	} else {
-		cmdEscaped = helpers.Truncate(cmd, 60, false)
-	}
-
-	spinner := message.NewProgressSpinner("Running \"%s\"", cmdEscaped)
+	spinner := message.NewProgressSpinner("Running %q", cmdEscaped)
 
 	cfg := GetBaseActionCfg(types.ActionDefaults{}, *action, variableConfig.GetSetVariables())
 
 	if cmd = exec.MutateCommand(cmd, cfg.Shell); err != nil {
 		message.SLog.Debug(err.Error())
-		spinner.Failf("Error mutating command: %s", cmdEscaped)
+		spinner.Failf("Error mutating command: %q", cmdEscaped)
 	}
 
 	// Template dir string
