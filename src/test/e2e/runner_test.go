@@ -461,4 +461,13 @@ func TestTaskRunner(t *testing.T) {
 		require.Error(t, err, stdOut, stdErr)
 		require.Contains(t, stdErr, "\"HELLO\" does not match pattern \"^HELLO$\"")
 	})
+
+	t.Run("dry run", func(t *testing.T) {
+		t.Parallel()
+
+		stdOut, stdErr, err := e2e.Maru("run", "--dry-run", "--file", "src/test/tasks/tasks.yaml", "env-from-file")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "Dry-running \"echo $MARU_ARCH\"")
+		require.Contains(t, stdErr, "echo env var from calling task - $SECRET_KEY")
+	})
 }
