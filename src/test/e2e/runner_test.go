@@ -60,7 +60,15 @@ func TestTaskRunner(t *testing.T) {
 
 		stdOut, stdErr, err := e2e.Maru("run", "recursive", "--file", "src/test/tasks/tasks.yaml")
 		require.Error(t, err, stdOut, stdErr)
-		require.Contains(t, stdErr, "task loop detected")
+		require.Contains(t, stdErr, "task looping exceeded max configured task stack")
+	})
+
+	t.Run("run direct loop", func(t *testing.T) {
+		t.Parallel()
+
+		stdOut, stdErr, err := e2e.Maru("run", "direct-loop", "--file", "src/test/tasks/loop-task.yaml")
+		require.Error(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "task looping exceeded max configured task stack")
 	})
 
 	t.Run("includes intentional task loop", func(t *testing.T) {
@@ -155,7 +163,7 @@ func TestTaskRunner(t *testing.T) {
 		t.Parallel()
 		stdOut, stdErr, err := e2e.Maru("run", "rerun-tasks-recursive", "--file", "src/test/tasks/tasks.yaml")
 		require.Error(t, err, stdOut, stdErr)
-		require.Contains(t, stdErr, "task loop detected")
+		require.Contains(t, stdErr, "task looping exceeded max configured task stack")
 	})
 
 	t.Run("run interactive (with --no-progress)", func(t *testing.T) {

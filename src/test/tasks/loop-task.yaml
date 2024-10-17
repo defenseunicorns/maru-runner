@@ -16,3 +16,7 @@ tasks:
           - name: LOOP_COUNT
       - task: loop
         if: ${{ ne .variables.LOOP_COUNT "0" }}
+
+  - name: direct-loop
+    actions:
+      - task: direct-loop

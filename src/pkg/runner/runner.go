@@ -25,10 +25,10 @@ import (
 type Runner struct {
 	TasksFile                       types.TasksFile
 	ExistingTaskIncludeNameLocation map[string]string
-	TaskNameMap                     map[string]bool
 	envFilePath                     string
 	variableConfig                  *variables.VariableConfig[variables.ExtraVariableInfo]
 	dryRun                          bool
+	currStackSize                   int
 }
 
 // Run runs a task from tasks file
@@ -65,7 +65,6 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 	runner := Runner{
 		TasksFile:                       tasksFile,
 		ExistingTaskIncludeNameLocation: map[string]string{},
-		TaskNameMap:                     map[string]bool{},
 		variableConfig:                  combinedVariableConfig,
 		dryRun:                          dryRun,
 	}
@@ -80,7 +79,7 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 		return err
 	}
 
-	if err = runner.processTasks(task, runner.TasksFile, setVariables); err != nil {
+	if err = runner.processTaskReferences(task, runner.TasksFile, setVariables); err != nil {
 		return err
 	}
 
@@ -278,6 +277,15 @@ func (r *Runner) getTask(taskName string) (types.Task, error) {
 }
 
 func (r *Runner) executeTask(task types.Task, withs map[string]string) error {
+	if r.currStackSize > config.MaxStack {
+		return fmt.Errorf("task looping exceeded max configured task stack of %d", config.MaxStack)
+	}
+
+	r.currStackSize += 1
+	defer func() {
+		r.currStackSize -= 1
+	}()
+
 	defaultEnv := []string{}
 	for name, inputParam := range task.Inputs {
 		d := inputParam.Default
@@ -294,15 +302,24 @@ func (r *Runner) executeTask(task types.Task, withs map[string]string) error {
 
 	for _, action := range task.Actions {
 		action.Env = utils.MergeEnv(action.Env, defaultEnv)
-
 		if err := r.performAction(action, withs, task.Inputs); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
-func (r *Runner) processTasks(task types.Task, tasksFile types.TasksFile, setVariables map[string]string) error {
+func (r *Runner) processTaskReferences(task types.Task, tasksFile types.TasksFile, setVariables map[string]string) error {
+	if r.currStackSize > config.MaxStack {
+		return fmt.Errorf("task looping exceeded max configured task stack of %d", config.MaxStack)
+	}
+
+	r.currStackSize += 1
+	defer func() {
+		r.currStackSize -= 1
+	}()
+
 	// Filtering unique task actions allows for rerunning tasks in the same execution
 	uniqueTaskActions := getUniqueTaskActions(task.Actions)
 	for _, action := range uniqueTaskActions {
@@ -312,22 +329,14 @@ func (r *Runner) processTasks(task types.Task, tasksFile types.TasksFile, setVar
 				return err
 			}
 
-			exists := r.TaskNameMap[action.TaskReference]
-			if exists {
-				return fmt.Errorf("task loop detected, ensure no cyclic loops in tasks or includes files")
-			}
-			r.TaskNameMap[action.TaskReference] = true
-
 			newTask, err := r.getTask(action.TaskReference)
 			if err != nil {
 				return err
 			}
-			if err = r.processTasks(newTask, tasksFile, setVariables); err != nil {
+			if err = r.processTaskReferences(newTask, tasksFile, setVariables); err != nil {
 				return err
 			}
 		}
-		// Clear map once we get to a task that doesn't call another task
-		clear(r.TaskNameMap)
 	}
 	return nil
 }

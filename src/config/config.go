@@ -36,6 +36,9 @@ var (
 	// VendorPrefix is the prefix for environment variables that an application vendoring Maru wants to use
 	VendorPrefix string
 
+	// MaxStack is the maximum stack size for task references
+	MaxStack = 2048
+
 	extraEnv = map[string]string{"MARU": "true", "MARU_ARCH": GetArch()}
 )
 

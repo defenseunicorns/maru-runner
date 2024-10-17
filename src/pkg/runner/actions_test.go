@@ -224,7 +224,6 @@ func TestRunner_performAction(t *testing.T) {
 	type fields struct {
 		TasksFile                       types.TasksFile
 		ExistingTaskIncludeNameLocation map[string]string
-		TaskNameMap                     map[string]bool
 		envFilePath                     string
 		variableConfig                  *variables.VariableConfig[variables.ExtraVariableInfo]
 	}
@@ -246,7 +245,6 @@ func TestRunner_performAction(t *testing.T) {
 			fields: fields{
 				TasksFile:                       types.TasksFile{},
 				ExistingTaskIncludeNameLocation: make(map[string]string),
-				TaskNameMap:                     make(map[string]bool),
 				envFilePath:                     "",
 				variableConfig:                  GetMaruVariableConfig(),
 			},
@@ -268,7 +266,6 @@ func TestRunner_performAction(t *testing.T) {
 			fields: fields{
 				TasksFile:                       types.TasksFile{},
 				ExistingTaskIncludeNameLocation: make(map[string]string),
-				TaskNameMap:                     make(map[string]bool),
 				envFilePath:                     "test/path",
 				variableConfig:                  GetMaruVariableConfig(),
 			},
@@ -298,7 +295,6 @@ func TestRunner_performAction(t *testing.T) {
 			r := &Runner{
 				TasksFile:                       tt.fields.TasksFile,
 				ExistingTaskIncludeNameLocation: tt.fields.ExistingTaskIncludeNameLocation,
-				TaskNameMap:                     tt.fields.TaskNameMap,
 				envFilePath:                     tt.fields.envFilePath,
 				variableConfig:                  tt.fields.variableConfig,
 			}
@@ -314,7 +310,6 @@ func TestRunner_processAction(t *testing.T) {
 	type fields struct {
 		TasksFile                       types.TasksFile
 		ExistingTaskIncludeNameLocation map[string]string
-		TaskNameMap                     map[string]bool
 		envFilePath                     string
 		variableConfig                  *variables.VariableConfig[variables.ExtraVariableInfo]
 	}
@@ -333,7 +328,6 @@ func TestRunner_processAction(t *testing.T) {
 			fields: fields{
 				TasksFile:                       types.TasksFile{},
 				ExistingTaskIncludeNameLocation: map[string]string{},
-				TaskNameMap:                     map[string]bool{},
 				envFilePath:                     "",
 				variableConfig:                  GetMaruVariableConfig(),
 			},
@@ -352,7 +346,6 @@ func TestRunner_processAction(t *testing.T) {
 			fields: fields{
 				TasksFile:                       types.TasksFile{},
 				ExistingTaskIncludeNameLocation: map[string]string{},
-				TaskNameMap:                     map[string]bool{},
 				envFilePath:                     "",
 				variableConfig:                  GetMaruVariableConfig(),
 			},
@@ -371,7 +364,6 @@ func TestRunner_processAction(t *testing.T) {
 			fields: fields{
 				TasksFile:                       types.TasksFile{},
 				ExistingTaskIncludeNameLocation: map[string]string{},
-				TaskNameMap:                     map[string]bool{},
 				envFilePath:                     "",
 				variableConfig:                  GetMaruVariableConfig(),
 			},
@@ -390,7 +382,6 @@ func TestRunner_processAction(t *testing.T) {
 			fields: fields{
 				TasksFile:                       types.TasksFile{},
 				ExistingTaskIncludeNameLocation: map[string]string{},
-				TaskNameMap:                     map[string]bool{},
 				envFilePath:                     "",
 				variableConfig:                  GetMaruVariableConfig(),
 			},
@@ -415,7 +406,6 @@ func TestRunner_processAction(t *testing.T) {
 					},
 				},
 				ExistingTaskIncludeNameLocation: map[string]string{},
-				TaskNameMap:                     map[string]bool{},
 				envFilePath:                     "",
 				variableConfig:                  GetMaruVariableConfig(),
 			},
@@ -435,7 +425,6 @@ func TestRunner_processAction(t *testing.T) {
 			r := &Runner{
 				TasksFile:                       tt.fields.TasksFile,
 				ExistingTaskIncludeNameLocation: tt.fields.ExistingTaskIncludeNameLocation,
-				TaskNameMap:                     tt.fields.TaskNameMap,
 				envFilePath:                     tt.fields.envFilePath,
 				variableConfig:                  tt.fields.variableConfig,
 			}
