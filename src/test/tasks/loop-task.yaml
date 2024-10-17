@@ -14,7 +14,7 @@ tasks:
       - cmd: echo $((LOOP_COUNT - 1))
         setVariables:
           - name: LOOP_COUNT
-      - task: loop
+      - task: original:include-loop
         if: ${{ ne .variables.LOOP_COUNT "0" }}
 
   - name: direct-loop
