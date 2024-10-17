@@ -1,6 +1,6 @@
 includes:
   - foo: ./more-tasks/foo.yaml
-  - infinite: ./loop-task.yaml
+  - intentional: ./loop-task.yaml
   - remote: https://raw.githubusercontent.com/defenseunicorns/maru-runner/${GIT_REVISION}/src/test/tasks/remote-import-tasks.yaml
 
 variables:
@@ -139,7 +139,7 @@ tasks:
               namespace: tasks
   - name: include-loop
     actions:
-      - task: infinite:loop
+      - task: intentional:loop
   - name: env-from-file
     envPath: "./my-env"
     actions:

@@ -222,10 +222,10 @@ func Test_validateActionableTaskCall(t *testing.T) {
 
 func TestRunner_performAction(t *testing.T) {
 	type fields struct {
-		TasksFile      types.TasksFile
-		TaskNameMap    map[string]bool
-		envFilePath    string
-		variableConfig *variables.VariableConfig[variables.ExtraVariableInfo]
+		TasksFile                       types.TasksFile
+		ExistingTaskIncludeNameLocation map[string]string
+		envFilePath                     string
+		variableConfig                  *variables.VariableConfig[variables.ExtraVariableInfo]
 	}
 	type args struct {
 		action types.Action
@@ -243,10 +243,10 @@ func TestRunner_performAction(t *testing.T) {
 		{
 			name: "failed action processing due to invalid command",
 			fields: fields{
-				TasksFile:      types.TasksFile{},
-				TaskNameMap:    make(map[string]bool),
-				envFilePath:    "",
-				variableConfig: GetMaruVariableConfig(),
+				TasksFile:                       types.TasksFile{},
+				ExistingTaskIncludeNameLocation: make(map[string]string),
+				envFilePath:                     "",
+				variableConfig:                  GetMaruVariableConfig(),
 			},
 			args: args{
 				action: types.Action{
@@ -264,10 +264,10 @@ func TestRunner_performAction(t *testing.T) {
 		{
 			name: "Unable to open path",
 			fields: fields{
-				TasksFile:      types.TasksFile{},
-				TaskNameMap:    make(map[string]bool),
-				envFilePath:    "test/path",
-				variableConfig: GetMaruVariableConfig(),
+				TasksFile:                       types.TasksFile{},
+				ExistingTaskIncludeNameLocation: make(map[string]string),
+				envFilePath:                     "test/path",
+				variableConfig:                  GetMaruVariableConfig(),
 			},
 			args: args{
 				action: types.Action{
@@ -293,10 +293,10 @@ func TestRunner_performAction(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &Runner{
-				TasksFile:      tt.fields.TasksFile,
-				TaskNameMap:    tt.fields.TaskNameMap,
-				envFilePath:    tt.fields.envFilePath,
-				variableConfig: tt.fields.variableConfig,
+				TasksFile:                       tt.fields.TasksFile,
+				ExistingTaskIncludeNameLocation: tt.fields.ExistingTaskIncludeNameLocation,
+				envFilePath:                     tt.fields.envFilePath,
+				variableConfig:                  tt.fields.variableConfig,
 			}
 			err := r.performAction(tt.args.action, tt.args.withs, tt.args.inputs)
 			if (err != nil) != tt.wantErr {
@@ -308,10 +308,10 @@ func TestRunner_performAction(t *testing.T) {
 
 func TestRunner_processAction(t *testing.T) {
 	type fields struct {
-		TasksFile      types.TasksFile
-		TaskNameMap    map[string]bool
-		envFilePath    string
-		variableConfig *variables.VariableConfig[variables.ExtraVariableInfo]
+		TasksFile                       types.TasksFile
+		ExistingTaskIncludeNameLocation map[string]string
+		envFilePath                     string
+		variableConfig                  *variables.VariableConfig[variables.ExtraVariableInfo]
 	}
 	type args struct {
 		task   types.Task
@@ -326,10 +326,10 @@ func TestRunner_processAction(t *testing.T) {
 		{
 			name: "successful action processing",
 			fields: fields{
-				TasksFile:      types.TasksFile{},
-				TaskNameMap:    map[string]bool{},
-				envFilePath:    "",
-				variableConfig: GetMaruVariableConfig(),
+				TasksFile:                       types.TasksFile{},
+				ExistingTaskIncludeNameLocation: map[string]string{},
+				envFilePath:                     "",
+				variableConfig:                  GetMaruVariableConfig(),
 			},
 			args: args{
 				task: types.Task{
@@ -344,10 +344,10 @@ func TestRunner_processAction(t *testing.T) {
 		{
 			name: "action processing with same task and action reference",
 			fields: fields{
-				TasksFile:      types.TasksFile{},
-				TaskNameMap:    map[string]bool{},
-				envFilePath:    "",
-				variableConfig: GetMaruVariableConfig(),
+				TasksFile:                       types.TasksFile{},
+				ExistingTaskIncludeNameLocation: map[string]string{},
+				envFilePath:                     "",
+				variableConfig:                  GetMaruVariableConfig(),
 			},
 			args: args{
 				task: types.Task{
@@ -362,10 +362,10 @@ func TestRunner_processAction(t *testing.T) {
 		{
 			name: "action processing with empty task reference",
 			fields: fields{
-				TasksFile:      types.TasksFile{},
-				TaskNameMap:    map[string]bool{},
-				envFilePath:    "",
-				variableConfig: GetMaruVariableConfig(),
+				TasksFile:                       types.TasksFile{},
+				ExistingTaskIncludeNameLocation: map[string]string{},
+				envFilePath:                     "",
+				variableConfig:                  GetMaruVariableConfig(),
 			},
 			args: args{
 				task: types.Task{
@@ -380,10 +380,10 @@ func TestRunner_processAction(t *testing.T) {
 		{
 			name: "action processing with non-empty task reference and different task and action reference names",
 			fields: fields{
-				TasksFile:      types.TasksFile{},
-				TaskNameMap:    map[string]bool{},
-				envFilePath:    "",
-				variableConfig: GetMaruVariableConfig(),
+				TasksFile:                       types.TasksFile{},
+				ExistingTaskIncludeNameLocation: map[string]string{},
+				envFilePath:                     "",
+				variableConfig:                  GetMaruVariableConfig(),
 			},
 			args: args{
 				task: types.Task{
@@ -405,9 +405,9 @@ func TestRunner_processAction(t *testing.T) {
 						},
 					},
 				},
-				TaskNameMap:    map[string]bool{},
-				envFilePath:    "",
-				variableConfig: GetMaruVariableConfig(),
+				ExistingTaskIncludeNameLocation: map[string]string{},
+				envFilePath:                     "",
+				variableConfig:                  GetMaruVariableConfig(),
 			},
 			args: args{
 				task: types.Task{
@@ -423,10 +423,10 @@ func TestRunner_processAction(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &Runner{
-				TasksFile:      tt.fields.TasksFile,
-				TaskNameMap:    tt.fields.TaskNameMap,
-				envFilePath:    tt.fields.envFilePath,
-				variableConfig: tt.fields.variableConfig,
+				TasksFile:                       tt.fields.TasksFile,
+				ExistingTaskIncludeNameLocation: tt.fields.ExistingTaskIncludeNameLocation,
+				envFilePath:                     tt.fields.envFilePath,
+				variableConfig:                  tt.fields.variableConfig,
 			}
 			if got := r.processAction(tt.args.task, tt.args.action); got != tt.want {
 				t.Errorf("processAction() got = %v, want %v", got, tt.want)

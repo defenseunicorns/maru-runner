@@ -60,15 +60,30 @@ func TestTaskRunner(t *testing.T) {
 
 		stdOut, stdErr, err := e2e.Maru("run", "recursive", "--file", "src/test/tasks/tasks.yaml")
 		require.Error(t, err, stdOut, stdErr)
-		require.Contains(t, stdErr, "task loop detected")
+		require.Contains(t, stdErr, "task looping exceeded max configured task stack")
 	})
 
-	t.Run("includes task loop", func(t *testing.T) {
+	t.Run("run direct loop", func(t *testing.T) {
 		t.Parallel()
 
-		stdOut, stdErr, err := e2e.Maru("run", "include-loop", "--file", "src/test/tasks/tasks.yaml")
+		stdOut, stdErr, err := e2e.Maru("run", "direct-loop", "--file", "src/test/tasks/loop-task.yaml")
 		require.Error(t, err, stdOut, stdErr)
-		require.Contains(t, stdErr, "task loop detected")
+		require.Contains(t, stdErr, "task looping exceeded max configured task stack")
+	})
+
+	t.Run("includes intentional task loop", func(t *testing.T) {
+		t.Parallel()
+
+		// get current git revision
+		gitRev, err := e2e.GetGitRevision()
+		if err != nil {
+			return
+		}
+		setVar := fmt.Sprintf("GIT_REVISION=%s", gitRev)
+		stdOut, stdErr, err := e2e.Maru("run", "include-loop", "--set", setVar, "--file", "src/test/tasks/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "9")
+		require.Contains(t, stdErr, "0")
 	})
 
 	t.Run("run cmd-set-variable with --set", func(t *testing.T) {
@@ -148,7 +163,7 @@ func TestTaskRunner(t *testing.T) {
 		t.Parallel()
 		stdOut, stdErr, err := e2e.Maru("run", "rerun-tasks-recursive", "--file", "src/test/tasks/tasks.yaml")
 		require.Error(t, err, stdOut, stdErr)
-		require.Contains(t, stdErr, "task loop detected")
+		require.Contains(t, stdErr, "task looping exceeded max configured task stack")
 	})
 
 	t.Run("run interactive (with --no-progress)", func(t *testing.T) {
@@ -469,5 +484,13 @@ func TestTaskRunner(t *testing.T) {
 		require.NoError(t, err, stdOut, stdErr)
 		require.Contains(t, stdErr, "Dry-running \"echo $MARU_ARCH\"")
 		require.Contains(t, stdOut, "echo env var from calling task - $SECRET_KEY")
+	})
+
+	t.Run("redefined include", func(t *testing.T) {
+		t.Parallel()
+
+		stdOut, stdErr, err := e2e.Maru("run", "--file", "src/test/tasks/redefined-include.yaml")
+		require.Error(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "task include \"foo\" attempted to be redefined")
 	})
 }
