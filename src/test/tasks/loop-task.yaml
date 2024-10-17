@@ -4,7 +4,15 @@
 includes:
   - original: "./tasks.yaml"
 
+variables:
+  - name: LOOP_COUNT
+    default: "10"
+
 tasks:
   - name: loop
     actions:
-      - task: original:include-loop
+      - cmd: echo $((LOOP_COUNT - 1))
+        setVariables:
+          - name: LOOP_COUNT
+      - task: loop
+        if: ${{ ne .variables.LOOP_COUNT "0" }}

@@ -63,12 +63,19 @@ func TestTaskRunner(t *testing.T) {
 		require.Contains(t, stdErr, "task loop detected")
 	})
 
-	t.Run("includes task loop", func(t *testing.T) {
+	t.Run("includes intentional task loop", func(t *testing.T) {
 		t.Parallel()
 
-		stdOut, stdErr, err := e2e.Maru("run", "include-loop", "--file", "src/test/tasks/tasks.yaml")
-		require.Error(t, err, stdOut, stdErr)
-		require.Contains(t, stdErr, "task loop detected")
+		// get current git revision
+		gitRev, err := e2e.GetGitRevision()
+		if err != nil {
+			return
+		}
+		setVar := fmt.Sprintf("GIT_REVISION=%s", gitRev)
+		stdOut, stdErr, err := e2e.Maru("run", "include-loop", "--set", setVar, "--file", "src/test/tasks/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "9")
+		require.Contains(t, stdErr, "0")
 	})
 
 	t.Run("run cmd-set-variable with --set", func(t *testing.T) {

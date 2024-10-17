@@ -23,11 +23,12 @@ import (
 
 // Runner holds the necessary data to run tasks from a tasks file
 type Runner struct {
-	TasksFile      types.TasksFile
-	TaskNameMap    map[string]bool
-	envFilePath    string
-	variableConfig *variables.VariableConfig[variables.ExtraVariableInfo]
-	dryRun         bool
+	TasksFile                       types.TasksFile
+	ExistingTaskIncludeNameLocation map[string]string
+	TaskNameMap                     map[string]bool
+	envFilePath                     string
+	variableConfig                  *variables.VariableConfig[variables.ExtraVariableInfo]
+	dryRun                          bool
 }
 
 // Run runs a task from tasks file
@@ -62,10 +63,11 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 
 	// Create the runner client to execute the task file
 	runner := Runner{
-		TasksFile:      tasksFile,
-		TaskNameMap:    map[string]bool{},
-		variableConfig: combinedVariableConfig,
-		dryRun:         dryRun,
+		TasksFile:                       tasksFile,
+		ExistingTaskIncludeNameLocation: map[string]string{},
+		TaskNameMap:                     map[string]bool{},
+		variableConfig:                  combinedVariableConfig,
+		dryRun:                          dryRun,
 	}
 
 	task, err := runner.getTask(taskName)
@@ -78,7 +80,7 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 		return err
 	}
 
-	if err = runner.checkForTaskLoops(task, runner.TasksFile, setVariables); err != nil {
+	if err = runner.processTasks(task, runner.TasksFile, setVariables); err != nil {
 		return err
 	}
 
@@ -113,41 +115,42 @@ func (r *Runner) processIncludes(tasksFile types.TasksFile, setVariables map[str
 
 func (r *Runner) importTasks(includes []map[string]string, currentFileLocation string, setVariables map[string]string) error {
 	// iterate through includes, open the file, and unmarshal it into a Task
-	var includeFileLocationKey string
-	var includeFileLocation string
+	var includeKey string
+	var includeLocation string
 	for _, include := range includes {
 		if len(include) > 1 {
 			return fmt.Errorf("included item %s must have only one key", include)
 		}
 		// grab first and only value from include map
 		for k, v := range include {
-			includeFileLocationKey = k
-			includeFileLocation = v
+			includeKey = k
+			includeLocation = v
 			break
 		}
 
-		includeFileLocation = utils.TemplateString(r.variableConfig.GetSetVariables(), includeFileLocation)
+		includeLocation = utils.TemplateString(r.variableConfig.GetSetVariables(), includeLocation)
 
-		absIncludeFileLocation, tasksFile, err := loadIncludeTask(currentFileLocation, includeFileLocation)
+		absIncludeFileLocation, tasksFile, err := loadIncludeTask(currentFileLocation, includeLocation)
 		if err != nil {
 			return fmt.Errorf("unable to read included file: %w", err)
 		}
 
+		if existingLocation, exists := r.ExistingTaskIncludeNameLocation[includeKey]; exists && existingLocation != absIncludeFileLocation {
+			return fmt.Errorf("task include %q name attempted to be redefined from %q to %q", includeKey, existingLocation, absIncludeFileLocation)
+		} else {
+			r.ExistingTaskIncludeNameLocation[includeKey] = absIncludeFileLocation
+		}
+
 		// prefix task names and actions with the includes key
 		for i, t := range tasksFile.Tasks {
-			tasksFile.Tasks[i].Name = includeFileLocationKey + ":" + t.Name
+			tasksFile.Tasks[i].Name = includeKey + ":" + t.Name
 			if len(tasksFile.Tasks[i].Actions) > 0 {
 				for j, a := range tasksFile.Tasks[i].Actions {
 					if a.TaskReference != "" && !strings.Contains(a.TaskReference, ":") {
-						tasksFile.Tasks[i].Actions[j].TaskReference = includeFileLocationKey + ":" + a.TaskReference
+						tasksFile.Tasks[i].Actions[j].TaskReference = includeKey + ":" + a.TaskReference
 					}
 				}
 			}
-		}
-
-		err = r.checkProcessedTasksForLoops(tasksFile)
-		if err != nil {
-			return err
 		}
 
 		r.TasksFile.Tasks = append(r.TasksFile.Tasks, tasksFile.Tasks...)
@@ -156,20 +159,21 @@ func (r *Runner) importTasks(includes []map[string]string, currentFileLocation s
 
 		// recursively import tasks from included files
 		if tasksFile.Includes != nil {
-			if err := r.importTasks(tasksFile.Includes, absIncludeFileLocation, setVariables); err != nil {
-				return err
+			newIncludes := []map[string]string{}
+			var newIncludeKey string
+			var newIncludeLocation string
+			for _, newInclude := range tasksFile.Includes {
+				for k, v := range newInclude {
+					newIncludeKey = k
+					newIncludeLocation = v
+					break
+				}
+				if _, exists := r.ExistingTaskIncludeNameLocation[newIncludeKey]; !exists {
+					newIncludes = append(newIncludes, map[string]string{newIncludeKey: newIncludeLocation})
+				}
 			}
-		}
-	}
-	return nil
-}
-
-func (r *Runner) checkProcessedTasksForLoops(tasksFile types.TasksFile) error {
-	// The following for loop protects against task loops. Makes sure the task being added hasn't already been processed
-	for _, taskToAdd := range tasksFile.Tasks {
-		for _, currentTasks := range r.TasksFile.Tasks {
-			if taskToAdd.Name == currentTasks.Name {
-				return fmt.Errorf("task loop detected, ensure no cyclic loops in tasks or includes files")
+			if err := r.importTasks(newIncludes, absIncludeFileLocation, setVariables); err != nil {
+				return err
 			}
 		}
 	}
@@ -286,7 +290,7 @@ func (r *Runner) executeTask(task types.Task, withs map[string]string) error {
 	return nil
 }
 
-func (r *Runner) checkForTaskLoops(task types.Task, tasksFile types.TasksFile, setVariables map[string]string) error {
+func (r *Runner) processTasks(task types.Task, tasksFile types.TasksFile, setVariables map[string]string) error {
 	// Filtering unique task actions allows for rerunning tasks in the same execution
 	uniqueTaskActions := getUniqueTaskActions(task.Actions)
 	for _, action := range uniqueTaskActions {
@@ -301,16 +305,17 @@ func (r *Runner) checkForTaskLoops(task types.Task, tasksFile types.TasksFile, s
 				return fmt.Errorf("task loop detected, ensure no cyclic loops in tasks or includes files")
 			}
 			r.TaskNameMap[action.TaskReference] = true
+
 			newTask, err := r.getTask(action.TaskReference)
 			if err != nil {
 				return err
 			}
-			if err = r.checkForTaskLoops(newTask, tasksFile, setVariables); err != nil {
+			if err = r.processTasks(newTask, tasksFile, setVariables); err != nil {
 				return err
 			}
 		}
 		// Clear map once we get to a task that doesn't call another task
-		clear(r.TaskNameMap)
+		clear(r.ExistingTaskIncludeNameLocation)
 	}
 	return nil
 }
