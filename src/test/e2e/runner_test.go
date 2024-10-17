@@ -477,4 +477,12 @@ func TestTaskRunner(t *testing.T) {
 		require.Contains(t, stdErr, "Dry-running \"echo $MARU_ARCH\"")
 		require.Contains(t, stdOut, "echo env var from calling task - $SECRET_KEY")
 	})
+
+	t.Run("redefined include", func(t *testing.T) {
+		t.Parallel()
+
+		stdOut, stdErr, err := e2e.Maru("run", "--file", "src/test/tasks/redefined-include.yaml")
+		require.Error(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "task include \"foo\" attempted to be redefined")
+	})
 }

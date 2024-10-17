@@ -1,11 +1,11 @@
 includes:
-  - remote: https://raw.githubusercontent.com/defenseunicorns/maru-runner/${GIT_REVISION}/src/test/tasks/even-more-tasks-to-import.yaml
+  - remote-more: https://raw.githubusercontent.com/defenseunicorns/maru-runner/${GIT_REVISION}/src/test/tasks/even-more-tasks-to-import.yaml
   - baz: ./more-tasks/baz.yaml
 
 tasks:
   - name: echo-var
     actions:
-      - task: remote:set-var
+      - task: remote-more:set-var
       - cmd: |
           echo "${PRETTY_OK_COMPANY} is a pretty ok company"
 

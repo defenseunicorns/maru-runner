@@ -1,0 +1,7 @@
+includes:
+  - foo: "./tasks.yaml"
+
+tasks:
+  - name: default
+    actions:
+      - task: foo:foobar

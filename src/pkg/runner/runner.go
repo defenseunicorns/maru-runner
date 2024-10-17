@@ -134,12 +134,8 @@ func (r *Runner) importTasks(includes []map[string]string, currentFileLocation s
 		if err != nil {
 			return fmt.Errorf("unable to read included file: %w", err)
 		}
-
-		if existingLocation, exists := r.ExistingTaskIncludeNameLocation[includeKey]; exists && existingLocation != absIncludeFileLocation {
-			return fmt.Errorf("task include %q name attempted to be redefined from %q to %q", includeKey, existingLocation, absIncludeFileLocation)
-		} else {
-			r.ExistingTaskIncludeNameLocation[includeKey] = absIncludeFileLocation
-		}
+		// If we arrive here we assume this was a new include due to the later check
+		r.ExistingTaskIncludeNameLocation[includeKey] = absIncludeFileLocation
 
 		// prefix task names and actions with the includes key
 		for i, t := range tasksFile.Tasks {
@@ -168,8 +164,16 @@ func (r *Runner) importTasks(includes []map[string]string, currentFileLocation s
 					newIncludeLocation = v
 					break
 				}
-				if _, exists := r.ExistingTaskIncludeNameLocation[newIncludeKey]; !exists {
+				if existingLocation, exists := r.ExistingTaskIncludeNameLocation[newIncludeKey]; !exists {
 					newIncludes = append(newIncludes, map[string]string{newIncludeKey: newIncludeLocation})
+				} else {
+					newAbsIncludeFileLocation, err := includeTaskAbsLocation(absIncludeFileLocation, newIncludeLocation)
+					if err != nil {
+						return err
+					}
+					if existingLocation != newAbsIncludeFileLocation {
+						return fmt.Errorf("task include %q attempted to be redefined from %q to %q", includeKey, existingLocation, newAbsIncludeFileLocation)
+					}
 				}
 			}
 			if err := r.importTasks(newIncludes, absIncludeFileLocation, setVariables); err != nil {
@@ -211,17 +215,14 @@ func loadIncludedTaskFile(taskFile types.TasksFile, taskName string, setVariable
 	return taskFile, taskName, nil
 }
 
-func loadIncludeTask(currentFileLocation, includeFileLocation string) (string, types.TasksFile, error) {
-	var localPath string
-	var includedTasksFile types.TasksFile
+func includeTaskAbsLocation(currentFileLocation, includeFileLocation string) (string, error) {
 	var absIncludeFileLocation string
-	var err error
 
 	if !helpers.IsURL(includeFileLocation) {
 		if helpers.IsURL(currentFileLocation) {
 			currentURL, err := url.Parse(currentFileLocation)
 			if err != nil {
-				return absIncludeFileLocation, includedTasksFile, err
+				return absIncludeFileLocation, err
 			}
 			currentURL.Path = path.Join(path.Dir(currentURL.Path), includeFileLocation)
 			absIncludeFileLocation = currentURL.String()
@@ -231,6 +232,17 @@ func loadIncludeTask(currentFileLocation, includeFileLocation string) (string, t
 		}
 	} else {
 		absIncludeFileLocation = includeFileLocation
+	}
+	return absIncludeFileLocation, nil
+}
+
+func loadIncludeTask(currentFileLocation, includeFileLocation string) (string, types.TasksFile, error) {
+	var localPath string
+	var includedTasksFile types.TasksFile
+
+	absIncludeFileLocation, err := includeTaskAbsLocation(currentFileLocation, includeFileLocation)
+	if err != nil {
+		return absIncludeFileLocation, includedTasksFile, err
 	}
 
 	// If the file is in fact a URL we need to download and load the YAML
@@ -315,7 +327,7 @@ func (r *Runner) processTasks(task types.Task, tasksFile types.TasksFile, setVar
 			}
 		}
 		// Clear map once we get to a task that doesn't call another task
-		clear(r.ExistingTaskIncludeNameLocation)
+		clear(r.TaskNameMap)
 	}
 	return nil
 }
