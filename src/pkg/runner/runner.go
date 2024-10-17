@@ -281,9 +281,9 @@ func (r *Runner) executeTask(task types.Task, withs map[string]string) error {
 		return fmt.Errorf("task looping exceeded max configured task stack of %d", config.MaxStack)
 	}
 
-	r.currStackSize += 1
+	r.currStackSize++
 	defer func() {
-		r.currStackSize -= 1
+		r.currStackSize--
 	}()
 
 	defaultEnv := []string{}
@@ -315,9 +315,9 @@ func (r *Runner) processTaskReferences(task types.Task, tasksFile types.TasksFil
 		return fmt.Errorf("task looping exceeded max configured task stack of %d", config.MaxStack)
 	}
 
-	r.currStackSize += 1
+	r.currStackSize++
 	defer func() {
-		r.currStackSize -= 1
+		r.currStackSize--
 	}()
 
 	// Filtering unique task actions allows for rerunning tasks in the same execution
