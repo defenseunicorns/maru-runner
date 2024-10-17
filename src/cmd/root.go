@@ -14,6 +14,7 @@ import (
 	"github.com/defenseunicorns/maru-runner/src/config/lang"
 	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -56,7 +57,7 @@ func init() {
 
 	v.SetDefault(V_LOG_LEVEL, "info")
 	v.SetDefault(V_ARCHITECTURE, "")
-	v.SetDefault(V_NO_LOG_FILE, false)
+	v.SetDefault(V_NO_LOG_FILE, true)
 	v.SetDefault(V_TMP_DIR, "")
 
 	rootCmd.PersistentFlags().StringVarP(&logLevelString, "log-level", "l", v.GetString(V_LOG_LEVEL), lang.RootCmdFlagLogLevel)
@@ -87,7 +88,12 @@ func cliSetup() {
 		}
 	}
 
-	if !skipLogFile && listTasks == listOff && listAllTasks == listOff {
+	// Intentionally set logging to avoid problems when vendored
+	if listTasks != listOff || listAllTasks != listOff {
+		pterm.SetDefaultOutput(os.Stdout)
+	} else if skipLogFile {
+		pterm.SetDefaultOutput(os.Stderr)
+	} else {
 		if err := utils.UseLogFile(); err != nil {
 			message.SLog.Warn(fmt.Sprintf("Unable to setup log file: %s", err.Error()))
 		}
