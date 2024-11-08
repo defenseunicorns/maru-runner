@@ -1,6 +1,9 @@
 includes:
   - remote-more: https://raw.githubusercontent.com/defenseunicorns/maru-runner/${GIT_REVISION}/src/test/tasks/even-more-tasks-to-import.yaml
   - baz: ./more-tasks/baz.yaml
+  - private-remote: git::https://github.com/defenseunicorns/uds-package-redpanda.git//tasks/test.yaml?ref=main
+  - private-remote-other-ref: git::https://github.com/defenseunicorns/uds-package-redpanda.git//tasks/dependencies.yaml?ref=v24.3.0-uds.1
+
 
 tasks:
   - name: echo-var
@@ -8,6 +11,7 @@ tasks:
       - task: remote-more:set-var
       - cmd: |
           echo "${PRETTY_OK_COMPANY} is a pretty ok company"
+      - task: private-remote:all
 
   - name: local-baz
     actions:
