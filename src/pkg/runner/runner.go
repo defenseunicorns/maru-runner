@@ -127,6 +127,7 @@ func (r *Runner) importTasks(includes []map[string]string, currentFileLocation s
 			break
 		}
 
+		// Apply variable substitution to includeLocation
 		includeLocation = utils.TemplateString(r.variableConfig.GetSetVariables(), includeLocation)
 
 		absIncludeFileLocation, tasksFile, err := loadIncludeTask(currentFileLocation, includeLocation, includeKey)
@@ -136,7 +137,7 @@ func (r *Runner) importTasks(includes []map[string]string, currentFileLocation s
 		// If we arrive here we assume this was a new include due to the later check
 		r.ExistingTaskIncludeNameLocation[includeKey] = absIncludeFileLocation
 
-		// prefix task names and actions with the includes key
+		// Prefix task names and actions with the includes key
 		for i, t := range tasksFile.Tasks {
 			tasksFile.Tasks[i].Name = includeKey + ":" + t.Name
 			if len(tasksFile.Tasks[i].Actions) > 0 {
@@ -152,7 +153,7 @@ func (r *Runner) importTasks(includes []map[string]string, currentFileLocation s
 
 		r.mergeVariablesFromIncludedTask(tasksFile)
 
-		// recursively import tasks from included files
+		// Recursively import tasks from included files
 		if tasksFile.Includes != nil {
 			var newIncludes []map[string]string
 			for _, newInclude := range tasksFile.Includes {
@@ -162,6 +163,10 @@ func (r *Runner) importTasks(includes []map[string]string, currentFileLocation s
 					newIncludeLocation = v
 					break
 				}
+
+				// Apply variable substitution to newIncludeLocation
+				newIncludeLocation = utils.TemplateString(r.variableConfig.GetSetVariables(), newIncludeLocation)
+
 				if existingLocation, exists := r.ExistingTaskIncludeNameLocation[newIncludeKey]; !exists {
 					newIncludes = append(newIncludes, map[string]string{newIncludeKey: newIncludeLocation})
 				} else {
