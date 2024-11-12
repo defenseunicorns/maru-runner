@@ -1,8 +1,8 @@
 includes:
   - remote-more: https://raw.githubusercontent.com/defenseunicorns/maru-runner/${GIT_REVISION}/src/test/tasks/even-more-tasks-to-import.yaml
   - baz: ./more-tasks/baz.yaml
-  - private-remote: git::https://github.com/defenseunicorns/uds-package-redpanda.git//tasks/test.yaml?ref=main
-  - private-remote-other-ref: git::https://github.com/defenseunicorns/uds-package-redpanda.git//tasks/dependencies.yaml?ref=v24.3.0-uds.1
+  - private-remote: git::https://gitlab.com/zachariah.miller31/private-task-test.git//tasks.yaml?ref=main
+  - private-remote-other-ref: git::https://gitlab.com/zachariah.miller31/private-task-test.git//tasks.yaml?ref=v0.1.0
 
 
 tasks:
