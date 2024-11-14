@@ -5,7 +5,7 @@ name: CI Docs Shim
 
 on:
   pull_request:
-    paths-ignore:
+    paths:
       - "**.md"
       - "**.jpg"
       - "**.png"
