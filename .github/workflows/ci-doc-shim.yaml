@@ -1,0 +1,45 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: CI Docs Shim
+
+on:
+  pull_request:
+    paths:
+      - "**.md"
+      - "**.jpg"
+      - "**.png"
+      - "**.gif"
+      - "**.svg"
+      - "adr/**"
+      - "docs/**"
+      - "CODEOWNERS"
+      - "goreleaser.yml"
+      - .gitignore
+      - renovate.json
+      - CODEOWNERS
+      - LICENSE
+      - CONTRIBUTING.md
+      - SECURITY.md
+
+# Permissions for the GITHUB_TOKEN used by the workflow.
+permissions:
+  contents: read # Allows reading the content of the repository.
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Shim for test
+        run: |
+          echo "Documentation-only change detected; test successful."
+
+  validate:
+    name: validate (go)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Shim for test
+        run: |
+          echo "Documentation-only change detected; validate successful."
