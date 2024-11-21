@@ -26,8 +26,8 @@ const (
 	tmpPathPrefix = "maru-"
 )
 
-// Regex to match the GitLab repo files api, test: https://regex101.com/r/8Rh0wX/1
-var gitlabAPIRegex = regexp.MustCompile(`\/api\/v4\/projects\/(?<repoId>\d+)\/repository\/files\/(?<path>[^\/]+)\/raw`)
+// Regex to match the GitLab repo files api, test: https://regex101.com/r/mBXuyM/1
+var gitlabAPIRegex = regexp.MustCompile(`\/api\/v4\/projects\/(?P<repoId>\d+)\/repository\/files\/(?P<path>[^\/]+)\/raw`)
 
 // UseLogFile writes output to stderr and a logFile.
 func UseLogFile() error {
