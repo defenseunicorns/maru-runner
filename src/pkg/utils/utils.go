@@ -115,7 +115,7 @@ func MakeTempDir(basePath string) (string, error) {
 	return tmp, nil
 }
 
-// IsGitLabURL returns whether a url is a GitLab files api URL
+// JoinURLPath joins a path in a URL (detecting the URL type)
 func JoinURLPath(currentURLPath, includeFilePath string) (string, error) {
 	get, err := helpers.MatchRegex(gitlabAPIRegex, currentURLPath)
 	if err != nil {
