@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -223,7 +222,10 @@ func includeTaskAbsLocation(currentFileLocation, includeFileLocation string) (st
 			if err != nil {
 				return absIncludeFileLocation, err
 			}
-			currentURL.Path = path.Join(path.Dir(currentURL.Path), includeFileLocation)
+			currentURL.Path, err = utils.JoinURLPath(currentURL.Path, includeFileLocation)
+			if err != nil {
+				return "", err
+			}
 			absIncludeFileLocation = currentURL.String()
 		} else {
 			// Calculate the full path for local (and most remote) references
@@ -232,6 +234,7 @@ func includeTaskAbsLocation(currentFileLocation, includeFileLocation string) (st
 	} else {
 		absIncludeFileLocation = includeFileLocation
 	}
+
 	return absIncludeFileLocation, nil
 }
 

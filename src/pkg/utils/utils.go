@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -24,6 +25,9 @@ import (
 const (
 	tmpPathPrefix = "maru-"
 )
+
+// Regex to match the GitLab repo files api, test: https://regex101.com/r/8Rh0wX/1
+var gitlabAPIRegex = regexp.MustCompile(`\/api\/v4\/projects\/(?<repoId>\d+)\/repository\/files\/(?<path>[^\/]+)\/raw`)
 
 // UseLogFile writes output to stderr and a logFile.
 func UseLogFile() error {
@@ -109,6 +113,22 @@ func MakeTempDir(basePath string) (string, error) {
 	message.SLog.Debug(fmt.Sprintf("Using temporary directory: %s", tmp))
 
 	return tmp, nil
+}
+
+// IsGitLabURL returns whether a url is a GitLab files api URL
+func JoinURLPath(currentURLPath, includeFilePath string) (string, error) {
+	get, err := helpers.MatchRegex(gitlabAPIRegex, currentURLPath)
+	if err != nil {
+		return path.Join(path.Dir(currentURLPath), includeFilePath), nil
+	}
+	escapedPath := get("path")
+	repoId := get("repoId")
+	unescapedPath, err := url.PathUnescape(escapedPath)
+	if err != nil {
+		return "", nil
+	}
+	joinedPath := path.Join(path.Dir(unescapedPath), includeFilePath)
+	return fmt.Sprintf("/api/v4/projects/%s/repository/files/%s/raw", repoId, url.PathEscape(joinedPath)), nil
 }
 
 // DownloadToFile downloads a given URL to the target filepath
