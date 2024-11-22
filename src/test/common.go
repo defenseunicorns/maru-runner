@@ -20,7 +20,6 @@ import (
 // MaruE2ETest Struct holding common fields most of the tests will utilize.
 type MaruE2ETest struct {
 	MaruBinPath       string
-	Arch              string
 	ApplianceMode     bool
 	ApplianceModeKeep bool
 	RunClusterTests   bool
@@ -54,17 +53,6 @@ func (e2e *MaruE2ETest) Maru(args ...string) (string, string, error) {
 func (e2e *MaruE2ETest) CleanFiles(files ...string) {
 	for _, file := range files {
 		_ = os.RemoveAll(file)
-	}
-}
-
-// GetMismatchedArch determines what architecture our tests are running on,
-// and returns the opposite architecture.
-func (e2e *MaruE2ETest) GetMismatchedArch() string {
-	switch e2e.Arch {
-	case "arm64":
-		return "amd64"
-	default:
-		return "arm64"
 	}
 }
 
