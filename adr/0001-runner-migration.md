@@ -1,8 +1,9 @@
-# 2. Runner Migration
+# 1. Runner Migration
 
-Date: 1 March 2024
+Date: 2024-03-01
 
 ## Status
+
 Accepted
 
 ## Context
