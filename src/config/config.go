@@ -4,10 +4,6 @@
 // Package config contains configuration strings for maru
 package config
 
-import (
-	"runtime"
-)
-
 const (
 	// TasksYAML is the string for the default tasks.yaml
 	TasksYAML = "tasks.yaml"
@@ -17,9 +13,6 @@ const (
 )
 
 var (
-	// CLIArch is the computer architecture of the device executing the CLI commands
-	CLIArch string
-
 	// CLIVersion track the version of the CLI
 	CLIVersion = "unset"
 
@@ -39,23 +32,8 @@ var (
 	// MaxStack is the maximum stack size for task references
 	MaxStack = 2048
 
-	extraEnv = map[string]string{"MARU": "true", "MARU_ARCH": GetArch()}
+	extraEnv = map[string]string{"MARU": "true"}
 )
-
-// GetArch returns the arch based on a priority list with options for overriding.
-func GetArch(archs ...string) string {
-	// List of architecture overrides.
-	priority := append([]string{CLIArch}, archs...)
-
-	// Find the first architecture that is specified.
-	for _, arch := range priority {
-		if arch != "" {
-			return arch
-		}
-	}
-
-	return runtime.GOARCH
-}
 
 // AddExtraEnv adds a new envirmentment variable to the extraEnv to make it available to actions
 func AddExtraEnv(key string, value string) {
