@@ -310,7 +310,6 @@ func TestTaskRunner(t *testing.T) {
 		t.Parallel()
 		stdOut, stdErr, err := e2e.Maru("run", "env-from-file", "--file", "src/test/tasks/tasks.yaml")
 		require.NoError(t, err, stdOut, stdErr)
-		require.Contains(t, stdErr, e2e.Arch)
 		require.Contains(t, stdErr, "not-a-secret")
 		require.Contains(t, stdErr, "3000")
 		require.Contains(t, stdErr, "$env/**/*var with#special%chars!")

@@ -10,7 +10,6 @@ import (
 	"path"
 	"testing"
 
-	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/test"
 )
 
@@ -50,7 +49,6 @@ func doAllTheThings(m *testing.M) (int, error) {
 	var err error
 
 	// Set up constants in the global variable that all the tests are able to access
-	e2e.Arch = config.GetArch()
 	e2e.MaruBinPath = path.Join("build", test.GetCLIName())
 	e2e.ApplianceMode = os.Getenv(applianceModeEnvVar) == "true"
 	e2e.ApplianceModeKeep = os.Getenv(applianceModeKeepEnvVar) == "true"
