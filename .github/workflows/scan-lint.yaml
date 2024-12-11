@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup golang
         uses: ./.github/actions/golang
@@ -26,7 +26,7 @@ jobs:
           extra_args: --all-files --verbose # pre-commit run --all-files --verbose
 
       - name: Run Revive Action by pulling pre-built image
-        uses: docker://morphy/revive-action:v2@sha256:d6f045593cf654035d239c3b64595bcc09a6271fc974a97b9f7a4e678cfcfa72
+        uses: docker://morphy/revive-action:v2@sha256:793c4e8bac339d7dcfccb0c35c9dbc623f5b0956515fcce9efd78162c084e8e0
         with:
           config: revive.toml
           # Exclude patterns, separated by semicolons (optional)
