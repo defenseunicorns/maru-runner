@@ -45,7 +45,7 @@ func TestRunnerInputs(t *testing.T) {
 
 		stdOut, stdErr, err := e2e.Maru("run", "has-default-and-required", "--file", "src/test/tasks/inputs/tasks-with-inputs.yaml")
 		require.NoError(t, err, stdOut, stdErr)
-		require.Contains(t, stdErr, "Completed \"echo $INPUT_HAS_DEFAULT_AND_REQUIRED; ; \"")
+		require.Contains(t, stdErr, "Completed \"echo $INPUT_HAS_DEFAULT_AND_REQUIRED; \"")
 	})
 
 	t.Run("test that direct calling of task without default values for required inputs fails", func(t *testing.T) {
