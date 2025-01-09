@@ -11,11 +11,9 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"path/filepath"
 	"regexp"
 	"strings"
 
-	"github.com/defenseunicorns/maru-runner/src/config/lang"
 	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/defenseunicorns/pkg/helpers/v2"
 	goyaml "github.com/goccy/go-yaml"
@@ -88,12 +86,14 @@ func ReadYaml(path string, destConfig any) error {
 	if err != nil {
 		return fmt.Errorf("cannot %s", err.Error())
 	}
+
 	err = goyaml.Unmarshal(file, destConfig)
 	if err != nil {
 		errStr := err.Error()
 		lines := strings.SplitN(errStr, "\n", 2)
 		return fmt.Errorf("cannot unmarshal %s: %s", path, lines[0])
 	}
+
 	return nil
 }
 
@@ -131,72 +131,44 @@ func JoinURLPath(currentURLPath, includeFilePath string) (string, error) {
 	return fmt.Sprintf("/api/v4/projects/%s/repository/files/%s/raw", repoID, url.PathEscape(joinedPath)), nil
 }
 
-// DownloadToFile downloads a given URL to the target filepath
-func DownloadToFile(src string, dst string) (err error) {
-	message.SLog.Debug(fmt.Sprintf("Downloading %s to %s", src, dst))
-	// check if the parsed URL has a checksum
-	// if so, remove it and use the checksum to validate the file
-	src, checksum, err := parseChecksum(src)
+// ReadRemoteYaml makes a get request to retrieve a given file from a URL
+func ReadRemoteYaml(location string, authentication map[string]string, destConfig any) (err error) {
+	// Send an HTTP GET request to fetch the content of the remote file
+	req, err := http.NewRequest("GET", location, nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to initialize request for %s: %w", location, err)
 	}
 
-	err = helpers.CreateDirectory(filepath.Dir(dst), helpers.ReadWriteExecuteUser)
+	parsedLocation, err := url.Parse(location)
 	if err != nil {
-		return fmt.Errorf(lang.ErrCreatingDir, filepath.Dir(dst), err.Error())
+		return fmt.Errorf("failed parsing URL %s: %w", location, err)
+	}
+	if token, ok := authentication[parsedLocation.Host]; ok {
+		fmt.Println(token)
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 	}
 
-	// Create the file
-	file, err := os.Create(dst)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return fmt.Errorf(lang.ErrWritingFile, dst, err.Error())
-	}
-	defer file.Close()
-
-	err = httpGetFile(src, file)
-	if err != nil {
-		return err
-	}
-
-	// If the file has a checksum, validate it
-	if len(checksum) > 0 {
-		received, err := helpers.GetSHA256OfFile(dst)
-		if err != nil {
-			return err
-		}
-		if received != checksum {
-			return fmt.Errorf("shasum mismatch for file %s: expected %s, got %s ", dst, checksum, received)
-		}
-	}
-
-	return nil
-}
-
-func httpGetFile(url string, destinationFile *os.File) error {
-	// Get the data
-	resp, err := http.Get(url)
-	if err != nil {
-		return fmt.Errorf("unable to download the file %s", url)
+		return fmt.Errorf("unable to make request for %s: %w", location, err)
 	}
 	defer resp.Body.Close()
 
-	// Check server response
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad HTTP status: %s", resp.Status)
+		return fmt.Errorf("failed getting %s: %s", location, resp.Status)
 	}
 
-	// Writer the body to file
-	title := fmt.Sprintf("Downloading %s", filepath.Base(url))
-	progressBar := message.NewProgressBar(resp.ContentLength, title)
-
-	if _, err = io.Copy(destinationFile, io.TeeReader(resp.Body, progressBar)); err != nil {
-		message.SLog.Debug(err.Error())
-		progressBar.Failf("Unable to save the file %s", destinationFile.Name())
-		return err
+	// Read the content of the response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed reading contents of %s: %w", location, err)
 	}
 
-	title = fmt.Sprintf("Downloaded %s", url)
-	progressBar.Successf("%s", title)
+	// Deserialize the content into the includedTasksFile
+	err = goyaml.Unmarshal(body, destConfig)
+	if err != nil {
+		return fmt.Errorf("failed unmarshalling contents of %s: %w", location, err)
+	}
 
 	return nil
 }

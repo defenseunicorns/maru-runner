@@ -7,12 +7,10 @@ package runner
 import (
 	"fmt"
 	"net/url"
-	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/defenseunicorns/maru-runner/src/config"
-	"github.com/defenseunicorns/maru-runner/src/config/lang"
 	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
 	"github.com/defenseunicorns/maru-runner/src/pkg/variables"
@@ -46,7 +44,7 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 	}
 
 	// Check to see if running an included task directly
-	tasksFile, taskName, err = loadIncludedTaskFile(tasksFile, taskName, rootVariableConfig.GetSetVariables())
+	tasksFile, taskName, err = loadIncludedTaskFile(tasksFile, taskName, rootVariableConfig.GetSetVariables(), authentication)
 	if err != nil {
 		return err
 	}
@@ -130,7 +128,7 @@ func (r *Runner) importTasks(includes []map[string]string, currentFileLocation s
 
 		includeLocation = utils.TemplateString(r.variableConfig.GetSetVariables(), includeLocation)
 
-		absIncludeFileLocation, tasksFile, err := loadIncludeTask(currentFileLocation, includeLocation)
+		absIncludeFileLocation, tasksFile, err := LoadIncludeTask(currentFileLocation, includeLocation, r.authentication)
 		if err != nil {
 			return fmt.Errorf("unable to read included file: %w", err)
 		}
@@ -193,7 +191,7 @@ func (r *Runner) mergeVariablesFromIncludedTask(tasksFile types.TasksFile) {
 	}
 }
 
-func loadIncludedTaskFile(taskFile types.TasksFile, taskName string, setVariables variables.SetVariableMap[variables.ExtraVariableInfo]) (types.TasksFile, string, error) {
+func loadIncludedTaskFile(taskFile types.TasksFile, taskName string, setVariables variables.SetVariableMap[variables.ExtraVariableInfo], authentication map[string]string) (types.TasksFile, string, error) {
 	// Check if running task directly from included task file
 	includedTask := strings.Split(taskName, ":")
 	if len(includedTask) == 2 {
@@ -204,7 +202,7 @@ func loadIncludedTaskFile(taskFile types.TasksFile, taskName string, setVariable
 			if includeFileLocation, ok := includes[includeName]; ok {
 				includeFileLocation = utils.TemplateString(setVariables, includeFileLocation)
 
-				absIncludeFileLocation, includedTasksFile, err := loadIncludeTask(config.TaskFileLocation, includeFileLocation)
+				absIncludeFileLocation, includedTasksFile, err := LoadIncludeTask(config.TaskFileLocation, includeFileLocation, authentication)
 				config.TaskFileLocation = absIncludeFileLocation
 				return includedTasksFile, includeTaskName, err
 			}
@@ -240,8 +238,7 @@ func includeTaskAbsLocation(currentFileLocation, includeFileLocation string) (st
 	return absIncludeFileLocation, nil
 }
 
-func loadIncludeTask(currentFileLocation, includeFileLocation string) (string, types.TasksFile, error) {
-	var localPath string
+func LoadIncludeTask(currentFileLocation, includeFileLocation string, authentication map[string]string) (string, types.TasksFile, error) {
 	var includedTasksFile types.TasksFile
 
 	absIncludeFileLocation, err := includeTaskAbsLocation(currentFileLocation, includeFileLocation)
@@ -251,24 +248,12 @@ func loadIncludeTask(currentFileLocation, includeFileLocation string) (string, t
 
 	// If the file is in fact a URL we need to download and load the YAML
 	if helpers.IsURL(absIncludeFileLocation) {
-		// If file is a url download it to a tmp directory
-		tmpDir, err := utils.MakeTempDir(config.TempDirectory)
-		if err != nil {
-			return absIncludeFileLocation, includedTasksFile, fmt.Errorf("error creating %s: %w", tmpDir, err)
-		}
-
-		// Remove tmpDir, but not until tasks have been loaded
-		defer os.RemoveAll(tmpDir)
-		localPath = filepath.Join(tmpDir, filepath.Base(absIncludeFileLocation))
-		if err := utils.DownloadToFile(absIncludeFileLocation, localPath); err != nil {
-			return absIncludeFileLocation, includedTasksFile, fmt.Errorf(lang.ErrDownloading, absIncludeFileLocation, err)
-		}
+		err = utils.ReadRemoteYaml(absIncludeFileLocation, authentication, &includedTasksFile)
 	} else {
-		localPath = absIncludeFileLocation
+		// Set TasksFile to the local included task file
+		err = utils.ReadYaml(absIncludeFileLocation, &includedTasksFile)
 	}
 
-	// Set TasksFile to include task file
-	err = utils.ReadYaml(localPath, &includedTasksFile)
 	return absIncludeFileLocation, includedTasksFile, err
 }
 

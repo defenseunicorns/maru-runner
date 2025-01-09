@@ -7,11 +7,7 @@ package cmd
 import (
 	"flag"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -22,7 +18,6 @@ import (
 	"github.com/defenseunicorns/maru-runner/src/pkg/utils"
 	"github.com/defenseunicorns/maru-runner/src/types"
 	"github.com/defenseunicorns/pkg/helpers/v2"
-	goyaml "github.com/goccy/go-yaml"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -173,8 +168,6 @@ func ListAutoCompleteTasks(_ *cobra.Command, _ []string, _ string) ([]string, co
 }
 
 func listTasksFromIncludes(rows *[][]string, tasksFile types.TasksFile, authentication map[string]string) error {
-	var includedTasksFile types.TasksFile
-
 	variableConfig := runner.GetMaruVariableConfig()
 	err := variableConfig.PopulateVariables(tasksFile.Variables, setRunnerVariables)
 	if err != nil {
@@ -190,12 +183,12 @@ func listTasksFromIncludes(rows *[][]string, tasksFile types.TasksFile, authenti
 			if re.MatchString(includeFileLocation) {
 				includeFileLocation = utils.TemplateString(variableConfig.GetSetVariables(), includeFileLocation)
 			}
-			// check if included file is a url
-			if helpers.IsURL(includeFileLocation) {
-				includedTasksFile = loadTasksFromRemoteIncludes(includeFileLocation, authentication)
-			} else {
-				includedTasksFile = loadTasksFromLocalIncludes(includeFileLocation)
+
+			_, includedTasksFile, err := runner.LoadIncludeTask(config.TaskFileLocation, includeFileLocation, authentication)
+			if err != nil {
+				message.Fatalf(err, "Error listing tasks: %s", err.Error())
 			}
+
 			for _, task := range includedTasksFile.Tasks {
 				*rows = append(*rows, []string{fmt.Sprintf("%s:%s", includeName, task.Name), task.Description})
 			}
@@ -203,61 +196,6 @@ func listTasksFromIncludes(rows *[][]string, tasksFile types.TasksFile, authenti
 	}
 
 	return nil
-}
-
-func loadTasksFromRemoteIncludes(includeFileLocation string, authentication map[string]string) types.TasksFile {
-	var includedTasksFile types.TasksFile
-
-	// Send an HTTP GET request to fetch the content of the remote file
-	req, err := http.NewRequest("GET", includeFileLocation, nil)
-	if err != nil {
-		message.Fatalf(err, "Error fetching %s", includeFileLocation)
-	}
-
-	parsedLocation, err := url.Parse(includeFileLocation)
-	if err != nil {
-		message.Fatalf(err, "Error fetching %s", includeFileLocation)
-	}
-	if token, ok := authentication[parsedLocation.Host]; ok {
-		fmt.Println(token)
-		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
-	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		message.Fatalf(err, "Error fetching %s", includeFileLocation)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		message.Fatalf(nil, resp.Status)
-	}
-
-	// Read the content of the response body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		message.Fatalf(err, "Error reading contents of %s", includeFileLocation)
-	}
-
-	// Deserialize the content into the includedTasksFile
-	err = goyaml.Unmarshal(body, &includedTasksFile)
-	if err != nil {
-		message.Fatalf(err, "Error deserializing %s into includedTasksFile", includeFileLocation)
-	}
-	return includedTasksFile
-}
-
-func loadTasksFromLocalIncludes(includeFileLocation string) types.TasksFile {
-	var includedTasksFile types.TasksFile
-	fullPath := filepath.Join(filepath.Dir(config.TaskFileLocation), includeFileLocation)
-	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-		message.Fatalf(err, "%s not found", fullPath)
-	}
-	err := utils.ReadYaml(fullPath, &includedTasksFile)
-	if err != nil {
-		message.Fatalf(err, "Failed to load file: %s", err.Error())
-	}
-	return includedTasksFile
 }
 
 func init() {

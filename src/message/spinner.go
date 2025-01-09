@@ -19,6 +19,8 @@ var activeSpinner *Spinner
 
 var sequence = []string{" ⬒ ", " ⬔ ", " ◨ ", " ◪ ", " ⬓ ", " ⬕ ", " ◧ ", " ◩ "}
 
+var NoProgress bool
+
 // Spinner is a wrapper around pterm.SpinnerPrinter.
 type Spinner struct {
 	spinner   *pterm.SpinnerPrinter
