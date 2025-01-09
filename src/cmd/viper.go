@@ -17,11 +17,12 @@ import (
 
 const (
 	// Root config keys
-	V_LOG_LEVEL    = "options.log_level"
-	V_ARCHITECTURE = "options.architecture"
-	V_NO_PROGRESS  = "options.no_progress"
-	V_NO_LOG_FILE  = "options.no_log_file"
-	V_TMP_DIR      = "options.tmp_dir"
+	V_LOG_LEVEL      = "options.log_level"
+	V_ARCHITECTURE   = "options.architecture"
+	V_NO_PROGRESS    = "options.no_progress"
+	V_NO_LOG_FILE    = "options.no_log_file"
+	V_TMP_DIR        = "options.tmp_dir"
+	V_AUTHENTICATION = "options.authentication"
 )
 
 var (

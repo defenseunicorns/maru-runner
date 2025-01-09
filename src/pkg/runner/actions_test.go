@@ -293,8 +293,8 @@ func TestRunner_performAction(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &Runner{
-				TasksFile:                       tt.fields.TasksFile,
-				ExistingTaskIncludeNameLocation: tt.fields.ExistingTaskIncludeNameLocation,
+				tasksFile:                       tt.fields.TasksFile,
+				existingTaskIncludeNameLocation: tt.fields.ExistingTaskIncludeNameLocation,
 				envFilePath:                     tt.fields.envFilePath,
 				variableConfig:                  tt.fields.variableConfig,
 			}
@@ -423,8 +423,8 @@ func TestRunner_processAction(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &Runner{
-				TasksFile:                       tt.fields.TasksFile,
-				ExistingTaskIncludeNameLocation: tt.fields.ExistingTaskIncludeNameLocation,
+				tasksFile:                       tt.fields.TasksFile,
+				existingTaskIncludeNameLocation: tt.fields.ExistingTaskIncludeNameLocation,
 				envFilePath:                     tt.fields.envFilePath,
 				variableConfig:                  tt.fields.variableConfig,
 			}

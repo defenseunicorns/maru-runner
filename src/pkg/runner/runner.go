@@ -22,8 +22,9 @@ import (
 
 // Runner holds the necessary data to run tasks from a tasks file
 type Runner struct {
-	TasksFile                       types.TasksFile
-	ExistingTaskIncludeNameLocation map[string]string
+	tasksFile                       types.TasksFile
+	existingTaskIncludeNameLocation map[string]string
+	authentication                  map[string]string
 	envFilePath                     string
 	variableConfig                  *variables.VariableConfig[variables.ExtraVariableInfo]
 	dryRun                          bool
@@ -31,7 +32,7 @@ type Runner struct {
 }
 
 // Run runs a task from tasks file
-func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]string, dryRun bool) error {
+func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]string, dryRun bool, authentication map[string]string) error {
 	if dryRun {
 		message.SLog.Info("Dry-run has been set - only printing the commands that would run:")
 	}
@@ -62,10 +63,11 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 
 	// Create the runner client to execute the task file
 	runner := Runner{
-		TasksFile:                       tasksFile,
-		ExistingTaskIncludeNameLocation: map[string]string{},
+		tasksFile:                       tasksFile,
+		existingTaskIncludeNameLocation: map[string]string{},
 		variableConfig:                  combinedVariableConfig,
 		dryRun:                          dryRun,
+		authentication:                  authentication,
 	}
 
 	task, err := runner.getTask(taskName)
@@ -78,7 +80,7 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 		return err
 	}
 
-	if err = runner.processTaskReferences(task, runner.TasksFile, setVariables); err != nil {
+	if err = runner.processTaskReferences(task, runner.tasksFile, setVariables); err != nil {
 		return err
 	}
 
@@ -133,7 +135,7 @@ func (r *Runner) importTasks(includes []map[string]string, currentFileLocation s
 			return fmt.Errorf("unable to read included file: %w", err)
 		}
 		// If we arrive here we assume this was a new include due to the later check
-		r.ExistingTaskIncludeNameLocation[includeKey] = absIncludeFileLocation
+		r.existingTaskIncludeNameLocation[includeKey] = absIncludeFileLocation
 
 		// prefix task names and actions with the includes key
 		for i, t := range tasksFile.Tasks {
@@ -147,7 +149,7 @@ func (r *Runner) importTasks(includes []map[string]string, currentFileLocation s
 			}
 		}
 
-		r.TasksFile.Tasks = append(r.TasksFile.Tasks, tasksFile.Tasks...)
+		r.tasksFile.Tasks = append(r.tasksFile.Tasks, tasksFile.Tasks...)
 
 		r.mergeVariablesFromIncludedTask(tasksFile)
 
@@ -162,7 +164,7 @@ func (r *Runner) importTasks(includes []map[string]string, currentFileLocation s
 					newIncludeLocation = v
 					break
 				}
-				if existingLocation, exists := r.ExistingTaskIncludeNameLocation[newIncludeKey]; !exists {
+				if existingLocation, exists := r.existingTaskIncludeNameLocation[newIncludeKey]; !exists {
 					newIncludes = append(newIncludes, map[string]string{newIncludeKey: newIncludeLocation})
 				} else {
 					newAbsIncludeFileLocation, err := includeTaskAbsLocation(absIncludeFileLocation, newIncludeLocation)
@@ -271,7 +273,7 @@ func loadIncludeTask(currentFileLocation, includeFileLocation string) (string, t
 }
 
 func (r *Runner) getTask(taskName string) (types.Task, error) {
-	for _, task := range r.TasksFile.Tasks {
+	for _, task := range r.tasksFile.Tasks {
 		if task.Name == taskName {
 			return task, nil
 		}

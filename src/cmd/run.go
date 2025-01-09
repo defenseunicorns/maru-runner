@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -100,6 +101,8 @@ var runCmd = &cobra.Command{
 			}
 		}
 
+		authentication := v.GetStringMapString(V_AUTHENTICATION)
+
 		listFormat := listTasks
 		if listAllTasks != listOff {
 			listFormat = listAllTasks
@@ -113,7 +116,7 @@ var runCmd = &cobra.Command{
 
 			// If ListAllTasks, add tasks from included files
 			if listAllTasks != listOff {
-				err = listTasksFromIncludes(&rows, tasksFile)
+				err = listTasksFromIncludes(&rows, tasksFile, authentication)
 				if err != nil {
 					message.Fatalf(err, "Cannot list tasks: %s", err.Error())
 				}
@@ -143,7 +146,7 @@ var runCmd = &cobra.Command{
 		if len(args) > 0 {
 			taskName = args[0]
 		}
-		if err := runner.Run(tasksFile, taskName, setRunnerVariables, dryRun); err != nil {
+		if err := runner.Run(tasksFile, taskName, setRunnerVariables, dryRun, authentication); err != nil {
 			message.Fatalf(err, "Failed to run action: %s", err.Error())
 		}
 	},
@@ -169,7 +172,7 @@ func ListAutoCompleteTasks(_ *cobra.Command, _ []string, _ string) ([]string, co
 	return taskNames, cobra.ShellCompDirectiveNoFileComp
 }
 
-func listTasksFromIncludes(rows *[][]string, tasksFile types.TasksFile) error {
+func listTasksFromIncludes(rows *[][]string, tasksFile types.TasksFile, authentication map[string]string) error {
 	var includedTasksFile types.TasksFile
 
 	variableConfig := runner.GetMaruVariableConfig()
@@ -189,7 +192,7 @@ func listTasksFromIncludes(rows *[][]string, tasksFile types.TasksFile) error {
 			}
 			// check if included file is a url
 			if helpers.IsURL(includeFileLocation) {
-				includedTasksFile = loadTasksFromRemoteIncludes(includeFileLocation)
+				includedTasksFile = loadTasksFromRemoteIncludes(includeFileLocation, authentication)
 			} else {
 				includedTasksFile = loadTasksFromLocalIncludes(includeFileLocation)
 			}
@@ -202,11 +205,24 @@ func listTasksFromIncludes(rows *[][]string, tasksFile types.TasksFile) error {
 	return nil
 }
 
-func loadTasksFromRemoteIncludes(includeFileLocation string) types.TasksFile {
+func loadTasksFromRemoteIncludes(includeFileLocation string, authentication map[string]string) types.TasksFile {
 	var includedTasksFile types.TasksFile
 
 	// Send an HTTP GET request to fetch the content of the remote file
-	resp, err := http.Get(includeFileLocation)
+	req, err := http.NewRequest("GET", includeFileLocation, nil)
+	if err != nil {
+		message.Fatalf(err, "Error fetching %s", includeFileLocation)
+	}
+
+	parsedLocation, err := url.Parse(includeFileLocation)
+	if err != nil {
+		message.Fatalf(err, "Error fetching %s", includeFileLocation)
+	}
+	if token, ok := authentication[parsedLocation.Host]; ok {
+		req.Header.Add("Authentication", fmt.Sprintf("Bearer %s", token))
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		message.Fatalf(err, "Error fetching %s", includeFileLocation)
 	}
