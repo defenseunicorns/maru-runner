@@ -219,7 +219,8 @@ func loadTasksFromRemoteIncludes(includeFileLocation string, authentication map[
 		message.Fatalf(err, "Error fetching %s", includeFileLocation)
 	}
 	if token, ok := authentication[parsedLocation.Host]; ok {
-		req.Header.Add("Authentication", fmt.Sprintf("Bearer %s", token))
+		fmt.Println(token)
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 	}
 
 	resp, err := http.DefaultClient.Do(req)
@@ -227,6 +228,10 @@ func loadTasksFromRemoteIncludes(includeFileLocation string, authentication map[
 		message.Fatalf(err, "Error fetching %s", includeFileLocation)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		message.Fatalf(nil, resp.Status)
+	}
 
 	// Read the content of the response body
 	body, err := io.ReadAll(resp.Body)

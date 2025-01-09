@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/config/lang"
 	"github.com/spf13/cobra"
 	"github.com/zalando/go-keyring"
@@ -52,7 +51,4 @@ var loginCmd = &cobra.Command{
 func init() {
 	initViper()
 	rootCmd.AddCommand(loginCmd)
-	runFlags := runCmd.Flags()
-	runFlags.StringVarP(&config.TaskFileLocation, "file", "f", config.TasksYAML, lang.CmdRunFlag)
-	runFlags.BoolVar(&dryRun, "dry-run", false, lang.CmdRunDryRun)
 }
