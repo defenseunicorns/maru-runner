@@ -27,7 +27,7 @@ const (
 )
 
 // Regex to match the GitLab repo files api, test: https://regex101.com/r/mBXuyM/1
-var gitlabAPIRegex = regexp.MustCompile(`\/api\/v4\/projects\/(?P<repoId>\d+)\/repository\/files\/(?P<path>[^\/]+)\/raw`)
+var gitlabAPIRegex = regexp.MustCompile(`\/api\/v4\/projects\/(?P<repoID>\d+)\/repository\/files\/(?P<path>[^\/]+)\/raw`)
 
 // UseLogFile writes output to stderr and a logFile.
 func UseLogFile() error {
@@ -122,13 +122,13 @@ func JoinURLPath(currentURLPath, includeFilePath string) (string, error) {
 		return path.Join(path.Dir(currentURLPath), includeFilePath), nil
 	}
 	escapedPath := get("path")
-	repoId := get("repoId")
+	repoID := get("repoID")
 	unescapedPath, err := url.PathUnescape(escapedPath)
 	if err != nil {
 		return "", nil
 	}
 	joinedPath := path.Join(path.Dir(unescapedPath), includeFilePath)
-	return fmt.Sprintf("/api/v4/projects/%s/repository/files/%s/raw", repoId, url.PathEscape(joinedPath)), nil
+	return fmt.Sprintf("/api/v4/projects/%s/repository/files/%s/raw", repoID, url.PathEscape(joinedPath)), nil
 }
 
 // DownloadToFile downloads a given URL to the target filepath
