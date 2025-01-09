@@ -171,22 +171,3 @@ func ReadRemoteYaml(location string, authentication map[string]string, destConfi
 
 	return nil
 }
-
-func parseChecksum(src string) (string, string, error) {
-	atSymbolCount := strings.Count(src, "@")
-	var checksum string
-	if atSymbolCount > 0 {
-		parsed, err := url.Parse(src)
-		if err != nil {
-			return src, checksum, fmt.Errorf("unable to parse the URL: %s", src)
-		}
-		if atSymbolCount == 1 && parsed.User != nil {
-			return src, checksum, nil
-		}
-
-		index := strings.LastIndex(src, "@")
-		checksum = src[index+1:]
-		src = src[:index]
-	}
-	return src, checksum, nil
-}
