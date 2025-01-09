@@ -144,7 +144,6 @@ func ReadRemoteYaml(location string, authentication map[string]string, destConfi
 		return fmt.Errorf("failed parsing URL %s: %w", location, err)
 	}
 	if token, ok := authentication[parsedLocation.Host]; ok {
-		fmt.Println(token)
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 	}
 
