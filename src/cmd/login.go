@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -22,8 +23,24 @@ var token string
 // tokenStdIn controls whether to pull the token from standard in
 var tokenStdIn bool
 
+var authCmd = &cobra.Command{
+	Use: "auth COMMAND",
+	PersistentPreRun: func(cmd *cobra.Command, _ []string) {
+		exitOnInterrupt()
+		cliSetup()
+	},
+	Short: lang.CmdAuthShort,
+	Run: func(cmd *cobra.Command, _ []string) {
+		_, _ = fmt.Fprintln(os.Stderr)
+		err := cmd.Help()
+		if err != nil {
+			message.Fatalf(err, "error calling help command")
+		}
+	},
+}
+
 var loginCmd = &cobra.Command{
-	Use: "login host",
+	Use: "login HOST",
 	PersistentPreRun: func(_ *cobra.Command, _ []string) {
 		exitOnInterrupt()
 		cliSetup()
@@ -44,6 +61,10 @@ var loginCmd = &cobra.Command{
 			token = strings.TrimSuffix(token, "\r")
 		}
 
+		if token == "" {
+			message.Fatalf(nil, "Received empty token - did you mean 'maru auth logout'?")
+		}
+
 		err := keyring.Set(config.KeyringService, host, token)
 		if err != nil {
 			message.Fatalf(err, "Unable to set the token for %s in the keyring: %s", host, err.Error())
@@ -51,10 +72,32 @@ var loginCmd = &cobra.Command{
 	},
 }
 
+var logoutCmd = &cobra.Command{
+	Use: "logout HOST",
+	PersistentPreRun: func(_ *cobra.Command, _ []string) {
+		exitOnInterrupt()
+		cliSetup()
+	},
+	Short:             lang.CmdLoginShort,
+	ValidArgsFunction: ListAutoCompleteTasks,
+	Args:              cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		host := args[0]
+
+		err := keyring.Delete(config.KeyringService, host)
+		if err != nil {
+			message.Fatalf(err, "Unable to remove the token for %s in the keyring: %s", host, err.Error())
+		}
+	},
+}
+
 func init() {
 	initViper()
-	rootCmd.AddCommand(loginCmd)
+	rootCmd.AddCommand(authCmd)
+	authCmd.AddCommand(loginCmd)
 	loginFlags := loginCmd.Flags()
 	loginFlags.StringVarP(&token, "token", "t", "", lang.CmdLoginTokenFlag)
 	loginFlags.BoolVar(&tokenStdIn, "token-stdin", false, lang.CmdLoginTokenStdInFlag)
+
+	authCmd.AddCommand(logoutCmd)
 }

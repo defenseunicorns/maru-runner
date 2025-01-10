@@ -62,7 +62,7 @@ func doAllTheThings(m *testing.M) (int, error) {
 	}
 
 	if gitlabToken, ok := os.LookupEnv("MARU_GITLAB_TOKEN"); ok {
-		_, _, err := e2e.Maru("login", "gitlab.com", "-t", gitlabToken)
+		_, _, err := e2e.Maru("auth", "login", "gitlab.com", "-t", gitlabToken)
 		if err != nil {
 			return 1, fmt.Errorf("unable to run login command for gitlab.com: %w", err)
 		}
