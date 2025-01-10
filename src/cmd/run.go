@@ -64,14 +64,9 @@ var runCmd = &cobra.Command{
 		exitOnInterrupt()
 		cliSetup()
 	},
-	Short:             lang.RootCmdShort,
+	Short:             lang.CmdRunShort,
 	ValidArgsFunction: ListAutoCompleteTasks,
-	Args: func(_ *cobra.Command, args []string) error {
-		if len(args) > 1 {
-			return fmt.Errorf("accepts 0 or 1 arg(s), received %d", len(args))
-		}
-		return nil
-	},
+	Args:              cobra.MaximumNArgs(1),
 	Run: func(_ *cobra.Command, args []string) {
 		var tasksFile types.TasksFile
 

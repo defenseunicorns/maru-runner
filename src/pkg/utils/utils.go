@@ -14,10 +14,12 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/defenseunicorns/pkg/helpers/v2"
 	goyaml "github.com/goccy/go-yaml"
 	"github.com/pterm/pterm"
+	"github.com/zalando/go-keyring"
 )
 
 const (
@@ -167,6 +169,13 @@ func ReadRemoteYaml(location string, authentication map[string]string, destConfi
 	}
 	if token, ok := authentication[parsedLocation.Host]; ok {
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+	} else {
+		token, err := keyring.Get(config.KeyringService, parsedLocation.Host)
+		if err != nil {
+			message.SLog.Debug(fmt.Sprintf("unable to lookup host %s in keyring: %s", parsedLocation.Host, err.Error()))
+		} else {
+			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		}
 	}
 	req.Header.Add("Accept", "application/vnd.github.raw+json")
 

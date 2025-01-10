@@ -5,50 +5,56 @@
 package cmd
 
 import (
-	"fmt"
-	"log"
+	"io"
+	"os"
+	"strings"
 
+	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/config/lang"
+	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/spf13/cobra"
 	"github.com/zalando/go-keyring"
 )
 
+// token is the token to save for the given host
+var token string
+
+// tokenStdIn controls whether to pull the token from standard in
+var tokenStdIn bool
+
 var loginCmd = &cobra.Command{
-	Use: "login",
+	Use: "login host",
 	PersistentPreRun: func(_ *cobra.Command, _ []string) {
 		exitOnInterrupt()
 		cliSetup()
 	},
-	Short:             lang.RootCmdShort,
+	Short:             lang.CmdLoginShort,
 	ValidArgsFunction: ListAutoCompleteTasks,
-	Args: func(_ *cobra.Command, args []string) error {
-		if len(args) > 1 {
-			return fmt.Errorf("accepts 0 or 1 arg(s), received %d", len(args))
-		}
-		return nil
-	},
+	Args:              cobra.ExactArgs(1),
 	Run: func(_ *cobra.Command, args []string) {
-		service := "my-app"
-		user := "anon"
-		password := "secret"
+		host := args[0]
 
-		// set password
-		err := keyring.Set(service, user, password)
-		if err != nil {
-			log.Fatal(err)
+		if tokenStdIn {
+			stdin, err := io.ReadAll(os.Stdin)
+			if err != nil {
+				message.Fatalf(err, "Unable to read the token from standard input: %s", err.Error())
+			}
+
+			token = strings.TrimSuffix(string(stdin), "\n")
+			token = strings.TrimSuffix(token, "\r")
 		}
 
-		// get password
-		secret, err := keyring.Get(service, user)
+		err := keyring.Set(config.KeyringService, host, token)
 		if err != nil {
-			log.Fatal(err)
+			message.Fatalf(err, "Unable to set the token for %s in the keyring: %s", host, err.Error())
 		}
-
-		log.Println(secret)
 	},
 }
 
 func init() {
 	initViper()
 	rootCmd.AddCommand(loginCmd)
+	loginFlags := loginCmd.Flags()
+	loginFlags.StringVarP(&token, "token", "t", "", lang.CmdLoginTokenFlag)
+	loginFlags.BoolVar(&tokenStdIn, "token-stdin", false, lang.CmdLoginTokenStdInFlag)
 }
