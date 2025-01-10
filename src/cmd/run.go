@@ -91,8 +91,6 @@ var runCmd = &cobra.Command{
 			}
 		}
 
-		authentication := v.GetStringMapString(V_AUTHENTICATION)
-
 		listFormat := listTasks
 		if listAllTasks != listOff {
 			listFormat = listAllTasks
@@ -106,7 +104,7 @@ var runCmd = &cobra.Command{
 
 			// If ListAllTasks, add tasks from included files
 			if listAllTasks != listOff {
-				err = listTasksFromIncludes(&rows, tasksFile, authentication)
+				err = listTasksFromIncludes(&rows, tasksFile)
 				if err != nil {
 					message.Fatalf(err, "Cannot list tasks: %s", err.Error())
 				}
@@ -136,7 +134,7 @@ var runCmd = &cobra.Command{
 		if len(args) > 0 {
 			taskName = args[0]
 		}
-		if err := runner.Run(tasksFile, taskName, setRunnerVariables, dryRun, authentication); err != nil {
+		if err := runner.Run(tasksFile, taskName, setRunnerVariables, dryRun); err != nil {
 			message.Fatalf(err, "Failed to run action: %s", err.Error())
 		}
 	},
@@ -162,7 +160,7 @@ func ListAutoCompleteTasks(_ *cobra.Command, _ []string, _ string) ([]string, co
 	return taskNames, cobra.ShellCompDirectiveNoFileComp
 }
 
-func listTasksFromIncludes(rows *[][]string, tasksFile types.TasksFile, authentication map[string]string) error {
+func listTasksFromIncludes(rows *[][]string, tasksFile types.TasksFile) error {
 	variableConfig := runner.GetMaruVariableConfig()
 	err := variableConfig.PopulateVariables(tasksFile.Variables, setRunnerVariables)
 	if err != nil {
@@ -179,7 +177,7 @@ func listTasksFromIncludes(rows *[][]string, tasksFile types.TasksFile, authenti
 				includeFileLocation = utils.TemplateString(variableConfig.GetSetVariables(), includeFileLocation)
 			}
 
-			_, includedTasksFile, err := runner.LoadIncludeTask(config.TaskFileLocation, includeFileLocation, authentication)
+			_, includedTasksFile, err := runner.LoadIncludeTask(config.TaskFileLocation, includeFileLocation)
 			if err != nil {
 				message.Fatalf(err, "Error listing tasks: %s", err.Error())
 			}

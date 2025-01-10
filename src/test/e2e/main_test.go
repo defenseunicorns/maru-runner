@@ -61,6 +61,13 @@ func doAllTheThings(m *testing.M) (int, error) {
 		return 1, fmt.Errorf("maru binary %s not found", e2e.MaruBinPath)
 	}
 
+	if gitlabToken, ok := os.LookupEnv("MARU_GITLAB_TOKEN"); ok {
+		_, _, err := e2e.Maru("login", "gitlab.com", "-t", gitlabToken)
+		if err != nil {
+			return 1, fmt.Errorf("unable to run login command for gitlab.com: %w", err)
+		}
+	}
+
 	// Run the tests, with the cluster cleanup being deferred to the end of the function call
 	returnCode := m.Run()
 
