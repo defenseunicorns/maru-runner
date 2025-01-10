@@ -5,8 +5,8 @@ go 1.21.8
 require (
 	github.com/defenseunicorns/pkg/exec v0.0.1
 	github.com/defenseunicorns/pkg/helpers/v2 v2.0.1
-	github.com/goccy/go-yaml v1.15.11
-	github.com/invopop/jsonschema v0.12.0
+	github.com/goccy/go-yaml v1.15.13
+	github.com/invopop/jsonschema v0.13.0
 	github.com/pterm/pterm v0.12.79
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
