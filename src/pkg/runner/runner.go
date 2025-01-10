@@ -222,7 +222,7 @@ func includeTaskAbsLocation(currentFileLocation, includeFileLocation string) (st
 			if err != nil {
 				return absIncludeFileLocation, err
 			}
-			currentURL.Path, err = utils.JoinURLPath(currentURL.Path, includeFileLocation)
+			currentURL, err = utils.JoinURLRepoPath(currentURL, includeFileLocation)
 			if err != nil {
 				return "", err
 			}

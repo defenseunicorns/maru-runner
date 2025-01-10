@@ -115,20 +115,42 @@ func MakeTempDir(basePath string) (string, error) {
 	return tmp, nil
 }
 
-// JoinURLPath joins a path in a URL (detecting the URL type)
-func JoinURLPath(currentURLPath, includeFilePath string) (string, error) {
-	get, err := helpers.MatchRegex(gitlabAPIRegex, currentURLPath)
-	if err != nil {
-		return path.Join(path.Dir(currentURLPath), includeFilePath), nil
+// JoinURLRepoPath joins a path in a URL (detecting the URL type)
+func JoinURLRepoPath(currentURL *url.URL, includeFilePath string) (*url.URL, error) {
+	currPath := currentURL.Path
+	if currentURL.RawPath != "" {
+		currPath = currentURL.RawPath
 	}
+
+	var joinedPath string
+
+	get, err := helpers.MatchRegex(gitlabAPIRegex, currPath)
+	if err != nil {
+		joinedPath = path.Join(path.Dir(currPath), includeFilePath)
+		if currentURL.RawPath == "" {
+			currentURL.Path = joinedPath
+		} else {
+			currentURL.Path, err = url.PathUnescape(joinedPath)
+			if err != nil {
+				return currentURL, err
+			}
+			currentURL.RawPath = joinedPath
+		}
+		return currentURL, nil
+	}
+
 	escapedPath := get("path")
 	repoID := get("repoID")
 	unescapedPath, err := url.PathUnescape(escapedPath)
 	if err != nil {
-		return "", nil
+		return currentURL, err
 	}
-	joinedPath := path.Join(path.Dir(unescapedPath), includeFilePath)
-	return fmt.Sprintf("/api/v4/projects/%s/repository/files/%s/raw", repoID, url.PathEscape(joinedPath)), nil
+
+	joinedPath = path.Join(path.Dir(unescapedPath), includeFilePath)
+	currentURL.Path = fmt.Sprintf("/api/v4/projects/%s/repository/files/%s/raw", repoID, joinedPath)
+	currentURL.RawPath = fmt.Sprintf("/api/v4/projects/%s/repository/files/%s/raw", repoID, url.PathEscape(joinedPath))
+
+	return currentURL, nil
 }
 
 // ReadRemoteYaml makes a get request to retrieve a given file from a URL
@@ -146,6 +168,7 @@ func ReadRemoteYaml(location string, authentication map[string]string, destConfi
 	if token, ok := authentication[parsedLocation.Host]; ok {
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 	}
+	req.Header.Add("Accept", "application/vnd.github.raw+json")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

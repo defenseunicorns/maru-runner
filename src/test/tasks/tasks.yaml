@@ -2,6 +2,10 @@ includes:
   - foo: ./more-tasks/foo.yaml
   - intentional: ./loop-task.yaml
   - remote: https://raw.githubusercontent.com/defenseunicorns/maru-runner/${GIT_REVISION}/src/test/tasks/remote-import-tasks.yaml
+  # This tests that Maru uses the correct Accept Header for the GitHub API when that is used
+  - remote-api: https://api.github.com/repos/defenseunicorns/maru-runner/contents/src/test/tasks/remote-import-tasks.yaml?ref=${GIT_REVISION}
+  # This tests that Maru properly handles authenitcation and GitLab paths (which are URL encoded)
+  - remote-gitlab: https://gitlab.com/api/v4/projects/66014760/repository/files/tasks%2Eyaml/raw
 
 variables:
   - name: REPLACE_ME
