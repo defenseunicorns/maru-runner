@@ -25,7 +25,7 @@ var tokenStdIn bool
 
 var authCmd = &cobra.Command{
 	Use: "auth COMMAND",
-	PersistentPreRun: func(cmd *cobra.Command, _ []string) {
+	PersistentPreRun: func(_ *cobra.Command, _ []string) {
 		exitOnInterrupt()
 		cliSetup()
 	},

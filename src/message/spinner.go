@@ -19,6 +19,7 @@ var activeSpinner *Spinner
 
 var sequence = []string{" ⬒ ", " ⬔ ", " ◨ ", " ◪ ", " ⬓ ", " ⬕ ", " ◧ ", " ◩ "}
 
+// NoProgress sets whether the default spinners and progress bars should use fancy animations
 var NoProgress bool
 
 // Spinner is a wrapper around pterm.SpinnerPrinter.
