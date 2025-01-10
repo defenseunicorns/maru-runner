@@ -165,12 +165,13 @@ func (r *Runner) importTasks(includes []map[string]string, currentFileLocation s
 				if existingLocation, exists := r.existingTaskIncludeNameLocation[newIncludeKey]; !exists {
 					newIncludes = append(newIncludes, map[string]string{newIncludeKey: newIncludeLocation})
 				} else {
+					newIncludeLocation = utils.TemplateString(r.variableConfig.GetSetVariables(), newIncludeLocation)
 					newAbsIncludeFileLocation, err := includeTaskAbsLocation(absIncludeFileLocation, newIncludeLocation)
 					if err != nil {
 						return err
 					}
 					if existingLocation != newAbsIncludeFileLocation {
-						return fmt.Errorf("task include %q attempted to be redefined from %q to %q", includeKey, existingLocation, newAbsIncludeFileLocation)
+						return fmt.Errorf("task include %q attempted to be redefined from %q to %q", newIncludeKey, existingLocation, newAbsIncludeFileLocation)
 					}
 				}
 			}

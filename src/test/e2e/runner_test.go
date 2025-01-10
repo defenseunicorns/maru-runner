@@ -264,7 +264,7 @@ func TestTaskRunner(t *testing.T) {
 		require.Contains(t, stdOut, "Test that env vars take precedence")
 		require.Contains(t, stdOut, "foo:foobar")
 		require.Contains(t, stdOut, "remote:echo-var")
-		require.Contains(t, stdOut, "remote-api:echo-var")
+		require.Contains(t, stdOut, "remote-api:non-default")
 	})
 
 	t.Run("run --list=md tasks", func(t *testing.T) {
