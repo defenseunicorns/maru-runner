@@ -334,6 +334,28 @@ run import-local
 run local:some-local-task
 ```
 
+#### Authenticated Includes
+
+Some included remote task files may require authentication to access - to access these you can use the `maru auth login` command to add a personal access token (bearer auth) to your computer keychain.
+
+Below is an example of how to use the login command for the above remote:
+
+```bash
+gh auth token | maru auth login raw.githubusercontent.com --token-stdin
+```
+
+If you wish to remove a token for a given host you can run the `maru auth logout` command:
+
+```bash
+maru auth logout raw.githubusercontent.com
+```
+
+If you are running Maru on a headless system without a keyring provider you can also specify the `host:token` key-value pairs in the `MARU_AUTH` environment variable as a JSON object or in the `options.auth` section of the Maru config file:
+
+```bash
+export MARU_AUTH="{\"raw.githubusercontent.com\": \"$(gh auth token)\"}"
+```
+
 ### Task Inputs and Reusable Tasks
 
 Although all tasks should be reusable, sometimes you may want to create a task that can be reused with different inputs. To create a reusable task that requires inputs, add an `inputs` key with a map of inputs to the task:

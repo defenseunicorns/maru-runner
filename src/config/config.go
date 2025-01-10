@@ -10,6 +10,9 @@ const (
 
 	// EnvPrefix is the prefix for environment variables
 	EnvPrefix = "MARU"
+
+	// KeyringService is the name given to the service Maru uses in the Keyring
+	KeyringService = "com.defenseunicorns.maru"
 )
 
 var (

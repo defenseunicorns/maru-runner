@@ -79,7 +79,7 @@ func (r *Runner) processAction(task types.Task, action types.Action) bool {
 	// don't need to process if the action.TaskReference is empty or if the task and action references are the same since
 	// that indicates the task and task in the action are in the same file
 	if action.TaskReference != "" && (taskReferenceName != actionReferenceName) {
-		for _, task := range r.TasksFile.Tasks {
+		for _, task := range r.tasksFile.Tasks {
 			// check if TasksFile.Tasks already includes tasks with given reference name, which indicates that the
 			// reference has already been processed.
 			if strings.Contains(task.Name, taskReferenceName+":") || strings.Contains(task.Name, actionReferenceName+":") {

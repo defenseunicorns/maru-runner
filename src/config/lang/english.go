@@ -46,12 +46,22 @@ const (
 
 // Run
 const (
+	CmdRunShort       = "Runs a specified task from a task file"
 	CmdRunFlag        = "Name and location of task file to run"
 	CmdRunSetVarFlag  = "Set a runner variable from the command line (KEY=value)"
 	CmdRunWithVarFlag = "Set the inputs for a task from the command line (KEY=value)"
 	CmdRunList        = "List available tasks in a task file"
 	CmdRunListAll     = "List all available tasks in a task file, including tasks from included files"
 	CmdRunDryRun      = "Validate the task without actually running any commands"
+)
+
+// Auth
+const (
+	CmdAuthShort           = "[beta] Authentication commands for pulling private remote task files"
+	CmdLoginShort          = "[beta] Adds a token for a given host to your keyring"
+	CmdLoginTokenFlag      = "The personal access token (bearer) you would like to save"
+	CmdLoginTokenStdInFlag = "Whether to pull the token from standard input"
+	CmdLogoutShort         = "[beta] Removes a token for a given host from your keyring"
 )
 
 // Common Errors

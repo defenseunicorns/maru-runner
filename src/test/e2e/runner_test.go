@@ -147,6 +147,15 @@ func TestTaskRunner(t *testing.T) {
 		require.Contains(t, stdErr, "baz")
 	})
 
+	t.Run("run remote-import gitlab", func(t *testing.T) {
+		t.Parallel()
+
+		stdOut, stdErr, err := e2e.Maru("run", "remote-gitlab:hello", "--file", "src/test/tasks/tasks.yaml")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "hello")
+		require.Contains(t, stdErr, "kitteh")
+	})
+
 	t.Run("run rerun-tasks", func(t *testing.T) {
 		t.Parallel()
 		stdOut, stdErr, err := e2e.Maru("run", "rerun-tasks", "--file", "src/test/tasks/tasks.yaml")
@@ -255,6 +264,7 @@ func TestTaskRunner(t *testing.T) {
 		require.Contains(t, stdOut, "Test that env vars take precedence")
 		require.Contains(t, stdOut, "foo:foobar")
 		require.Contains(t, stdOut, "remote:echo-var")
+		require.Contains(t, stdOut, "remote-api:non-default")
 	})
 
 	t.Run("run --list=md tasks", func(t *testing.T) {

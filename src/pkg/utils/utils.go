@@ -10,20 +10,24 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
+	"path"
 	"regexp"
 	"strings"
 
-	"github.com/defenseunicorns/maru-runner/src/config/lang"
+	"github.com/defenseunicorns/maru-runner/src/config"
 	"github.com/defenseunicorns/maru-runner/src/message"
 	"github.com/defenseunicorns/pkg/helpers/v2"
 	goyaml "github.com/goccy/go-yaml"
 	"github.com/pterm/pterm"
+	"github.com/zalando/go-keyring"
 )
 
 const (
 	tmpPathPrefix = "maru-"
 )
+
+// Regex to match the GitLab repo files api, test: https://regex101.com/r/mBXuyM/1
+var gitlabAPIRegex = regexp.MustCompile(`\/api\/v4\/projects\/(?P<repoID>\d+)\/repository\/files\/(?P<path>[^\/]+)\/raw`)
 
 // UseLogFile writes output to stderr and a logFile.
 func UseLogFile() error {
@@ -84,12 +88,14 @@ func ReadYaml(path string, destConfig any) error {
 	if err != nil {
 		return fmt.Errorf("cannot %s", err.Error())
 	}
+
 	err = goyaml.Unmarshal(file, destConfig)
 	if err != nil {
 		errStr := err.Error()
 		lines := strings.SplitN(errStr, "\n", 2)
 		return fmt.Errorf("cannot unmarshal %s: %s", path, lines[0])
 	}
+
 	return nil
 }
 
@@ -111,91 +117,89 @@ func MakeTempDir(basePath string) (string, error) {
 	return tmp, nil
 }
 
-// DownloadToFile downloads a given URL to the target filepath
-func DownloadToFile(src string, dst string) (err error) {
-	message.SLog.Debug(fmt.Sprintf("Downloading %s to %s", src, dst))
-	// check if the parsed URL has a checksum
-	// if so, remove it and use the checksum to validate the file
-	src, checksum, err := parseChecksum(src)
-	if err != nil {
-		return err
+// JoinURLRepoPath joins a path in a URL (detecting the URL type)
+func JoinURLRepoPath(currentURL *url.URL, includeFilePath string) (*url.URL, error) {
+	currPath := currentURL.Path
+	if currentURL.RawPath != "" {
+		currPath = currentURL.RawPath
 	}
 
-	err = helpers.CreateDirectory(filepath.Dir(dst), helpers.ReadWriteExecuteUser)
-	if err != nil {
-		return fmt.Errorf(lang.ErrCreatingDir, filepath.Dir(dst), err.Error())
-	}
+	var joinedPath string
 
-	// Create the file
-	file, err := os.Create(dst)
+	get, err := helpers.MatchRegex(gitlabAPIRegex, currPath)
 	if err != nil {
-		return fmt.Errorf(lang.ErrWritingFile, dst, err.Error())
-	}
-	defer file.Close()
-
-	err = httpGetFile(src, file)
-	if err != nil {
-		return err
-	}
-
-	// If the file has a checksum, validate it
-	if len(checksum) > 0 {
-		received, err := helpers.GetSHA256OfFile(dst)
-		if err != nil {
-			return err
+		joinedPath = path.Join(path.Dir(currPath), includeFilePath)
+		if currentURL.RawPath == "" {
+			currentURL.Path = joinedPath
+		} else {
+			currentURL.Path, err = url.PathUnescape(joinedPath)
+			if err != nil {
+				return currentURL, err
+			}
+			currentURL.RawPath = joinedPath
 		}
-		if received != checksum {
-			return fmt.Errorf("shasum mismatch for file %s: expected %s, got %s ", dst, checksum, received)
-		}
+		return currentURL, nil
 	}
 
-	return nil
+	escapedPath := get("path")
+	repoID := get("repoID")
+	unescapedPath, err := url.PathUnescape(escapedPath)
+	if err != nil {
+		return currentURL, err
+	}
+
+	joinedPath = path.Join(path.Dir(unescapedPath), includeFilePath)
+	currentURL.Path = fmt.Sprintf("/api/v4/projects/%s/repository/files/%s/raw", repoID, joinedPath)
+	currentURL.RawPath = fmt.Sprintf("/api/v4/projects/%s/repository/files/%s/raw", repoID, url.PathEscape(joinedPath))
+
+	return currentURL, nil
 }
 
-func httpGetFile(url string, destinationFile *os.File) error {
-	// Get the data
-	resp, err := http.Get(url)
+// ReadRemoteYaml makes a get request to retrieve a given file from a URL
+func ReadRemoteYaml(location string, destConfig any, auth map[string]string) (err error) {
+	// Send an HTTP GET request to fetch the content of the remote file
+	req, err := http.NewRequest("GET", location, nil)
 	if err != nil {
-		return fmt.Errorf("unable to download the file %s", url)
+		return fmt.Errorf("unable to initialize request for %s: %w", location, err)
+	}
+
+	parsedLocation, err := url.Parse(location)
+	if err != nil {
+		return fmt.Errorf("failed parsing URL %s: %w", location, err)
+	}
+	if token, ok := auth[parsedLocation.Host]; ok {
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+	} else {
+		token, err := keyring.Get(config.KeyringService, parsedLocation.Host)
+		if err != nil {
+			message.SLog.Debug(fmt.Sprintf("unable to lookup host %s in keyring: %s", parsedLocation.Host, err.Error()))
+		} else {
+			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		}
+	}
+	req.Header.Add("Accept", "application/vnd.github.raw+json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("unable to make request for %s: %w", location, err)
 	}
 	defer resp.Body.Close()
 
-	// Check server response
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad HTTP status: %s", resp.Status)
+		return fmt.Errorf("failed getting %s: %s", location, resp.Status)
 	}
 
-	// Writer the body to file
-	title := fmt.Sprintf("Downloading %s", filepath.Base(url))
-	progressBar := message.NewProgressBar(resp.ContentLength, title)
-
-	if _, err = io.Copy(destinationFile, io.TeeReader(resp.Body, progressBar)); err != nil {
-		message.SLog.Debug(err.Error())
-		progressBar.Failf("Unable to save the file %s", destinationFile.Name())
-		return err
+	// Read the content of the response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed reading contents of %s: %w", location, err)
 	}
 
-	title = fmt.Sprintf("Downloaded %s", url)
-	progressBar.Successf("%s", title)
+	// Deserialize the content into the includedTasksFile
+	err = goyaml.Unmarshal(body, destConfig)
+	if err != nil {
+		return fmt.Errorf("failed unmarshalling contents of %s: %w", location, err)
+	}
 
 	return nil
-}
-
-func parseChecksum(src string) (string, string, error) {
-	atSymbolCount := strings.Count(src, "@")
-	var checksum string
-	if atSymbolCount > 0 {
-		parsed, err := url.Parse(src)
-		if err != nil {
-			return src, checksum, fmt.Errorf("unable to parse the URL: %s", src)
-		}
-		if atSymbolCount == 1 && parsed.User != nil {
-			return src, checksum, nil
-		}
-
-		index := strings.LastIndex(src, "@")
-		checksum = src[index+1:]
-		src = src[:index]
-	}
-	return src, checksum, nil
 }
