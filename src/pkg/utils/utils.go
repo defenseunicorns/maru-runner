@@ -156,7 +156,7 @@ func JoinURLRepoPath(currentURL *url.URL, includeFilePath string) (*url.URL, err
 }
 
 // ReadRemoteYaml makes a get request to retrieve a given file from a URL
-func ReadRemoteYaml(location string, destConfig any) (err error) {
+func ReadRemoteYaml(location string, destConfig any, auth map[string]string) (err error) {
 	// Send an HTTP GET request to fetch the content of the remote file
 	req, err := http.NewRequest("GET", location, nil)
 	if err != nil {
@@ -167,11 +167,15 @@ func ReadRemoteYaml(location string, destConfig any) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed parsing URL %s: %w", location, err)
 	}
-	token, err := keyring.Get(config.KeyringService, parsedLocation.Host)
-	if err != nil {
-		message.SLog.Debug(fmt.Sprintf("unable to lookup host %s in keyring: %s", parsedLocation.Host, err.Error()))
-	} else {
+	if token, ok := auth[parsedLocation.Host]; ok {
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+	} else {
+		token, err := keyring.Get(config.KeyringService, parsedLocation.Host)
+		if err != nil {
+			message.SLog.Debug(fmt.Sprintf("unable to lookup host %s in keyring: %s", parsedLocation.Host, err.Error()))
+		} else {
+			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		}
 	}
 	req.Header.Add("Accept", "application/vnd.github.raw+json")
 

@@ -22,6 +22,7 @@ const (
 	V_NO_PROGRESS  = "options.no_progress"
 	V_NO_LOG_FILE  = "options.no_log_file"
 	V_TMP_DIR      = "options.tmp_dir"
+	V_AUTH         = "options.auth"
 )
 
 var (

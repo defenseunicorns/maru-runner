@@ -37,7 +37,7 @@ jobs:
         run: |
           make test-e2e
         env:
-          MARU_GITLAB_TOKEN: ${{ secrets.MARU_GITLAB_TOKEN }}
+          MARU_AUTHENTICATION: '{"gitlab.com": "${{ secrets.MARU_GITLAB_TOKEN }}"}'
 
       - name: Save logs
         if: always()

@@ -350,6 +350,12 @@ If you wish to remove a token for a given host you can run the `maru auth logout
 maru auth logout raw.githubusercontent.com
 ```
 
+If you are running Maru on a headless system without a keyring provider you can also specify the `host:token` key-value pairs in the `MARU_AUTH` environment variable as a JSON object or in the `options.auth` section of the Maru config file:
+
+```bash
+export MARU_AUTH="{\"raw.githubusercontent.com\": \"$(gh auth token)\"}"
+```
+
 ### Task Inputs and Reusable Tasks
 
 Although all tasks should be reusable, sometimes you may want to create a task that can be reused with different inputs. To create a reusable task that requires inputs, add an `inputs` key with a map of inputs to the task:
