@@ -422,6 +422,9 @@ Running `maru run len` will print the length of the inputs to `hello-input` and 
 
 #### Command Line Flags
 
+> [!NOTE]
+> The `--with` command line flag is experimental and likely to change as part of a comprehensive overhaul of the inputs/variables design.
+
 When creating a task with `inputs` you can also use the `--with` command line flag. Given the `length-of-inputs` task documented above, you can also run:
 
 ```shell
