@@ -49,7 +49,7 @@ const (
 	CmdRunShort       = "Runs a specified task from a task file"
 	CmdRunFlag        = "Name and location of task file to run"
 	CmdRunSetVarFlag  = "Set a runner variable from the command line (KEY=value)"
-	CmdRunWithVarFlag = "Set the inputs for a task from the command line (KEY=value)"
+	CmdRunWithVarFlag = "(experimental) Set the inputs for a task from the command line (KEY=value)"
 	CmdRunList        = "List available tasks in a task file"
 	CmdRunListAll     = "List all available tasks in a task file, including tasks from included files"
 	CmdRunDryRun      = "Validate the task without actually running any commands"

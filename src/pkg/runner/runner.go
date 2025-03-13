@@ -30,7 +30,7 @@ type Runner struct {
 }
 
 // Run runs a task from tasks file
-func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]string, dryRun bool, auth map[string]string) error {
+func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]string, withInputs map[string]string, dryRun bool, auth map[string]string) error {
 	if dryRun {
 		message.SLog.Info("Dry-run has been set - only printing the commands that would run:")
 	}
@@ -73,8 +73,8 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 		return err
 	}
 
-	// Check that this task is a valid task we can call (i.e. has defaults for any inputs since those cannot be set on the CLI)
-	if err := validateActionableTaskCall(task.Name, task.Inputs, nil); err != nil {
+	// Check that this task is a valid task we can call (i.e. has defaults for any unset inputs)
+	if err := validateActionableTaskCall(task.Name, task.Inputs, withInputs); err != nil {
 		return err
 	}
 
@@ -82,7 +82,7 @@ func Run(tasksFile types.TasksFile, taskName string, setVariables map[string]str
 		return err
 	}
 
-	err = runner.executeTask(task, nil)
+	err = runner.executeTask(task, withInputs)
 	return err
 }
 
@@ -278,13 +278,21 @@ func (r *Runner) executeTask(task types.Task, withs map[string]string) error {
 		r.currStackSize--
 	}()
 
-	defaultEnv := []string{}
+	env := []string{}
+	// Load the withs
+	for name, value := range withs {
+		env = append(env, utils.FormatEnvVar(name, value))
+	}
+	// load the default for each input if it has one and it isn't already set from withs
 	for name, inputParam := range task.Inputs {
+		if _, ok := withs[name]; ok {
+			continue
+		}
 		d := inputParam.Default
 		if d == "" {
 			continue
 		}
-		defaultEnv = append(defaultEnv, utils.FormatEnvVar(name, d))
+		env = append(env, utils.FormatEnvVar(name, d))
 	}
 
 	// load the tasks env file into the runner, can override previous task's env files
@@ -293,7 +301,7 @@ func (r *Runner) executeTask(task types.Task, withs map[string]string) error {
 	}
 
 	for _, action := range task.Actions {
-		action.Env = utils.MergeEnv(action.Env, defaultEnv)
+		action.Env = utils.MergeEnv(action.Env, env)
 		if err := r.performAction(action, withs, task.Inputs); err != nil {
 			return err
 		}

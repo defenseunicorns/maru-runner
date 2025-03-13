@@ -58,6 +58,9 @@ var dryRun bool
 // setRunnerVariables provides a map of set variables from the command line
 var setRunnerVariables map[string]string
 
+// withRunnerInputs provides a map of --with inputs from the command line
+var withRunnerInputs map[string]string
+
 var runCmd = &cobra.Command{
 	Use: "run",
 	PersistentPreRun: func(_ *cobra.Command, _ []string) {
@@ -136,7 +139,7 @@ var runCmd = &cobra.Command{
 		if len(args) > 0 {
 			taskName = args[0]
 		}
-		if err := runner.Run(tasksFile, taskName, setRunnerVariables, dryRun, auth); err != nil {
+		if err := runner.Run(tasksFile, taskName, setRunnerVariables, withRunnerInputs, dryRun, auth); err != nil {
 			message.Fatalf(err, "Failed to run action: %s", err.Error())
 		}
 	},
@@ -213,4 +216,6 @@ func init() {
 	runFlags.AddFlag(listAllPFlag)
 
 	runFlags.StringToStringVar(&setRunnerVariables, "set", nil, lang.CmdRunSetVarFlag)
+
+	runFlags.StringToStringVar(&withRunnerInputs, "with", nil, lang.CmdRunWithVarFlag)
 }
