@@ -220,7 +220,7 @@ Variables can be defined in several ways:
          # Or drop the curly brackets
          - cmd: echo $FOO
          # Or use template syntax
-         - cmd: echo ${{.variables.FOO}}
+         - cmd: echo ${{ .variables.FOO }}
    ```
 
 1. As an environment variable prefixed with `MARU_`. In the example above, if you create an env var `MARU_FOO=bar`, then the`FOO` variable would be set to `bar`.
@@ -379,7 +379,7 @@ tasks:
       # to use the input, reference it using INPUT_<INPUT_NAME> in all caps
       - cmd: echo $INPUT_HELLO_INPUT
       # or use template syntax
-      - cmd: echo ${{.inputs.hello-input}}
+      - cmd: echo ${{ .inputs.hello-input }}
 
   - name: use-echo-var
     actions:

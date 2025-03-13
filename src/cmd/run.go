@@ -58,7 +58,7 @@ var dryRun bool
 // setRunnerVariables provides a map of set variables from the command line
 var setRunnerVariables map[string]string
 
-// withRunnerInputs provides a map of --with variables from the command line
+// withRunnerInputs provides a map of --with inputs from the command line
 var withRunnerInputs map[string]string
 
 var runCmd = &cobra.Command{
