@@ -152,4 +152,10 @@ func TestRunnerInputs(t *testing.T) {
 		require.NoError(t, err, stdOut, stdErr)
 		require.Contains(t, stdErr, "default-value")
 	})
+
+	t.Run("test that using the --with command line flag works", func(t *testing.T) {
+		stdOut, stdErr, err := e2e.Maru("run", "with:command-line-with", "--file", "src/test/tasks/inputs/tasks.yaml", "--with", "input1=input1", "--with", "input3=notthedefault", "--set", "FOO=baz")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "Input1Tmpl: input1 Input1Env: input1 Input2Tmpl: input2 Input2Env: input2 Input3Tmpl: notthedefault Input3Env: notthedefault Var: baz")
+	})
 }

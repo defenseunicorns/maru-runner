@@ -59,3 +59,21 @@ tasks:
   - name: echo-bar
     actions:
       - cmd: echo $BAR
+
+  - name: command-line-with
+    description: Test task that uses the --with flag on the command line
+    inputs:
+      input1:
+        description: some input
+        required: true
+      input2:
+        description: some input
+        required: false
+        default: input2
+      input3:
+        description: some input
+        required: false
+        default: input3
+    actions:
+      - cmd: |
+          echo "Input1Tmpl: ${{.inputs.input1}} Input1Env: $INPUT_INPUT1 Input2Tmpl: ${{.inputs.input2}} Input2Env: ${INPUT_INPUT2} Input3Tmpl: ${{.inputs.input3}} Input3Env: $INPUT_INPUT3 Var: $FOO"

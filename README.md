@@ -217,6 +217,10 @@ Variables can be defined in several ways:
            setVariables:
              - name: FOO
          - cmd: echo ${FOO}
+         # Or drop the curly brackets
+         - cmd: echo $FOO
+         # Or use template syntax
+         - cmd: echo ${{.variables.FOO}}
    ```
 
 1. As an environment variable prefixed with `MARU_`. In the example above, if you create an env var `MARU_FOO=bar`, then the`FOO` variable would be set to `bar`.
@@ -374,6 +378,8 @@ tasks:
     actions:
       # to use the input, reference it using INPUT_<INPUT_NAME> in all caps
       - cmd: echo $INPUT_HELLO_INPUT
+      # or use template syntax
+      - cmd: echo ${{.inputs.hello-input}}
 
   - name: use-echo-var
     actions:
@@ -412,4 +418,12 @@ tasks:
           hello-input: hello unicorn
 ```
 
-Running `run len` will print the length of the inputs to `hello-input` and `another-input` to the console.
+Running `maru run len` will print the length of the inputs to `hello-input` and `another-input` to the console.
+
+#### Command Line Flags
+
+When creating a task with `inputs` you can also use the `--with` command line flag. Given the `length-of-inputs` task documented above, you can also run:
+
+```shell
+maru run length-of-inputs --with hello-input="hello unicorn"
+```
