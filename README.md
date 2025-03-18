@@ -369,8 +369,8 @@ tasks:
   - name: echo-var
     inputs:
       hello-input:
-        default: hello world
         description: This is an input to the echo-var task
+        required: true
       deprecated-input:
         default: foo
         description: this is a input from a previous version of this task
@@ -384,7 +384,7 @@ tasks:
       - cmd: echo ${{ index .inputs "hello-input" }}
       # or use simple template syntax. NOTE: This doesn't work if your input name has any dashes in it.
       - cmd: echo "${{ .inputs.input3 }}"
-      
+
 
   - name: use-echo-var
     actions:
