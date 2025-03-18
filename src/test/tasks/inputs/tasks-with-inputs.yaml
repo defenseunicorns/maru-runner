@@ -84,7 +84,7 @@ tasks:
       not-empty:
         description: An input that should not be empty
         required: true
-        default: ${SOME_NONEXISTANT_ENV_VAR}
+        default: ${SOME_NONEXISTENT_ENV_VAR}
         pattern: ".+"
       not-empty-and-number:
         description: An input that should be a number
