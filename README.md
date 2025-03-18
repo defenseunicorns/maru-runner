@@ -375,11 +375,16 @@ tasks:
         default: foo
         description: this is a input from a previous version of this task
         deprecatedMessage: this input is deprecated, use hello-input instead
+      input3:
+        default: baz
     actions:
       # to use the input, reference it using INPUT_<INPUT_NAME> in all caps
       - cmd: echo $INPUT_HELLO_INPUT
-      # or use template syntax
-      - cmd: echo ${{ .inputs.hello-input }}
+      # or use template "index" syntax
+      - cmd: echo ${{ index .inputs "hello-input" }}
+      # or use simple template syntax. NOTE: This doesn't work if your input name has any dashes in it.
+      - cmd: echo "${{ .inputs.input3 }}"
+      
 
   - name: use-echo-var
     actions:
