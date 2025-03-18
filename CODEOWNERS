@@ -1,10 +1,8 @@
 # This repository is owned by the UDS CLI team
-* @defenseunicorns/uds-cli
-
 # This repository was previously owned by the Software Factory Team who remain
 # here in order to unblock review/release/support while CLI team takes total
 # ownership of the project (2025-03-13 - Dave Worth)
-* @defenseunicorns/swf
+* @defenseunicorns/uds-cli @defenseunicorns/swf
 
 # Additional privileged files
 /CODEOWNERS @jeff-mccoy @daveworth
