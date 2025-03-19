@@ -7,16 +7,22 @@
   ],
   "ignorePaths": [],
   "timezone": "America/New_York",
-  "repositories": ["defenseunicorns/maru-runner"],
+  "repositories": [
+    "defenseunicorns/maru-runner"
+  ],
   "rebaseStalePrs": true,
-  "schedule": ["after 12pm and before 11am every weekday"],
+  "schedule": [
+    "after 12pm and before 11am every weekday"
+  ],
   "dependencyDashboard": true,
   "platform": "github",
   "onboarding": false,
   "dependencyDashboardTitle": "Renovate Dashboard 🤖",
   "rebaseWhen": "conflicted",
   "commitBodyTable": true,
-  "suppressNotifications": ["prIgnoreNotification"],
+  "suppressNotifications": [
+    "prIgnoreNotification"
+  ],
   "postUpdateOptions": [
     "gomodTidy"
   ],
@@ -34,15 +40,29 @@
   "packageRules": [
     {
       "groupName": "Maru Support Dependencies",
-      "labels": ["support-deps"],
+      "labels": [
+        "support-deps"
+      ],
       "commitMessageTopic": "support-deps",
-      "packagePatterns": ["*"]
+      "packagePatterns": [
+        "*"
+      ]
     },
     {
       "groupName": "Maru Code Dependencies",
-      "labels": ["code-deps"],
+      "labels": [
+        "code-deps"
+      ],
       "commitMessageTopic": "code-deps",
-      "matchDatasources": ["go"]
+      "matchDatasources": [
+        "go"
+      ]
+    },
+    {
+      "matchPackageNames": [
+        "github.com/pterm/pterm"
+      ],
+      "allowedVersions": "!/-v0.12.80$/"
     }
   ]
 }
