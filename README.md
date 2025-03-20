@@ -21,6 +21,7 @@ Many [Zarf Actions features](https://docs.zarf.dev/ref/actions/) are also availa
         - [Wait](#wait)
         - [Includes](#includes)
         - [Task Inputs and Reusable Tasks](#task-inputs-and-reusable-tasks)
+    - [Known Issues](#known-issues)
 
 ## Quickstart
 
@@ -435,3 +436,11 @@ When creating a task with `inputs` you can also use the `--with` command line fl
 ```shell
 maru run length-of-inputs --with hello-input="hello unicorn"
 ```
+
+## Known Issues
+
+### If the input name has a dash the ${{ .inputs.input-name }} syntax doesn't work
+See [#188](https://github.com/defenseunicorns/maru-runner/issues/188)
+
+### Unable to use go templating and a "colon space" (`: `) in the same cmd
+See [#199](https://github.com/defenseunicorns/maru-runner/issues/199)
