@@ -76,6 +76,9 @@ The following outlines the pros and cons of the various solutions considered:
 
 ### Option 4: Come up with something net-new, then deprecate both Variables and Inputs
 
+> [!NOTE]
+> This option could result in changes to the existing Maru tool. It could also potentially involve a full rewrite, leading to a `maru2`. More investigation is necessary if this option is chosen as the Decision.
+
 **Pros:**
 - **Modern Approach:** A new solution can be designed from the ground up with modern requirements in mind, free from legacy constraints.
 - **Unified and Simplified System:** Offers the opportunity to create a cohesive, intuitive configuration system that eliminates past inconsistencies.
