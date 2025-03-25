@@ -18,6 +18,7 @@ Maru Runner currently supports two mechanisms for task configuration: Variables 
     - `required:` field, which allows the task file maintainer to require a non-empty value
     - `deprecatedMessage:` field, which allows the task file maintainer to set an input as deprecated, which will alert the consumer via a command line message if they use it.
     - The ability to use yaml to set variables, similar to Inputs' `with:` yaml syntax.
+    - The ability to define task-level variables.
 
 ### Inputs
 
@@ -28,6 +29,7 @@ Maru Runner currently supports two mechanisms for task configuration: Variables 
     - `prompt:` field, which allows the task file maintainer to tell Maru to prompt the consumer interactively for the value if one isn't already defined, rather than making the task fail by returning an error message and a nonzero exit code.
     - The ability to set an input using an environment variable, similar to Variables' `MARU_` env var prefix.
     - The ability to set the value of an input from a previous task action, similar to Variables' `setVariable:` yaml syntax.
+    - The ability to define file-level inputs.
 
 ## Decision
 
