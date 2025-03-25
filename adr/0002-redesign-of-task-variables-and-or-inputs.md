@@ -31,7 +31,7 @@ Maru Runner currently supports two mechanisms for task configuration: Variables 
 
 ## Decision
 
-TBD
+After extensive discussion the decision is go to with Option 4: a net-new redesign, likely of the entire `maru` tool. Initial estimate is that this will happen in Q2 2025.
 
 ## Consequences
 
