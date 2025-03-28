@@ -38,6 +38,8 @@ require (
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/opencontainers/go-digest v1.0.0 // indirect
+	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/otiai10/copy v1.14.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
@@ -61,5 +63,5 @@ require (
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	oras.land/oras-go/v2 v2.5.0 // indirect
+	oras.land/oras-go/v2 v2.5.0
 )
