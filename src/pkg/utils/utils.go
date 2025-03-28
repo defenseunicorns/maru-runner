@@ -5,12 +5,14 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -19,7 +21,11 @@ import (
 	"github.com/defenseunicorns/pkg/helpers/v2"
 	goyaml "github.com/goccy/go-yaml"
 	"github.com/pterm/pterm"
-	"github.com/zalando/go-keyring"
+	keyring "github.com/zalando/go-keyring"
+	oras "oras.land/oras-go/v2"
+	"oras.land/oras-go/v2/content/file"
+	"oras.land/oras-go/v2/registry/remote"
+	"oras.land/oras-go/v2/registry/remote/auth"
 )
 
 const (
@@ -199,6 +205,138 @@ func ReadRemoteYaml(location string, destConfig any, auth map[string]string) (er
 	err = goyaml.Unmarshal(body, destConfig)
 	if err != nil {
 		return fmt.Errorf("failed unmarshalling contents of %s: %w", location, err)
+	}
+
+	return nil
+}
+
+// ReadOCIYaml fetches a YAML file from an OCI registry and unmarshals it into the provided destination
+func ReadOCIYaml(reference string, destConfig any, authMap map[string]string) error {
+	ctx := context.Background()
+
+	// Create a temporary directory to store the YAML files
+	tmpDir, err := os.MkdirTemp("", "maru-oci-*")
+	if err != nil {
+		return fmt.Errorf("failed to create temporary directory: %w", err)
+	}
+	defer func() {
+		_ = os.RemoveAll(tmpDir)
+	}()
+
+	message.SLog.Debug(fmt.Sprintf("Fetching OCI artifact: %s", reference))
+
+	// Remove the oci:// prefix if present
+	reference = strings.TrimPrefix(reference, "oci://")
+
+	// Parse the reference to extract the registry, repository and tag
+	// Format expected: registry/repo/path:tag
+
+	// First, get registry and the rest by splitting at first slash
+	parts := strings.SplitN(reference, "/", 2)
+	if len(parts) < 2 {
+		return fmt.Errorf("invalid reference format: %s", reference)
+	}
+
+	registry := parts[0]  // e.g., ghcr.io
+	remainder := parts[1] // e.g., myorg/maru-tasks/hello:0.0.1
+
+	// Split the remainder at the colon to get repo path and tag
+	repoAndTag := strings.SplitN(remainder, ":", 2)
+	repoPath := repoAndTag[0] // e.g., myorg/maru-tasks/hello
+	tag := "latest"
+	if len(repoAndTag) > 1 {
+		tag = repoAndTag[1] // e.g., 0.0.1
+	}
+
+	// Full repository reference that includes the registry
+	fullRepo := fmt.Sprintf("%s/%s", registry, repoPath)
+
+	// Create a new repository client
+	remoteRepo, err := remote.NewRepository(fullRepo)
+	if err != nil {
+		return fmt.Errorf("failed to create repository client: %w", err)
+	}
+
+	// Add authentication if available in the auth map
+	if token, ok := authMap[registry]; ok {
+		authClient := &auth.Client{
+			Client: http.DefaultClient,
+			Cache:  auth.NewCache(),
+			Credential: auth.StaticCredential(registry, auth.Credential{
+				Username: "token",
+				Password: token,
+			}),
+		}
+		remoteRepo.Client = authClient
+	} else {
+		// Try to get token from keyring
+		token, err := keyring.Get(config.KeyringService, registry)
+		if err == nil {
+			authClient := &auth.Client{
+				Client: http.DefaultClient,
+				Cache:  auth.NewCache(),
+				Credential: auth.StaticCredential(registry, auth.Credential{
+					Username: "token",
+					Password: token,
+				}),
+			}
+			remoteRepo.Client = authClient
+		}
+	}
+
+	// Create a file store for the output
+	fs, err := file.New(tmpDir)
+	if err != nil {
+		return fmt.Errorf("failed to create file store: %w", err)
+	}
+	defer func() {
+		_ = fs.Close()
+	}()
+
+	// Log what we're about to pull
+	message.SLog.Debug(fmt.Sprintf("Pulling OCI artifact from repository %s with tag %s", fullRepo, tag))
+
+	// Copy the artifact to the file store
+	_, err = oras.Copy(ctx, remoteRepo, tag, fs, "", oras.DefaultCopyOptions)
+	if err != nil {
+		return fmt.Errorf("failed to pull OCI artifact: %w", err)
+	}
+
+	message.SLog.Debug(fmt.Sprintf("Successfully fetched OCI artifact: %s", reference))
+
+	// Find the YAML file in the output directory
+	var yamlFiles []string
+	err = filepath.Walk(tmpDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() && (strings.HasSuffix(path, ".yaml") || strings.HasSuffix(path, ".yml")) {
+			yamlFiles = append(yamlFiles, path)
+		}
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to find YAML files in output directory: %w", err)
+	}
+
+	if len(yamlFiles) == 0 {
+		return fmt.Errorf("no YAML files found in the OCI artifact")
+	}
+
+	// Use the first YAML file found
+	yamlFilePath := yamlFiles[0]
+	message.SLog.Debug(fmt.Sprintf("Using YAML file: %s", yamlFilePath))
+
+	// Read the YAML file
+	yamlData, err := os.ReadFile(yamlFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read YAML file: %w", err)
+	}
+
+	// Unmarshal the YAML data
+	err = goyaml.Unmarshal(yamlData, destConfig)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal YAML data: %w", err)
 	}
 
 	return nil
