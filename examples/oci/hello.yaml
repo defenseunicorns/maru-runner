@@ -1,0 +1,18 @@
+# Example Maru tasks file for OCI publishing
+tasks:
+  - name: world
+    actions:
+      - cmd: echo "Hello from an OCI artifact task!"
+      - cmd: echo "This task is being executed from a container registry."
+
+  - name: inputs
+    inputs:
+      name:
+        description: "Your name"
+        default: "Friend"
+      message:
+        description: "Custom message"
+        default: "Welcome to Maru OCI tasks!"
+    actions:
+      - cmd: echo "Hello, ${INPUT_NAME}!"
+      - cmd: echo "${INPUT_MESSAGE}"

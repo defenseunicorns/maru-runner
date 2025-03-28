@@ -322,7 +322,7 @@
             "type": "object"
           },
           "type": "array",
-          "description": "List of local task files to include"
+          "description": "List of task files to include (local"
         },
         "variables": {
           "items": {

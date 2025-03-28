@@ -29,9 +29,10 @@ type MaruE2ETest struct {
 // GetCLIName looks at the OS and CPU architecture to determine which Maru binary needs to be run.
 func GetCLIName() string {
 	var binaryName string
-	if runtime.GOOS == "linux" {
+	switch runtime.GOOS {
+	case "linux":
 		binaryName = "maru"
-	} else if runtime.GOOS == "darwin" {
+	case "darwin":
 		if runtime.GOARCH == "arm64" {
 			binaryName = "maru-mac-apple"
 		} else {

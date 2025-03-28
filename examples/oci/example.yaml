@@ -1,0 +1,16 @@
+# Test file for using OCI-based tasks
+includes:
+  - hello: oci://ghcr.io/willswire/maru-tasks/hello:0.0.1
+
+tasks:
+  - name: default
+    actions:
+      - cmd: echo "Testing OCI artifact integration"
+      - task: hello:world
+
+  - name: with-args
+    actions:
+      - task: hello:inputs
+        with:
+          name: "OCI Test User"
+          message: "This is a test of the OCI tasks feature!"

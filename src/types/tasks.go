@@ -10,7 +10,7 @@ import (
 
 // TasksFile represents the contents of a tasks file
 type TasksFile struct {
-	Includes  []map[string]string                                          `json:"includes,omitempty" jsonschema:"description=List of local task files to include"`
+	Includes  []map[string]string                                          `json:"includes,omitempty" jsonschema:"description=List of task files to include (local, remote via https://, or OCI via oci://)"`
 	Variables []variables.InteractiveVariable[variables.ExtraVariableInfo] `json:"variables,omitempty" jsonschema:"description=Definitions and default values for variables used in run.yaml"`
 	Tasks     []Task                                                       `json:"tasks" jsonschema:"description=The list of tasks that can be run"`
 }

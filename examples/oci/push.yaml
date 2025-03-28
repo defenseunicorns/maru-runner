@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=../../tasks.schema.json
+variables:
+  - name: REF
+    default: ghcr.io/willswire/maru-tasks/hello:0.0.1
+    description: the full OCI artifact reference (registry/repo:tag)
+  - name: TASK
+    default: hello.yaml
+    description: the task file to publish as an OCI artifact
+
+tasks:
+  - name: default
+    description: publish a task file as an OCI artifact
+    actions:
+      - description: check dependencies and validate variables
+        cmd: |
+          # Check for the oras CLI
+          if ! command -v oras &> /dev/null; then
+            echo "oras CLI not found. Please install it from https://oras.land"
+            exit 1
+          fi
+
+          # Validate REF variable
+          if [[ -z "$REF" ]]; then
+            echo "ERROR: REF variable is not set"
+            exit 1
+          fi
+
+          # Validate TASK variable and check if file exists
+          if [[ -z "$TASK" ]]; then
+            echo "ERROR: TASK variable is not set"
+            exit 1
+          fi
+
+          if [[ ! -f "$TASK" ]]; then
+            echo "ERROR: Task file '$TASK' not found"
+            exit 1
+          fi
+      - description: push the artifact
+        cmd: |
+          oras push "$REF" \
+            --config /dev/null:application/vnd.oci.empty.v1+json \
+            $TASK:application/yaml

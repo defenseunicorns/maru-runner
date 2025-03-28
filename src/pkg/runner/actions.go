@@ -395,7 +395,8 @@ func validateActionableTaskCall(inputTaskName string, inputs map[string]types.In
 		}
 	}
 	if len(missing) > 0 {
-		return fmt.Errorf("task %s is missing required inputs: %s", inputTaskName, strings.Join(missing, ", "))
+		// Add quotes around the task name to properly handle task names with special characters like colons
+		return fmt.Errorf("task \"%s\" is missing required inputs: %s", inputTaskName, strings.Join(missing, ", "))
 	}
 	for withKey := range withs {
 		matched := false

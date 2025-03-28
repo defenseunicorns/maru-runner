@@ -60,7 +60,7 @@ var NewProgressSpinner = func(format string, a ...any) helpers.ProgressWriter {
 func (p *Spinner) Write(raw []byte) (int, error) {
 	size := len(raw)
 	if NoProgress {
-		os.Stderr.Write(raw)
+		_, _ = os.Stderr.Write(raw)
 
 		return size, nil
 	}
@@ -107,7 +107,7 @@ func (p *Spinner) Successf(format string, a ...any) {
 	} else {
 		successf(format, a...)
 	}
-	p.Close()
+	_ = p.Close()
 }
 
 // Failf prints an error message with the spinner.
@@ -118,5 +118,5 @@ func (p *Spinner) Failf(format string, a ...any) {
 	} else {
 		errorf(format, a...)
 	}
-	p.Close()
+	_ = p.Close()
 }

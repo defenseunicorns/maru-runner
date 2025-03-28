@@ -1,0 +1,21 @@
+variables:
+  - name: REGISTRY
+    default: "ghcr.io"
+  - name: REPOSITORY
+    default: "willswire/maru-tasks"
+  - name: TAG
+    default: "latest"
+
+includes:
+  # Include tasks stored in OCI registry
+  - oci-example: oci://${REGISTRY}/${REPOSITORY}:${TAG}
+
+tasks:
+  - name: default
+    actions:
+      - cmd: echo "OCI tasks example"
+      - cmd: echo "Run the included task with: maru run oci-example:task-name"
+
+  - name: use-oci-task
+    actions:
+      - task: oci-example:hello-world

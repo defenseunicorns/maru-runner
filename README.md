@@ -309,12 +309,13 @@ tasks:
 
 ### Includes
 
-The `includes` key is used to import tasks from either local or remote task files. This is useful for sharing common tasks across multiple task files. When importing a task from a local task file, the path is relative to the file you are currently in. When running a task, the tasks in the task file as well as the `includes` get processed to ensure there are no infinite loop references.
+The `includes` key is used to import tasks from local, remote, or OCI task files. This is useful for sharing common tasks across multiple task files. When importing a task from a local task file, the path is relative to the file you are currently in. When running a task, the tasks in the task file as well as the `includes` get processed to ensure there are no infinite loop references.
 
 ```yaml
 includes:
   - local: ./path/to/tasks-to-import.yaml
   - remote: https://raw.githubusercontent.com/defenseunicorns/maru-runner/main/src/test/tasks/remote-import-tasks.yaml
+  - oci-tasks: oci://ghcr.io/myorg/maru-tasks:latest
 
 tasks:
   - name: import-local
@@ -323,6 +324,9 @@ tasks:
   - name: import-remote
     actions:
       - task: remote:echo-var
+  - name: import-oci
+    actions:
+      - task: oci-tasks:hello-world
 ```
 
 Note that included task files can also include other task files, with the following restriction:
@@ -337,6 +341,35 @@ run import-local
 ```bash
 run local:some-local-task
 ```
+
+#### OCI Task Files
+
+Maru supports using OCI artifacts as task files. This allows you to store your tasks in container registries and version them using tags. To use an OCI task file, use the `oci://` prefix in your includes:
+
+```yaml
+includes:
+  - common-tasks: oci://ghcr.io/myorg/maru-tasks:v1.0.0
+
+tasks:
+  - name: use-oci-task
+    actions:
+      - task: common-tasks:setup-env
+```
+
+You can also use variables in your OCI references:
+
+```yaml
+variables:
+  - name: REGISTRY
+    default: "ghcr.io"
+  - name: TASK_VERSION
+    default: "latest"
+
+includes:
+  - common-tasks: oci://${REGISTRY}/myorg/maru-tasks:${TASK_VERSION}
+```
+
+Authentication to private OCI registries works the same way as for remote HTTPS task files, using the `maru auth login` command with the registry hostname.
 
 #### Authenticated Includes
 
