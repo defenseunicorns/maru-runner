@@ -83,7 +83,7 @@ tasks:
 	require.NoError(t, err)
 
 	// For manual testing, identify the maru binary and provide instructions
-	maruBin := "./build/maru-mac-apple"
+	maruBin := "./build/maru"
 	t.Logf("For manual testing run: %s run -f %s", maruBin, tasksYaml)
 	t.Logf("This test requires the OCI artifact to be published first")
 	t.Log("To verify the OCI feature works correctly, manual execution is required")
@@ -101,9 +101,9 @@ tasks:
 func TestOCITaskDocumentation(t *testing.T) {
 	// Test that the example files exist and are valid YAML
 	exampleFiles := []string{
-		"/Users/willwalker/Developer/github.com/willswire/maru-runner/examples/oci/hello.yaml",
-		"/Users/willwalker/Developer/github.com/willswire/maru-runner/examples/oci/push.yaml",
-		"/Users/willwalker/Developer/github.com/willswire/maru-runner/examples/oci/example.yaml",
+		"examples/oci/hello.yaml",
+		"examples/oci/push.yaml",
+		"examples/oci/example.yaml",
 	}
 
 	for _, file := range exampleFiles {
@@ -120,7 +120,7 @@ func TestOCITaskDocumentation(t *testing.T) {
 	}
 
 	// Verify documentation file
-	docsFile := "/Users/willwalker/Developer/github.com/willswire/maru-runner/docs/oci-tasks.md"
+	docsFile := "docs/oci-tasks.md"
 	_, err := os.Stat(docsFile)
 	require.NoError(t, err, "Documentation file not found: %s", docsFile)
 
