@@ -356,6 +356,9 @@ gh auth token | maru auth login ghcr.io --token-stdin
 
 # Push the task file
 maru push hello.yaml ghcr.io/myorg/maru-tasks:v1.0.0
+
+# Push the task file (to an insecure registry)
+maru push --insecure hello.yaml ghcr.io/myorg/maru-tasks:v1.0.0
 ```
 
 **Using OCI Tasks**
@@ -373,6 +376,12 @@ tasks:
 ```
 
 Authentication to private OCI registries works the same way as for remote HTTPS task files, using the `maru auth login` command with the registry hostname.
+
+If the registry is insecure, you can use the `--insecure` flag when pushing the task file:
+
+```bash
+maru run --insecure common:setup-env
+```
 
 #### Authenticated Includes
 
