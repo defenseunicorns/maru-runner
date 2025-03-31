@@ -257,6 +257,12 @@ func ReadOCIYaml(reference string, destConfig any, authMap map[string]string) er
 		return fmt.Errorf("failed to create repository client: %w", err)
 	}
 
+	// Configure insecure mode if requested
+	if insecureStr, ok := authMap["insecure"]; ok && insecureStr == "true" {
+		message.SLog.Info(fmt.Sprintf("Using insecure mode for %s", fullRepo))
+		remoteRepo.PlainHTTP = true
+	}
+
 	// Add authentication if available in the auth map
 	if token, ok := authMap[registry]; ok {
 		authClient := &auth.Client{

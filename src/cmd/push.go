@@ -51,9 +51,12 @@ Examples:
 	},
 }
 
+var pushInsecure bool
+
 func init() {
 	initViper()
 	rootCmd.AddCommand(pushCmd)
+	pushCmd.Flags().BoolVar(&pushInsecure, "insecure", false, "Allow interaction with OCI registries that are not using HTTPS")
 }
 
 // Parse an OCI reference into registry, repository, and tag
@@ -166,6 +169,12 @@ func pushTaskFile(taskFilePath, reference string) error {
 	repo, err := remote.NewRepository(fullRepo)
 	if err != nil {
 		return fmt.Errorf("failed to create repository client: %w", err)
+	}
+
+	// Configure insecure mode if requested
+	if pushInsecure {
+		message.SLog.Info(fmt.Sprintf("Using insecure mode for %s", fullRepo))
+		repo.PlainHTTP = true
 	}
 
 	// Try to get token from keyring for the registry
