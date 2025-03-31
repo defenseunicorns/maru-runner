@@ -344,7 +344,23 @@ run local:some-local-task
 
 #### OCI Task Files
 
-Maru supports using OCI artifacts as task files. This allows you to store your tasks in container registries and version them using tags. To use an OCI task file, use the `oci://` prefix in your includes:
+Maru supports using OCI artifacts as task files. This allows you to store your tasks in container registries and version them using tags.
+
+**Pushing Tasks to OCI Registries**
+
+You can push your task files to OCI registries using the built-in `push` command:
+
+```bash
+# Login to your registry first
+gh auth token | maru auth login ghcr.io --token-stdin
+
+# Push the task file
+maru push hello.yaml ghcr.io/myorg/maru-tasks:v1.0.0
+```
+
+**Using OCI Tasks**
+
+To use an OCI task file, use the `oci://` prefix in your includes:
 
 ```yaml
 includes:
