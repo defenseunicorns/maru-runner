@@ -7,16 +7,11 @@
   ],
   "ignorePaths": [],
   "timezone": "America/New_York",
-  "repositories": [
-    "defenseunicorns/maru-runner"
-  ],
   "rebaseStalePrs": true,
   "schedule": [
     "after 12pm and before 11am every weekday"
   ],
   "dependencyDashboard": true,
-  "platform": "github",
-  "onboarding": false,
   "dependencyDashboardTitle": "Renovate Dashboard 🤖",
   "rebaseWhen": "conflicted",
   "commitBodyTable": true,
@@ -62,7 +57,7 @@
       "matchPackageNames": [
         "github.com/pterm/pterm"
       ],
-      "allowedVersions": "!/-v0.12.80$/"
+      "allowedVersions": "!/v0.12.80/"
     }
   ]
 }
