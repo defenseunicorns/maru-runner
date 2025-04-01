@@ -57,7 +57,7 @@
       "matchPackageNames": [
         "github.com/pterm/pterm"
       ],
-      "allowedVersions": "!/v0.12.80$/"
+      "allowedVersions": "!/v0.12.80/"
     }
   ]
 }
