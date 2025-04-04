@@ -77,3 +77,16 @@ tasks:
     actions:
       - cmd: |
           echo "Input1Tmpl: ${{ .inputs.input1 }} Input1Env: $INPUT_INPUT1 Input2Tmpl: ${{ .inputs.input2 }} Input2Env: ${INPUT_INPUT2} Input3Tmpl: ${{ .inputs.input3 }} Input3Env: $INPUT_INPUT3 Var: $FOO"
+
+  - name: dashes-in-input-names
+    description: Test task that puts dashes in input names
+    inputs:
+      required-input-with-dashes:
+        description: A required input with dashes in its name
+        required: true
+      default-input-with-dashes:
+        description: A default input with dashes in its name
+        default: bar
+    actions:
+      - cmd: |
+          echo "$INPUT_REQUIRED_INPUT_WITH_DASHES $INPUT_DEFAULT_INPUT_WITH_DASHES ${INPUT_REQUIRED_INPUT_WITH_DASHES} ${INPUT_DEFAULT_INPUT_WITH_DASHES} ${{ .inputs.required-input-with-dashes }} ${{ .inputs.default-input-with-dashes }} ${{ index .inputs "required-input-with-dashes" }} ${{ index .inputs "default-input-with-dashes" }}"
