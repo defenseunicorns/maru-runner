@@ -158,4 +158,11 @@ func TestRunnerInputs(t *testing.T) {
 		require.NoError(t, err, stdOut, stdErr)
 		require.Contains(t, stdErr, "Input1Tmpl: input1 Input1Env: input1 Input2Tmpl: input2 Input2Env: input2 Input3Tmpl: notthedefault Input3Env: notthedefault Var: baz")
 	})
+
+	t.Run("test that verifies that dashes can be used in input names", func(t *testing.T) {
+		stdOut, stdErr, err := e2e.Maru("run", "with:dashes-in-input-names", "--file", "src/test/tasks/inputs/tasks.yaml", "--with", "required-input-with-dashes=foo")
+		require.NoError(t, err, stdOut, stdErr)
+		//require.Contains(t, stdErr, "foo bar foo bar foo bar foo bar")
+		require.Contains(t, stdErr, "foo bar foo bar foo bar")
+	})
 }
