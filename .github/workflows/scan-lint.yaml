@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
 
       - name: Setup golang
         uses: ./.github/actions/golang
@@ -21,7 +21,7 @@ jobs:
         run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
 
       - name: Run pre-commit
-        uses: pre-commit/action@576ff52938d158a24ac7e009dfa94b1455e7df99 #
+        uses: pre-commit/action@1b06ec171f2f6faa71ed760c4042bd969e4f8b43 #
         with:
           extra_args: --all-files --verbose # pre-commit run --all-files --verbose
 
