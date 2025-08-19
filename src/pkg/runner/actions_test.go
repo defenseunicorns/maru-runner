@@ -75,7 +75,7 @@ func Test_getUniqueTaskActions(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
+
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			if got := getUniqueTaskActions(tt.args.actions); !reflect.DeepEqual(got, tt.want) {
