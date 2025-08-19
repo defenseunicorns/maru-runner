@@ -158,7 +158,7 @@ func ListAutoCompleteTasks(_ *cobra.Command, _ []string, _ string) ([]string, co
 		return []string{}, cobra.ShellCompDirectiveNoFileComp
 	}
 
-	var taskNames []string
+	taskNames := make([]string, 0, len(tasksFile.Tasks))
 	for _, task := range tasksFile.Tasks {
 		taskNames = append(taskNames, task.Name)
 	}

@@ -17,10 +17,6 @@ repos:
     rev: 0.2.0
     hooks:
       - id: fix-smartquotes
-  - repo: https://github.com/dnephin/pre-commit-golang
-    rev: v0.5.1
-    hooks:
-      - id: go-imports
   - repo: https://github.com/golangci/golangci-lint
     rev: v1.55.2
     hooks:
