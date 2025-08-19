@@ -11,16 +11,16 @@ Many [Zarf Actions features](https://docs.zarf.dev/ref/actions/) are also availa
 ## Table of Contents
 
 - [Runner](#maru-runner)
-    - [Quickstart](#quickstart)
-    - [Key Concepts](#key-concepts)
-        - [Tasks](#tasks)
-        - [Actions](#actions)
-            - [Task](#task)
-            - [Cmd](#cmd)
-        - [Variables](#variables)
-        - [Wait](#wait)
-        - [Includes](#includes)
-        - [Task Inputs and Reusable Tasks](#task-inputs-and-reusable-tasks)
+  - [Quickstart](#quickstart)
+  - [Key Concepts](#key-concepts)
+    - [Tasks](#tasks)
+    - [Actions](#actions)
+      - [Task](#task)
+      - [Cmd](#cmd)
+    - [Variables](#variables)
+    - [Wait](#wait)
+    - [Includes](#includes)
+    - [Task Inputs and Reusable Tasks](#task-inputs-and-reusable-tasks)
 
 ## Quickstart
 
@@ -72,6 +72,7 @@ You can also view the tasks that are available to run in your current task file 
 ```bash
 run -f tmp/tasks.yaml --list
 ```
+
 ```bash
 run -f tmp/tasks.yaml --list-all
 ```
@@ -123,6 +124,7 @@ run make-build-dir  # only runs make-build-dir
 ```
 
 #### Default Tasks
+
 In the above example, there is also a `default` task, which is special, optional, task that can be used for the most common entrypoint for your tasks. When trying to run the `default` task, you can omit the task name from the run command:
 
 ```bash
@@ -172,22 +174,22 @@ This task will decode the base64 string and set the value as a variable named `F
 Command blocks can have several other properties including:
 
 - `description`: description of the command
-    - `mute`: boolean value to mute the output of a command
-    - `dir`: the directory to run the command in
-    - `env`: list of environment variables to run for this `cmd` block only
+- `mute`: boolean value to mute the output of a command
+- `dir`: the directory to run the command in
+- `env`: list of environment variables to run for this `cmd` block only
 
-      ```yaml
-      tasks:
-        - name: foo
-          actions:
-            - cmd: echo ${BAR}
-              env:
-                - BAR=bar
-      ```
+  ```yaml
+  tasks:
+    - name: foo
+      actions:
+        - cmd: echo ${BAR}
+          env:
+            - BAR=bar
+  ```
 
-    - `maxRetries`: number of times to retry the command
-    - `maxTotalSeconds`: max number of seconds the command can run until it is killed; takes precedence
-      over `maxRetries`
+- `maxRetries`: number of times to retry the command
+- `maxTotalSeconds`: max number of seconds the command can run until it is killed; takes precedence
+  over `maxRetries`
 
 ### Variables
 
@@ -233,7 +235,7 @@ Note that variables also have the following attributes when setting them with YA
 
 - `sensitive`: boolean value indicating if a variable should be visible in output
 - `default`: default value of a variable
-    - In the example above, if `FOO` did not have a default, and you have an environment variable `MARU_FOO=bar`, the default would get set to `bar`.
+  - In the example above, if `FOO` did not have a default, and you have an environment variable `MARU_FOO=bar`, the default would get set to `bar`.
 
 #### Environment Variable Files
 
@@ -253,21 +255,26 @@ tasks:
 ```
 
 #### Automatic Environment Variables
+
 The following Environment Variables are set automatically by maru-runner and are available to any action being performed:
+
 - `MARU` - Set to 'true' to indicate the action was executed by maru-runner.
 - `MARU_ARCH` - Set to the current architecture. e.g. 'amd64'
 
 Example:
 
 - tasks.yaml
+
   ```yaml
-    - name: print-common-env
-      actions:
-        - cmd: echo MARU_ARCH=[$MARU_ARCH]
-        - cmd: echo MARU=[$MARU]
+  - name: print-common-env
+    actions:
+      - cmd: echo MARU_ARCH=[$MARU_ARCH]
+      - cmd: echo MARU=[$MARU]
   ```
+
 - `maru run print-common-env` output:
-  ```
+
+  ```text
       MARU_ARCH=[amd64]
     ✔  Completed "echo MARU_ARCH=[$MARU_ARCH]"
       MARU=[true]
@@ -275,7 +282,9 @@ Example:
   ```
 
 #### Variable Precedence
+
 Variable precedence is as follows, from least to most specific:
+
 - Variable defaults set in YAML
 - Environment variables prefixed with `MARU_`
 - Variables set with the `--set` flag in the CLI
@@ -283,9 +292,9 @@ Variable precedence is as follows, from least to most specific:
 That is to say, variables set via the `--set` flag take precedence over all other variables.
 
 There are a couple of exceptions to this precedence order:
+
 - When a variable is modified using `setVariable`, which will change the value of the variable during runtime.
 - When another application is vendoring in maru, it can use config.AddExtraEnv to add extra environment variables. Any variables set by an application in this way take precedence over everything else.
-
 
 ### Wait
 
@@ -334,6 +343,7 @@ Tasks from an included file can also be run individually, by using the includes 
 ```bash
 run import-local
 ```
+
 ```bash
 run local:some-local-task
 ```
@@ -384,7 +394,6 @@ tasks:
       - cmd: echo ${{ index .inputs "hello-input" }}
       # or use simple template syntax. NOTE: This doesn't work if your input name has any dashes in it.
       - cmd: echo "${{ .inputs.input3 }}"
-
 
   - name: use-echo-var
     actions:
