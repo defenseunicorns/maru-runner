@@ -3,7 +3,7 @@
 > [!CAUTION]
 > maru-runner is now in maintenance mode
 >
-> only bug reports / fixes will be accepted as issues / pull requests
+> only critical bug reports / vulnerability fixes will be accepted as issues / pull requests
 >
 > for information on the future of Defense Unicorn's task runner efforts, see maru2:
 >
