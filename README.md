@@ -255,7 +255,6 @@ tasks:
   - name: env
     actions:
       - cmd: echo $FOO
-      - cmd: echo $MARU_ARCH
       - task: echo-env
   - name: echo-env
     envPath: ./path/to/.env
@@ -268,7 +267,6 @@ tasks:
 The following Environment Variables are set automatically by maru-runner and are available to any action being performed:
 
 - `MARU` - Set to 'true' to indicate the action was executed by maru-runner.
-- `MARU_ARCH` - Set to the current architecture. e.g. 'amd64'
 
 Example:
 
@@ -277,15 +275,12 @@ Example:
   ```yaml
   - name: print-common-env
     actions:
-      - cmd: echo MARU_ARCH=[$MARU_ARCH]
       - cmd: echo MARU=[$MARU]
   ```
 
 - `maru run print-common-env` output:
 
   ```text
-      MARU_ARCH=[amd64]
-    ✔  Completed "echo MARU_ARCH=[$MARU_ARCH]"
       MARU=[true]
     ✔  Completed "echo MARU=[$MARU]"
   ```
