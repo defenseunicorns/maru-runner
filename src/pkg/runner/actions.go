@@ -157,7 +157,7 @@ func RunAction[T any](action *types.BaseAction[T], envFilePath string, variableC
 		return nil
 	}
 
-	// load the contents of the env file into the Action + the MARU_ARCH
+	// load the contents of the env file into the Action
 	if envFilePath != "" {
 		envFilePath := filepath.Join(filepath.Dir(config.TaskFileLocation), envFilePath)
 		envFileContents, err := os.ReadFile(envFilePath)

@@ -54,10 +54,8 @@
       ]
     },
     {
-      "matchPackageNames": [
-        "github.com/pterm/pterm"
-      ],
-      "allowedVersions": "!/v0.12.80/"
+      "matchPackageNames": ["github.com/pterm/pterm"],
+      "enabled": false
     }
   ]
 }

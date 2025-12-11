@@ -9,27 +9,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Setup golang
         uses: ./.github/actions/golang
 
-      - name: Install goimports
-        run: go install golang.org/x/tools/cmd/goimports@latest
-
+        # will run golangci-lint 2x due to pre-commit hook
       - name: Install golangci-lint
-        run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
+        uses: golangci/golangci-lint-action@4afd733a84b1f43292c63897423277bb7f4313a9 # v8.0.0
+        with:
+          version: latest
 
       - name: Run pre-commit
-        uses: pre-commit/action@576ff52938d158a24ac7e009dfa94b1455e7df99 #
+        uses: pre-commit/action@1b06ec171f2f6faa71ed760c4042bd969e4f8b43 #
         with:
           extra_args: --all-files --verbose # pre-commit run --all-files --verbose
-
-      - name: Run Revive Action by pulling pre-built image
-        uses: docker://morphy/revive-action:v2@sha256:561ebd74b37d5b317d05ff3f0f16c94f86416d62eacc68b107e74725a544890f
-        with:
-          config: revive.toml
-          # Exclude patterns, separated by semicolons (optional)
-          exclude: "src/cmd/viper.go;src/config/lang/lang.go"
-          # Path pattern (default: ./...)
-          path: "./src/..."

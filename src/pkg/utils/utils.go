@@ -53,7 +53,6 @@ func UseLogFile() error {
 // otherwise appending the variable from env1 to env2
 func MergeEnv(env1, env2 []string) []string {
 	envMap := make(map[string]string)
-	var result []string
 
 	// First, populate the map with env2's values for quick lookup.
 	for _, s := range env2 {
@@ -71,6 +70,7 @@ func MergeEnv(env1, env2 []string) []string {
 		}
 	}
 
+	result := make([]string, 0, len(envMap))
 	// Finally, reconstruct the environment array from the map.
 	for key, value := range envMap {
 		result = append(result, key+"="+value)
@@ -164,7 +164,7 @@ func JoinURLRepoPath(currentURL *url.URL, includeFilePath string) (*url.URL, err
 // ReadRemoteYaml makes a get request to retrieve a given file from a URL
 func ReadRemoteYaml(location string, destConfig any, auth map[string]string) (err error) {
 	// Send an HTTP GET request to fetch the content of the remote file
-	req, err := http.NewRequest("GET", location, nil)
+	req, err := http.NewRequest(http.MethodGet, location, nil)
 	if err != nil {
 		return fmt.Errorf("unable to initialize request for %s: %w", location, err)
 	}

@@ -1,0 +1,98 @@
+version: "2"
+run:
+  concurrency: 8
+  allow-parallel-runners: true
+linters:
+  default: fast
+  enable:
+    - revive
+  disable:
+    - depguard
+    - funlen
+    - lll
+    - mnd
+    - wsl
+    - gochecknoinits # codebase still uses inits
+    # More linters to never use (not part of fast)
+    - containedctx
+    - exhaustive
+    - exhaustruct
+    - forbidigo
+    - gochecknoglobals
+    - tagliatelle
+    - varnamelen
+    - wrapcheck
+    # linters I disagree with
+    - whitespace
+    - testpackage
+    - nestif
+    - maintidx
+    - inamedparam
+    - godox
+    - godot
+    - gocognit
+    - cyclop
+    - gocyclo
+    - nlreturn
+  settings:
+    goheader:
+      template: |-
+        SPDX-License-Identifier: Apache-2.0
+        SPDX-FileCopyrightText: 2023-Present the Maru Authors
+    govet:
+      disable:
+        - shadow
+        - fieldalignment
+        - unusedwrite
+      enable-all: true
+    nolintlint:
+      require-specific: true
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: exported
+        - name: if-return
+        - name: increment-decrement
+        - name: var-naming
+          disabled: true
+        - name: var-declaration
+        - name: package-comments
+        - name: range
+        - name: receiver-naming
+        - name: time-naming
+        - name: unexported-return
+        - name: indent-error-flow
+        - name: errorf
+        - name: empty-block
+        - name: superfluous-else
+        - name: unused-parameter
+        - name: unreachable-code
+        - name: redefines-builtin-id
+    testifylint:
+      enable-all: true
+  exclusions:
+    generated: lax
+    presets:
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

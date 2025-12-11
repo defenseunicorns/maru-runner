@@ -73,7 +73,6 @@ tasks:
       - cmd: MARU=hello; echo "I was changed on the command line - MARU=${MARU}"
   - name: print-common-env
     actions:
-      - cmd: echo MARU_ARCH=[$MARU_ARCH]
       - cmd: echo MARU=[$MARU]
   - name: reference
     actions:
@@ -148,7 +147,6 @@ tasks:
   - name: env-from-file
     envPath: "./my-env"
     actions:
-      - cmd: echo $MARU_ARCH
       - cmd: echo $SECRET_KEY
       - cmd: echo $PORT
       - cmd: echo $SPECIAL
