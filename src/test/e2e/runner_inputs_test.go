@@ -157,4 +157,15 @@ func TestRunnerInputs(t *testing.T) {
 		require.NoError(t, err, stdOut, stdErr)
 		require.Contains(t, stdErr, "Input1Tmpl: input1 Input1Env: input1 Input2Tmpl: input2 Input2Env: input2 Input3Tmpl: notthedefault Input3Env: notthedefault Var: baz")
 	})
+
+	t.Run("test that invalid inputs are rejected", func(t *testing.T) {
+		stdOut, stdErr, err := e2e.Maru("run", "with:input-with-regex", "--file", "src/test/tasks/inputs/tasks.yaml", "--with", "not-empty-and-number=notanumber")
+		require.Error(t, err, stdOut, stdErr)
+	})
+
+	t.Run("test that inputs that match regex are accepted", func(t *testing.T) {
+		stdOut, stdErr, err := e2e.Maru("run", "with:input-with-regex", "--file", "src/test/tasks/inputs/tasks.yaml", "--with", "not-empty=hello!", "--with", "not-empty-and-number=12345")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "hello! 12345")
+	})
 }
