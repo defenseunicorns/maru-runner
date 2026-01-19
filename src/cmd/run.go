@@ -54,6 +54,9 @@ func (i *listFlag) Set(value string) error {
 // dryRun is a flag to only load / validate tasks without running commands
 var dryRun bool
 
+// insecure is a flag to allow interaction with OCI registries that are not using HTTPS
+var insecure bool
+
 // setRunnerVariables provides a map of set variables from the command line
 var setRunnerVariables map[string]string
 
@@ -94,6 +97,11 @@ var runCmd = &cobra.Command{
 		}
 
 		auth := v.GetStringMapString(V_AUTH)
+
+		// Pass insecure flag to the auth map for OCI operations
+		if insecure {
+			auth["insecure"] = "true"
+		}
 
 		listFormat := listTasks
 		if listAllTasks != listOff {
@@ -201,6 +209,7 @@ func init() {
 	runFlags := runCmd.Flags()
 	runFlags.StringVarP(&config.TaskFileLocation, "file", "f", config.TasksYAML, lang.CmdRunFlag)
 	runFlags.BoolVar(&dryRun, "dry-run", false, lang.CmdRunDryRun)
+	runFlags.BoolVar(&insecure, "insecure", false, "Allow interaction with OCI registries that are not using HTTPS")
 
 	// Setup the --list flag
 	flag.Var(&listTasks, "list", lang.CmdRunList)
