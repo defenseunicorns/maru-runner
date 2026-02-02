@@ -3,7 +3,7 @@
 > [!IMPORTANT]
 > The maru-runner project is currently under limited maintenance.
 >
-> The project continues to be supported for dependency updates, bug fixes, and security updates. 
+> The project continues to be supported for dependency updates, bug fixes, and security updates.
 > New feature work is not actively being pursued at this time.
 
 [![Latest Release](https://img.shields.io/github/v/release/defenseunicorns/maru-runner)](https://github.com/defenseunicorns/maru-runner/releases)
