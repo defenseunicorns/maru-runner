@@ -238,10 +238,24 @@ func includeTaskAbsLocation(currentFileLocation, includeFileLocation string) (st
 	return absIncludeFileLocation, nil
 }
 
-// LoadIncludeTask loads an included task file either from a remote or local file
+// isOCIReference checks if a string is an OCI reference
+func isOCIReference(reference string) bool {
+	return strings.HasPrefix(reference, "oci://")
+}
+
+// LoadIncludeTask loads an included task file from a remote, OCI, or local file
 func LoadIncludeTask(currentFileLocation, includeFileLocation string, auth map[string]string) (string, types.TasksFile, error) {
 	var includedTasksFile types.TasksFile
 
+	// Check if this is an OCI reference
+	if isOCIReference(includeFileLocation) {
+		// For OCI references, we use the full reference as the location identifier
+		ociReference := strings.TrimPrefix(includeFileLocation, "oci://")
+		err := utils.ReadOCIYaml(ociReference, &includedTasksFile, auth)
+		return includeFileLocation, includedTasksFile, err
+	}
+
+	// Handle normal file or URL references
 	absIncludeFileLocation, err := includeTaskAbsLocation(currentFileLocation, includeFileLocation)
 	if err != nil {
 		return absIncludeFileLocation, includedTasksFile, err
