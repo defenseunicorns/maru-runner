@@ -77,3 +77,19 @@ tasks:
     actions:
       - cmd: |
           echo "Input1Tmpl: ${{ .inputs.input1 }} Input1Env: $INPUT_INPUT1 Input2Tmpl: ${{ .inputs.input2 }} Input2Env: ${INPUT_INPUT2} Input3Tmpl: ${{ .inputs.input3 }} Input3Env: $INPUT_INPUT3 Var: $FOO"
+
+  - name: input-with-regex
+    description: Test task that uses regex to validate inputs
+    inputs:
+      not-empty:
+        description: An input that should not be empty
+        required: true
+        default: ${SOME_NONEXISTENT_ENV_VAR}
+        pattern: ".+"
+      not-empty-and-number:
+        description: An input that should be a number
+        required: true
+        pattern: "[0-9]+"
+    actions:
+      - cmd: |
+          echo ${{ index .inputs "not-empty" }} ${{ index .inputs "not-empty-and-number" }}
