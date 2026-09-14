@@ -99,7 +99,7 @@ jobs:
       - name: Skip brew latest for pre-release tags
         run: |
           if [[ $GITHUB_REF_NAME == *"rc"* ]]; then
-            echo "BREW_NAME=maru@latest-rc" >> $GITHUB_ENV
+            echo "BREW_NAME=maru-rc" >> $GITHUB_ENV
           else
             echo "BREW_NAME=maru" >> $GITHUB_ENV
           fi
