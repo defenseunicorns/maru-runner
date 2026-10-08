@@ -5,4 +5,4 @@ runs:
   using: composite
   steps:
     # used by goreleaser to create SBOMs
-    - uses: anchore/sbom-action/download-syft@0b82b0b1a22399a1c542d4d656f70cd903571b5c # v0.21.1
+    - uses: anchore/sbom-action/download-syft@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
