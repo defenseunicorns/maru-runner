@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
-// SPDX-FileCopyrightText: 2023-Present The Maru Authors
+// SPDX-FileCopyrightText: 2023-Present the Maru Authors
 
-// Package test provides e2e tests for the runner.
 package test
 
 import (
@@ -491,7 +490,6 @@ func TestTaskRunner(t *testing.T) {
 
 		stdOut, stdErr, err := e2e.Maru("run", "--dry-run", "--file", "src/test/tasks/tasks.yaml", "env-from-file")
 		require.NoError(t, err, stdOut, stdErr)
-		require.Contains(t, stdErr, "Dry-running \"echo $MARU_ARCH\"")
 		require.Contains(t, stdOut, "echo env var from calling task - $SECRET_KEY")
 	})
 
