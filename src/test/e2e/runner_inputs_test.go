@@ -5,6 +5,7 @@ package test
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -161,6 +162,7 @@ func TestRunnerInputs(t *testing.T) {
 	t.Run("test that invalid inputs are rejected", func(t *testing.T) {
 		stdOut, stdErr, err := e2e.Maru("run", "with:input-with-regex", "--file", "src/test/tasks/inputs/tasks.yaml", "--with", "not-empty-and-number=notanumber")
 		require.Error(t, err, stdOut, stdErr)
+		require.Contains(t, strings.Join(strings.Fields(stdErr), " "), `input "not-empty-and-number" does not match pattern "[0-9]+"`)
 	})
 
 	t.Run("test that inputs that match regex are accepted", func(t *testing.T) {
