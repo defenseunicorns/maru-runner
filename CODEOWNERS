@@ -1,6 +1,5 @@
-# This repository is owned by the Software Factory Team
-* @defenseunicorns/swf
+* @defenseunicorns/uds-cli
 
 # Additional privileged files
 /CODEOWNERS @jeff-mccoy @daveworth
-/LICENSE @jeff-mccoy @austenbryan
+/LICENS* @jeff-mccoy @austenbryan
