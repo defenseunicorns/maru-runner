@@ -1,4 +1,6 @@
 # Contributing to Maru
+Maru is actively maintained, and contributions for new features, bug fixes, documentation, dependency updates, and security updates are welcome.
+
 Welcome :unicorn: to Maru! If you'd like to contribute, please reach out to one of the [CODEOWNERS](CODEOWNERS) and we'll be happy to get you started!
 
 Below are some notes on our core software design philosophies that should help guide contributors.
