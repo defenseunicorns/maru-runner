@@ -29,6 +29,7 @@ type InputParameter struct {
 	DeprecatedMessage string `json:"deprecatedMessage,omitempty" jsonschema:"description=Message to display when the parameter is deprecated"`
 	Required          bool   `json:"required,omitempty"          jsonschema:"description=Whether the parameter is required,default=true"`
 	Default           string `json:"default,omitempty"           jsonschema:"description=Default value for the parameter"`
+	Pattern           string `json:"pattern,omitempty"           jsonschema:"description=An optional regex pattern that the input value must match"`
 }
 
 // Action is a wrapped BaseAction action inside a Task to provide additional functionality

@@ -408,6 +408,8 @@ In this example, the `echo-var` task takes an input called `hello-input` and pri
 
 Note that the `deprecated-input` input has a `deprecatedMessage` attribute. This is used to indicate that the input is deprecated and should not be used. If a task is run with a deprecated input, a warning will be printed to the console.
 
+Inputs can also define a `pattern` regular expression, such as `pattern: '^[0-9]+$'` to accept only digits. The supplied value (or the default when no value is supplied) must match before the task runs. Patterns use Go regular expression syntax; use `^` and `$` to match the entire value. An invalid pattern returns an error.
+
 #### Templates
 
 When creating a task with `inputs` you can use [Go templates](https://pkg.go.dev/text/template#hdr-Functions) in that task's `actions`. For example:
