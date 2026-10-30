@@ -27,15 +27,35 @@
     "vulnerabilityFixStrategy": "highest",
     "commitMessageSuffix": ""
   },
-  "regexManagers": [
+  "customDatasources": {
+    "zarf-go": {
+      "defaultRegistryUrlTemplate": "https://raw.githubusercontent.com/zarf-dev/zarf/main/go.mod",
+      "format": "plain",
+      "transformTemplates": [
+        "{\"releases\": [releases[$contains(version, /^go[ \\t]+[0-9]+\\.[0-9]+(\\.[0-9]+)?[ \\t\\r]*$/)].{\"version\": $trim($replace(version, /^go[ \\t]+/, \"\"))}], \"sourceUrl\": \"https://github.com/zarf-dev/zarf\"}"
+      ]
+    }
+  },
+  "customManagers": [
     {
-      "fileMatch": [
+      "customType": "regex",
+      "managerFilePatterns": [
         "action.yaml"
       ],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>.*) depName=(?<depName>.*)(versioning=(?<versioning>.*))?(registryUrl=(?<registryUrl>.*))?\\n\\s*(version|ref): (?<currentValue>.*)"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^go\\.mod$/"],
+      "matchStrings": [
+        "(?:^|\\r?\\n)go[ \\t]+(?<currentValue>[0-9]+\\.[0-9]+(?:\\.[0-9]+)?)[ \\t]*(?:\\r?\\n|$)"
+      ],
+      "depNameTemplate": "go",
+      "datasourceTemplate": "custom.zarf-go",
+      "versioningTemplate": "semver-coerced"
     }
   ],
   "packageRules": [
@@ -50,6 +70,13 @@
       "matchPackageNames": [
         "*"
       ]
+    },
+    {
+      "description": "Let the custom manager follow Zarf's Go minimum instead of Go releases",
+      "matchManagers": ["gomod"],
+      "matchDepTypes": ["golang"],
+      "matchPackageNames": ["go"],
+      "enabled": false
     },
     {
       "matchPackageNames": ["github.com/pterm/pterm"],
