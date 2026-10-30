@@ -55,7 +55,7 @@ Pushing the tag starts **Release Maru on Tag** in GitHub Actions. Creating a Git
 
 1. Monitor the [release workflow run](https://github.com/defenseunicorns/maru-runner/actions/workflows/release.yaml). It builds the Linux AMD64 CLI, runs unit and E2E tests, then runs GoReleaser after validation succeeds and any environment approvals are satisfied.
 2. Verify the published [GitHub release](https://github.com/defenseunicorns/maru-runner/releases). GoReleaser generates GitHub release notes and publishes Linux and macOS binaries for AMD64 and ARM64, a universal macOS binary, `checksums.txt` with SHA-256 checksums, and binary SBOMs. Releases are published directly, and prerelease status is determined automatically from the version tag.
-3. Review and merge the generated pull request in [defenseunicorns/homebrew-tap](https://github.com/defenseunicorns/homebrew-tap). Stable tags update `maru`; tags containing `rc` update `maru@latest-rc`. Both also create a versioned formula, `maru@<version>`, without the leading `v`.
+3. Review and merge the generated pull request in [defenseunicorns/homebrew-tap](https://github.com/defenseunicorns/homebrew-tap). Stable tags update `maru`; tags containing `rc` update `maru-rc`. Both also create a versioned formula, `maru@<version>`, without the leading `v`.
 4. Download a release binary, verify it against `checksums.txt`, and confirm it runs and reports the expected version with `maru version`.
 
 If a workflow job fails, inspect its logs and any partially published artifacts or Homebrew changes before retrying. Keep published tags and artifacts immutable; if a published release needs a code fix, merge the fix and release a new version.
