@@ -1,10 +1,9 @@
 # maru-runner
 
-> [!IMPORTANT]
-> The maru-runner project is currently under limited maintenance.
+> [!NOTE]
+> Maru is actively maintained again, including new feature development, bug fixes, dependency updates, and security updates.
 >
-> The project continues to be supported for dependency updates, bug fixes, and security updates.
-> New feature work is not actively being pursued at this time.
+> Contributions are welcome! See the [contributor guide](CONTRIBUTING.md) to get started.
 
 [![Latest Release](https://img.shields.io/github/v/release/defenseunicorns/maru-runner)](https://github.com/defenseunicorns/maru-runner/releases)
 [![Go version](https://img.shields.io/github/go-mod/go-version/defenseunicorns/maru-runner?filename=go.mod)](https://go.dev/)
