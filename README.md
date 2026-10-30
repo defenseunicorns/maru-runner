@@ -1,10 +1,9 @@
 # maru-runner
 
-> [!IMPORTANT]
-> The maru-runner project is currently under limited maintenance.
+> [!NOTE]
+> Maru is actively maintained again, including new feature development, bug fixes, dependency updates, and security updates.
 >
-> The project continues to be supported for dependency updates, bug fixes, and security updates.
-> New feature work is not actively being pursued at this time.
+> Contributions are welcome! See the [contributor guide](CONTRIBUTING.md) to get started.
 
 [![Latest Release](https://img.shields.io/github/v/release/defenseunicorns/maru-runner)](https://github.com/defenseunicorns/maru-runner/releases)
 [![Go version](https://img.shields.io/github/go-mod/go-version/defenseunicorns/maru-runner?filename=go.mod)](https://go.dev/)
@@ -407,6 +406,8 @@ tasks:
 In this example, the `echo-var` task takes an input called `hello-input` and prints it to the console; notice that the `input` can have a `default` value. The `use-echo-var` task calls `echo-var` with a different input value using the `with` key. In this case `"hello unicorn"` is passed to the `hello-input` input.
 
 Note that the `deprecated-input` input has a `deprecatedMessage` attribute. This is used to indicate that the input is deprecated and should not be used. If a task is run with a deprecated input, a warning will be printed to the console.
+
+Inputs can also define a `pattern` regular expression, such as `pattern: '^[0-9]+$'` to accept only digits. The supplied value (or the default when no value is supplied) must match before the task runs. Patterns use Go regular expression syntax; use `^` and `$` to match the entire value. An invalid pattern returns an error.
 
 #### Templates
 

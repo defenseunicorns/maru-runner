@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -395,6 +396,22 @@ func validateActionableTaskCall(inputTaskName string, inputs map[string]types.In
 	}
 	if len(missing) > 0 {
 		return fmt.Errorf("task %s is missing required inputs: %s", inputTaskName, strings.Join(missing, ", "))
+	}
+	for inputKey, input := range inputs {
+		if input.Pattern == "" {
+			continue
+		}
+		pattern, err := regexp.Compile(input.Pattern)
+		if err != nil {
+			return fmt.Errorf("task %s input %q has invalid pattern %q: %w", inputTaskName, inputKey, input.Pattern, err)
+		}
+		value, supplied := withs[inputKey]
+		if !supplied {
+			value = input.Default
+		}
+		if !pattern.MatchString(value) {
+			return fmt.Errorf("task %s input %q does not match pattern %q", inputTaskName, inputKey, input.Pattern)
+		}
 	}
 	for withKey := range withs {
 		matched := false

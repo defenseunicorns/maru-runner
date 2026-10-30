@@ -220,6 +220,76 @@ func Test_validateActionableTaskCall(t *testing.T) {
 	}
 }
 
+func TestValidateInputPatterns(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   types.InputParameter
+		withs   map[string]string
+		wantErr string
+	}{
+		{
+			name:  "matching value",
+			input: types.InputParameter{Pattern: "^[0-9]+$"},
+			withs: map[string]string{"number": "123"},
+		},
+		{
+			name:    "nonmatching value",
+			input:   types.InputParameter{Pattern: "^[0-9]+$"},
+			withs:   map[string]string{"number": "abc"},
+			wantErr: `input "number" does not match pattern "^[0-9]+$"`,
+		},
+		{
+			name:  "matching default",
+			input: types.InputParameter{Pattern: "^[0-9]+$", Default: "123"},
+		},
+		{
+			name:    "nonmatching default",
+			input:   types.InputParameter{Pattern: "^[0-9]+$", Default: "abc"},
+			wantErr: `input "number" does not match pattern "^[0-9]+$"`,
+		},
+		{
+			name:  "supplied value overrides default",
+			input: types.InputParameter{Pattern: "^[0-9]+$", Default: "abc"},
+			withs: map[string]string{"number": "123"},
+		},
+		{
+			name:    "explicit empty overrides default",
+			input:   types.InputParameter{Pattern: ".+", Default: "123"},
+			withs:   map[string]string{"number": ""},
+			wantErr: `input "number" does not match pattern ".+"`,
+		},
+		{
+			name:    "omitted empty value rejected",
+			input:   types.InputParameter{Pattern: ".+"},
+			wantErr: `input "number" does not match pattern ".+"`,
+		},
+		{
+			name:  "empty value allowed by pattern",
+			input: types.InputParameter{Pattern: "^[0-9]*$"},
+		},
+		{
+			name:  "unanchored partial match",
+			input: types.InputParameter{Pattern: "[0-9]+"},
+			withs: map[string]string{"number": "abc123"},
+		},
+		{
+			name:    "malformed pattern",
+			input:   types.InputParameter{Pattern: "["},
+			wantErr: `input "number" has invalid pattern "["`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateActionableTaskCall("testTask", map[string]types.InputParameter{"number": tt.input}, tt.withs)
+			if tt.wantErr != "" {
+				require.ErrorContains(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestRunner_performAction(t *testing.T) {
 	type fields struct {
 		TasksFile                       types.TasksFile

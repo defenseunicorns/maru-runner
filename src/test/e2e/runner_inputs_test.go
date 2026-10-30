@@ -5,8 +5,10 @@ package test
 
 import (
 	"os"
+	"strings"
 	"testing"
 
+	"github.com/pterm/pterm"
 	"github.com/stretchr/testify/require"
 )
 
@@ -156,5 +158,18 @@ func TestRunnerInputs(t *testing.T) {
 		stdOut, stdErr, err := e2e.Maru("run", "with:command-line-with", "--file", "src/test/tasks/inputs/tasks.yaml", "--with", "input1=input1", "--with", "input3=notthedefault", "--set", "FOO=baz")
 		require.NoError(t, err, stdOut, stdErr)
 		require.Contains(t, stdErr, "Input1Tmpl: input1 Input1Env: input1 Input2Tmpl: input2 Input2Env: input2 Input3Tmpl: notthedefault Input3Env: notthedefault Var: baz")
+	})
+
+	t.Run("test that invalid inputs are rejected", func(t *testing.T) {
+		stdOut, stdErr, err := e2e.Maru("run", "with:input-with-regex", "--file", "src/test/tasks/inputs/tasks.yaml", "--with", "not-empty-and-number=notanumber")
+		require.Error(t, err, stdOut, stdErr)
+		stdErr = pterm.RemoveColorFromString(stdErr)
+		require.Contains(t, strings.Join(strings.Fields(stdErr), " "), `input "not-empty-and-number" does not match pattern "[0-9]+"`)
+	})
+
+	t.Run("test that inputs that match regex are accepted", func(t *testing.T) {
+		stdOut, stdErr, err := e2e.Maru("run", "with:input-with-regex", "--file", "src/test/tasks/inputs/tasks.yaml", "--with", "not-empty=hello!", "--with", "not-empty-and-number=12345")
+		require.NoError(t, err, stdOut, stdErr)
+		require.Contains(t, stdErr, "hello! 12345")
 	})
 }
