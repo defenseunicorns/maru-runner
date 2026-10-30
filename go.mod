@@ -2,7 +2,7 @@ module github.com/defenseunicorns/maru-runner
 
 // Renovate syncs this Go version with github.com/zarf-dev/zarf's go.mod.
 // Coordinate with the Maru and Zarf maintainers before changing it manually.
-go 1.26.0
+go 1.26.10
 
 require (
 	github.com/defenseunicorns/pkg/exec v0.0.2
