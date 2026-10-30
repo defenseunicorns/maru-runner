@@ -17,6 +17,12 @@ Fundamentally, software engineering is a communication problem; we write code fo
 ### Pre-Commit Hooks and Linting
 In this repo you can optionally use [pre-commit](https://pre-commit.com/) hooks for automated validation and linting, but if not CI will run these checks for you.
 
+### UDS CLI Compatibility
+
+The [UDS CLI compatibility workflow](.github/workflows/test-uds-cli-pr.yaml) runs on every pull request. It checks out UDS CLI's current `main`, replaces its Maru dependency with the pull request's Maru checkout, and regenerates its vendor directory before building UDS CLI. It runs UDS CLI's unit tests and exercises the rebuilt binary with the `TestTaskRunner` integration suite. Full upstream CI, including cluster, signing, and registry write tests, is outside this check's scope.
+
+The job summary records both source commits, and the `uds-cli-compatibility-logs` artifact contains build and test output, including the binary's Go module information. The check requires no repository secrets. Because it follows UDS CLI's `main`, upstream changes can require updates to the build or test commands in this workflow.
+
 ## Continuous Delivery
 Continuous Delivery is core to our development philosophy. Check out [https://minimumcd.org](https://minimumcd.org/) for a good baseline agreement on what that means.
 
