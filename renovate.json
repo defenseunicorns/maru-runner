@@ -21,6 +21,12 @@
   "postUpdateOptions": [
     "gomodTidy"
   ],
+  "vulnerabilityAlerts": {
+    "groupName": "Maru Dependencies",
+    "groupSlug": "maru-dependencies",
+    "vulnerabilityFixStrategy": "highest",
+    "commitMessageSuffix": ""
+  },
   "regexManagers": [
     {
       "fileMatch": [
@@ -34,23 +40,15 @@
   ],
   "packageRules": [
     {
-      "groupName": "Maru Support Dependencies",
+      "groupName": "Maru Dependencies",
+      "groupSlug": "maru-dependencies",
+      "separateMajorMinor": false,
       "labels": [
-        "support-deps"
+        "dependencies"
       ],
-      "commitMessageTopic": "support-deps",
-      "packagePatterns": [
+      "commitMessageTopic": "dependencies",
+      "matchPackageNames": [
         "*"
-      ]
-    },
-    {
-      "groupName": "Maru Code Dependencies",
-      "labels": [
-        "code-deps"
-      ],
-      "commitMessageTopic": "code-deps",
-      "matchDatasources": [
-        "go"
       ]
     },
     {
