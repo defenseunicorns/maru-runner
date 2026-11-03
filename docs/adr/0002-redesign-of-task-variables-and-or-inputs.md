@@ -4,7 +4,7 @@ Date: 2025-03-24
 
 ## Status
 
-Accepted
+Superseded by [ADR 0003: Continue Maintaining Maru](0003-continue-maintaining-maru.md)
 
 ## Context
 
