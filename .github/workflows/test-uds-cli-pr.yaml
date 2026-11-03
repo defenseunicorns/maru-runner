@@ -1,0 +1,85 @@
+name: UDS CLI Compatibility
+
+on: pull_request
+
+permissions:
+  contents: read
+
+concurrency:
+  group: uds-cli-compatibility-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compatibility:
+    name: UDS CLI Compatibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+        working-directory: uds-cli
+    env:
+      GOWORK: "off"
+
+    steps:
+      - name: Checkout Maru
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: maru
+          persist-credentials: false
+
+      - name: Checkout UDS CLI main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: defenseunicorns/uds-cli
+          ref: main
+          path: uds-cli
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup golang
+        uses: ./maru/.github/actions/golang
+
+      - name: Record source revisions
+        run: |
+          {
+            echo "### UDS CLI compatibility sources"
+            echo "- Maru: $(git -C ../maru rev-parse HEAD)"
+            echo "- UDS CLI main: $(git rev-parse HEAD)"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Build Maru
+        run: make -C ../maru build-cli-linux-amd
+
+      - name: Replace UDS CLI's Maru dependency
+        run: |
+          go mod edit -replace="github.com/defenseunicorns/maru-runner=${GITHUB_WORKSPACE}/maru"
+          go mod tidy
+          go mod vendor
+          echo "GOFLAGS=-mod=vendor" >> "$GITHUB_ENV"
+
+      - name: Build UDS CLI with the PR's Maru
+        run: |
+          ../maru/build/maru run build-cli-linux-amd 2>&1 | tee "$RUNNER_TEMP/uds-cli-build.log"
+          go version -m build/uds | tee "$RUNNER_TEMP/uds-cli-build-info.log"
+          grep -F -- "${GITHUB_WORKSPACE}/maru" "$RUNNER_TEMP/uds-cli-build-info.log"
+
+      - name: Run UDS CLI unit tests
+        run: |
+          go test ./cmd/... ./internal/... ./pkg/... \
+            -failfast -v -count=1 -timeout 5m 2>&1 | tee "$RUNNER_TEMP/uds-cli-unit.log"
+
+      - name: Run UDS CLI task-runner integration tests
+        run: |
+          # Fail if upstream renames the suite instead of silently running no tests.
+          go test ./tests/legacy/e2e -list '^TestTaskRunner$' | grep -x 'TestTaskRunner'
+          go test ./tests/legacy/e2e -run '^TestTaskRunner$' \
+            -failfast -v -count=1 -timeout 30m 2>&1 | tee "$RUNNER_TEMP/uds-cli-task-runner.log"
+
+      - name: Save compatibility logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: uds-cli-compatibility-logs
+          path: ${{ runner.temp }}/uds-cli-*.log
+          if-no-files-found: ignore
