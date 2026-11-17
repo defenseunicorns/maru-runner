@@ -8,19 +8,19 @@ SRC_FILES ?= $(shell find . -type f -name "*.go")
 
 BUILD_CLI_FOR_SYSTEM := build-cli
 UNAME_S := $(shell uname -s)
-UNAME_P := $(shell uname -p)
+UNAME_M := $(shell uname -m)
 ifeq ($(UNAME_S),Darwin)
-	ifeq ($(UNAME_P),i386)
+	ifeq ($(UNAME_M),x86_64)
 		BUILD_CLI_FOR_SYSTEM := $(addsuffix -mac-intel,$(BUILD_CLI_FOR_SYSTEM))
 	endif
-	ifeq ($(UNAME_P),arm)
+	ifeq ($(UNAME_M),arm64)
 		BUILD_CLI_FOR_SYSTEM := $(addsuffix -mac-apple,$(BUILD_CLI_FOR_SYSTEM))
 	endif
 else ifeq ($(UNAME_S),Linux)
-	ifeq ($(UNAME_P),x86_64)
+	ifeq ($(UNAME_M),x86_64)
 		BUILD_CLI_FOR_SYSTEM := $(addsuffix -linux-amd,$(BUILD_CLI_FOR_SYSTEM))
 	endif
-	ifeq ($(UNAME_P),aarch64)
+	ifeq ($(UNAME_M),aarch64)
 		BUILD_CLI_FOR_SYSTEM := $(addsuffix -linux-arm,$(BUILD_CLI_FOR_SYSTEM))
 	endif
 endif
